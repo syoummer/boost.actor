@@ -32,10 +32,10 @@
 #include <sstream>
 #include <cstring>
 
-#include "cppa/config.hpp"
-#include "cppa/exception.hpp"
+#include "boost/actor/config.hpp"
+#include "boost/actor/exception.hpp"
 
-#ifdef CPPA_WINDOWS
+#ifdef BOOST_ACTOR_WINDOWS
 #   include <winsock2.h>
 #   include <ws2tcpip.h> /* socklen_t, et al (MSVC20xx) */
 #   include <windows.h>
@@ -50,13 +50,15 @@
 #   include <netinet/tcp.h>
 #endif
 
-#include "cppa/util/scope_guard.hpp"
+#include "boost/actor/util/scope_guard.hpp"
 
-#include "cppa/detail/fd_util.hpp"
+#include "boost/actor/detail/fd_util.hpp"
 
 /************** implementation of platform-independent functions **************/
 
-namespace cppa { namespace detail { namespace fd_util {
+namespace boost {
+namespace actor {
+namespace detail { namespace fd_util {
 
 void throw_io_failure [[noreturn]] (const char* what, bool add_errno) {
     if (add_errno) {
@@ -96,11 +98,14 @@ void handle_read_result(ssize_t res, bool is_nonblock) {
     if (res == 0) throw_io_failure("cannot read from closed file descriptor");
 }
 
-} } } // namespace cppa::detail::fd_util
+} } } // namespace actor
+} // namespace boost::detail::fd_util
 
-#ifndef CPPA_WINDOWS // Linux or Mac OS
+#ifndef BOOST_ACTOR_WINDOWS // Linux or Mac OS
 
-namespace cppa { namespace detail { namespace fd_util {
+namespace boost {
+namespace actor {
+namespace detail { namespace fd_util {
 
 std::string last_socket_error_as_string() {
     return strerror(errno);
@@ -119,15 +124,18 @@ void nonblocking(native_socket_type fd, bool new_value) {
 
 std::pair<native_socket_type, native_socket_type> create_pipe() {
     native_socket_type pipefds[2];
-    if (pipe(pipefds) != 0) { CPPA_CRITICAL("cannot create pipe"); }
+    if (pipe(pipefds) != 0) { BOOST_ACTOR_CRITICAL("cannot create pipe"); }
     return {pipefds[0], pipefds[1]};
 }
 
-} } } // namespace cppa::detail::fd_util
+} } } // namespace actor
+} // namespace boost::detail::fd_util
 
-#else // CPPA_WINDOWS
+#else // BOOST_ACTOR_WINDOWS
 
-namespace cppa { namespace detail { namespace fd_util {
+namespace boost {
+namespace actor {
+namespace detail { namespace fd_util {
 
 std::string last_socket_error_as_string() {
     LPTSTR errorText = NULL;
@@ -253,5 +261,6 @@ std::pair<native_socket_type, native_socket_type> create_pipe() {
     return {read_fd, write_fd};
 }
 
-} } } // namespace cppa::detail::fd_util
+} } } // namespace actor
+} // namespace boost::detail::fd_util
 #endif

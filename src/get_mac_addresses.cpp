@@ -1,7 +1,7 @@
-#include "cppa/config.hpp"
-#include "cppa/util/get_mac_addresses.hpp"
+#include "boost/actor/config.hpp"
+#include "boost/actor/util/get_mac_addresses.hpp"
 
-#ifdef CPPA_MACOS
+#ifdef BOOST_ACTOR_MACOS
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -19,7 +19,8 @@
 
 #include <iostream>
 
-namespace cppa { namespace util {
+namespace boost {
+namespace actor { namespace util {
 
 std::vector<std::string> get_mac_addresses() {
     int mib[6];
@@ -81,9 +82,10 @@ std::vector<std::string> get_mac_addresses() {
     return result;
 }
 
-} } // namespace cppa::util
+} } // namespace actor
+} // namespace boost::util
 
-#elif defined(CPPA_LINUX)
+#elif defined(BOOST_ACTOR_LINUX)
 
 
 #include <vector>
@@ -105,7 +107,8 @@ std::vector<std::string> get_mac_addresses() {
 
 using namespace std;
 
-namespace cppa { namespace util {
+namespace boost {
+namespace actor { namespace util {
 
 std::vector<std::string> get_mac_addresses() {
     // get a socket handle
@@ -156,7 +159,8 @@ std::vector<std::string> get_mac_addresses() {
     return hw_addresses;
 }
 
-} } // namespace cppa::util
+} } // namespace actor
+} // namespace boost::util
 
 #else
 
@@ -180,7 +184,7 @@ std::vector<std::string> get_mac_addresses() {
 #include <iphlpapi.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "cppa/singletons.hpp"
+#include "boost/actor/singletons.hpp"
 
 namespace {
 
@@ -199,7 +203,8 @@ struct c_free {
 
 using namespace std;
 
-namespace cppa { namespace util {
+namespace boost {
+namespace actor { namespace util {
 
 std::vector<std::string> get_mac_addresses() {
     // result vector
@@ -254,7 +259,8 @@ std::vector<std::string> get_mac_addresses() {
     return hw_addresses;
 }
 
-} } // namespace cppa::util
+} } // namespace actor
+} // namespace boost::util
 
 
 #endif

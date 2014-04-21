@@ -28,9 +28,10 @@
 \******************************************************************************/
 
 
-#include "cppa/exit_reason.hpp"
+#include "boost/actor/exit_reason.hpp"
 
-namespace cppa { namespace exit_reason {
+namespace boost {
+namespace actor { namespace exit_reason {
 
 namespace { constexpr const char* s_names_table[] = {
     "not_exited",
@@ -48,4 +49,5 @@ const char* as_string(std::uint32_t value) {
     return "illegal_exit_reason";
 }
 
-} } // namespace cppa::exit_reason
+} } // namespace actor
+} // namespace boost::exit_reason

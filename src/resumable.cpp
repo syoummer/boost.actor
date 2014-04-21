@@ -28,12 +28,14 @@
 \******************************************************************************/
 
 
-#include "cppa/resumable.hpp"
+#include "boost/actor/resumable.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 resumable::resumable() : m_hidden(true) { }
 
 resumable::~resumable() { }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

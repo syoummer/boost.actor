@@ -1,12 +1,12 @@
 #include <iostream>
-#include "cppa/cppa.hpp"
-#include "cppa/to_string.hpp"
+#include "boost/actor/cppa.hpp"
+#include "boost/actor/to_string.hpp"
 
 using std::cout;
 using std::endl;
 using std::make_pair;
 
-using namespace cppa;
+using namespace boost::actor;
 
 // the foo class from example 3
 class foo {

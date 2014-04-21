@@ -28,14 +28,15 @@
 \******************************************************************************/
 
 
-#include "cppa/policy.hpp"
-#include "cppa/singletons.hpp"
-#include "cppa/scoped_actor.hpp"
+#include "boost/actor/policy.hpp"
+#include "boost/actor/singletons.hpp"
+#include "boost/actor/scoped_actor.hpp"
 
-#include "cppa/detail/proper_actor.hpp"
-#include "cppa/detail/actor_registry.hpp"
+#include "boost/actor/detail/proper_actor.hpp"
+#include "boost/actor/detail/actor_registry.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 namespace {
 
@@ -59,7 +60,7 @@ void scoped_actor::init(bool hide_actor) {
     m_self.reset(alloc());
     if (!m_hidden) {
         get_actor_registry()->inc_running();
-        m_prev = CPPA_SET_AID(m_self->id());
+        m_prev = BOOST_ACTOR_SET_AID(m_self->id());
     }
 }
 
@@ -74,8 +75,9 @@ scoped_actor::scoped_actor(bool hide_actor) {
 scoped_actor::~scoped_actor() {
     if (!m_hidden) {
         get_actor_registry()->dec_running();
-        CPPA_SET_AID(m_prev);
+        BOOST_ACTOR_SET_AID(m_prev);
     }
 }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

@@ -30,12 +30,14 @@
 
 #include <memory>
 
-#include "cppa/detail/cs_thread.hpp"
-#include "cppa/detail/yield_interface.hpp"
+#include "boost/actor/detail/cs_thread.hpp"
+#include "boost/actor/detail/yield_interface.hpp"
+
+namespace boost {
+namespace actor {
+namespace detail {
 
 namespace {
-
-using namespace cppa;
 
 __thread detail::yield_state* t_ystate = nullptr;
 __thread detail::cs_thread* t_caller = nullptr;
@@ -49,8 +51,6 @@ constexpr const char* names_table[] = {
 };
 
 } // namespace <anonymous>
-
-namespace cppa { namespace detail {
 
 void yield(yield_state ystate) {
     *t_ystate = ystate;
@@ -66,13 +66,17 @@ yield_state call(detail::cs_thread* what, detail::cs_thread* from) {
     return result;
 }
 
-} } // namespace cppa::detail
+} } // namespace actor
+} // namespace boost::detail
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 std::string to_string(detail::yield_state ys) {
     auto i = static_cast<size_t>(ys);
-    return (i < sizeof(names_table)) ? names_table[i] : "{illegal yield_state}";
+    return (i < sizeof(detail::names_table)) ? detail::names_table[i]
+                                             : "{illegal yield_state}";
 }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

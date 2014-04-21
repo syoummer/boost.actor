@@ -31,9 +31,9 @@
 #include <cstdint>
 #include <stdexcept>
 
-#include "cppa/config.hpp"
+#include "boost/actor/config.hpp"
 
-#include "cppa/detail/cs_thread.hpp"
+#include "boost/actor/detail/cs_thread.hpp"
 
 namespace {
 
@@ -43,7 +43,7 @@ typedef void (*cst_fun)(vptr);
 // Boost's coroutine minimal stack size is pretty small
 // and easily causes stack overflows when using libcppa
 // in debug mode or with logging
-#if defined(CPPA_DEBUG_MODE) || defined(CPPA_LOG_LEVEL)
+#if defined(BOOST_ACTOR_DEBUG_MODE) || defined(BOOST_ACTOR_LOG_LEVEL)
 constexpr size_t stack_multiplier = 4;
 #else
 constexpr size_t stack_multiplier = 2;
@@ -51,9 +51,11 @@ constexpr size_t stack_multiplier = 2;
 
 } // namespace <anonmyous>
 
-#if defined(CPPA_DISABLE_CONTEXT_SWITCHING) || defined(CPPA_STANDALONE_BUILD)
+#if defined(BOOST_ACTOR_DISABLE_CONTEXT_SWITCHING) || defined(BOOST_ACTOR_STANDALONE_BUILD)
 
-namespace cppa { namespace detail {
+namespace boost {
+namespace actor {
+namespace detail {
 
 cs_thread::cs_thread() : m_impl(nullptr) { }
 
@@ -63,34 +65,37 @@ cs_thread::~cs_thread() { }
 
 void cs_thread::swap(cs_thread&, cs_thread&) {
     throw std::logic_error("libcppa was compiled using "
-                           "CPPA_DISABLE_CONTEXT_SWITCHING");
+                           "BOOST_ACTOR_DISABLE_CONTEXT_SWITCHING");
 }
 
 const bool cs_thread::is_disabled_feature = true;
 
-} } // namespace cppa::detail
+} } // namespace actor
+} // namespace boost::detail
 
-#else // CPPA_DISABLE_CONTEXT_SWITCHING  || CPPA_STANDALONE_BUILD
+#else // BOOST_ACTOR_DISABLE_CONTEXT_SWITCHING  || BOOST_ACTOR_STANDALONE_BUILD
 
 // optional valgrind include
-#ifdef CPPA_ANNOTATE_VALGRIND
+#ifdef BOOST_ACTOR_ANNOTATE_VALGRIND
 #   include <valgrind/valgrind.h>
 #endif
 
-CPPA_PUSH_WARNINGS
+BOOST_ACTOR_PUSH_WARNINGS
 // boost includes
 #include <boost/version.hpp>
 #include <boost/context/all.hpp>
 #include <boost/coroutine/all.hpp>
-CPPA_POP_WARNINGS
+BOOST_ACTOR_POP_WARNINGS
 
-namespace cppa { namespace detail {
+namespace boost {
+namespace actor {
+namespace detail {
 
 void cst_trampoline(intptr_t iptr);
 
 namespace {
 
-#ifdef CPPA_ANNOTATE_VALGRIND
+#ifdef BOOST_ACTOR_ANNOTATE_VALGRIND
     typedef int vg_member;
     inline void vg_register(vg_member& stack_id, vptr ptr1, vptr ptr2) {
         stack_id = VALGRIND_STACK_REGISTER(ptr1, ptr2);
@@ -259,6 +264,7 @@ cs_thread::~cs_thread() {
 
 const bool cs_thread::is_disabled_feature = false;
 
-} } // namespace cppa::detail
+} } // namespace actor
+} // namespace boost::detail
 
-#endif // CPPA_DISABLE_CONTEXT_SWITCHING
+#endif // BOOST_ACTOR_DISABLE_CONTEXT_SWITCHING

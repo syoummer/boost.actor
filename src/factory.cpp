@@ -28,10 +28,12 @@
 \******************************************************************************/
 
 
-#include "cppa/factory.hpp"
+#include "boost/actor/factory.hpp"
 
-namespace cppa { namespace factory {
+namespace boost {
+namespace actor { namespace factory {
 
 void default_cleanup() { }
 
-} } // namespace cppa::factory
+} } // namespace actor
+} // namespace boost::factory

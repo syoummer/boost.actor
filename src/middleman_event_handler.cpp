@@ -28,9 +28,11 @@
 \******************************************************************************/
 
 
-#include "cppa/io/middleman_event_handler.hpp"
+#include "boost/actor/io/middleman_event_handler.hpp"
 
-namespace cppa { namespace io {
+namespace boost {
+namespace actor {
+namespace io {
 
 inline std::string eb2str(event_bitmask e) {
     switch (e) {
@@ -63,7 +65,7 @@ void middleman_event_handler::alteration(continuable* ptr,
             fd = ptr->read_handle();
             auto wrfd = ptr->write_handle();
             if (fd != wrfd) {
-                CPPA_LOG_DEBUG("read_handle != write_handle, split "
+                BOOST_ACTOR_LOG_DEBUG("read_handle != write_handle, split "
                                "into two function calls");
                 // split into two function calls
                 e = event::read;
@@ -72,31 +74,31 @@ void middleman_event_handler::alteration(continuable* ptr,
             break;
         }
         default:
-            CPPA_CRITICAL("invalid bitmask");
+            BOOST_ACTOR_CRITICAL("invalid bitmask");
             return;
     }
     m_alterations.emplace_back(fd_meta_info(fd, ptr, e), etype);
 }
 
 void middleman_event_handler::add_later(continuable* ptr, event_bitmask e) {
-    CPPA_LOG_TRACE(CPPA_ARG(ptr) << ", "
-                   << CPPA_TARG(e, eb2str)
+    BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_ARG(ptr) << ", "
+                   << BOOST_ACTOR_TARG(e, eb2str)
                    << ", socket = " << ptr->read_handle());
     alteration(ptr, e, fd_meta_event::add);
 }
 
 void middleman_event_handler::erase_later(continuable* ptr, event_bitmask e) {
-    CPPA_LOG_TRACE(CPPA_ARG(ptr) << ", e = " << eb2str(e));
+    BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_ARG(ptr) << ", e = " << eb2str(e));
     alteration(ptr, e, fd_meta_event::erase);
 }
 
 event_bitmask middleman_event_handler::next_bitmask(event_bitmask old, event_bitmask arg, fd_meta_event op) const {
-    CPPA_REQUIRE(op == fd_meta_event::add || op == fd_meta_event::erase);
+    BOOST_ACTOR_REQUIRE(op == fd_meta_event::add || op == fd_meta_event::erase);
     return (op == fd_meta_event::add) ? old | arg : old & ~arg;
 }
 
 void middleman_event_handler::update() {
-    CPPA_LOG_TRACE("");
+    BOOST_ACTOR_LOG_TRACE("");
     auto mless = [](const fd_meta_info& lhs, native_socket_type rhs) {
         return lhs.fd < rhs;
     };
@@ -108,7 +110,7 @@ void middleman_event_handler::update() {
         if (iter != last) old = iter->mask;
         auto mask = next_bitmask(old, elem.mask, elem_pair.second);
         auto ptr = elem.ptr;
-        CPPA_LOG_DEBUG("new bitmask for "
+        BOOST_ACTOR_LOG_DEBUG("new bitmask for "
                        << elem.ptr << ": " << eb2str(mask));
         if (iter == last || iter->fd != elem.fd) {
             if (mask != event::none) {
@@ -120,7 +122,7 @@ void middleman_event_handler::update() {
             }
         }
         else if (iter->fd == elem.fd) {
-            CPPA_REQUIRE(iter->ptr == elem.ptr);
+            BOOST_ACTOR_REQUIRE(iter->ptr == elem.ptr);
             if (mask == event::none) {
                 // note: we cannot decide whether it's safe to dispose `ptr`,
                 // because we didn't parse all alterations yet
@@ -168,4 +170,5 @@ bool middleman_event_handler::has_writer(continuable* ptr) {
     });
 }
 
-} } // namespace cppa::network
+} } // namespace actor
+} // namespace boost::network

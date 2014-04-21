@@ -28,10 +28,11 @@
 \******************************************************************************/
 
 
-#include "cppa/behavior.hpp"
-#include "cppa/partial_function.hpp"
+#include "boost/actor/behavior.hpp"
+#include "boost/actor/partial_function.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 namespace {
 class continuation_decorator : public detail::behavior_impl {
@@ -46,7 +47,7 @@ class continuation_decorator : public detail::behavior_impl {
 
     continuation_decorator(continuation_fun fun, pointer ptr)
     : super(ptr->timeout()), m_fun(fun), m_decorated(std::move(ptr)) {
-        CPPA_REQUIRE(m_decorated != nullptr);
+        BOOST_ACTOR_REQUIRE(m_decorated != nullptr);
     }
 
     template<typename T>
@@ -89,4 +90,5 @@ behavior behavior::add_continuation(continuation_fun fun) {
                                                          m_impl)};
 }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

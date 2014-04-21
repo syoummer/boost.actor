@@ -28,11 +28,13 @@
 \******************************************************************************/
 
 
-#include "cppa/detail/demangle.hpp"
+#include "boost/actor/detail/demangle.hpp"
 
-#include "cppa/io/continuable.hpp"
+#include "boost/actor/io/continuable.hpp"
 
-namespace cppa { namespace io {
+namespace boost {
+namespace actor {
+namespace io {
 
 continuable::~continuable() { }
 
@@ -47,4 +49,5 @@ continue_writing_result continuable::continue_writing() {
     return continue_writing_result::closed;
 }
 
-} } // namespace cppa::network
+} } // namespace actor
+} // namespace boost::network

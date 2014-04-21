@@ -28,9 +28,11 @@
 \******************************************************************************/
 
 
-#include "cppa/detail/object_array.hpp"
+#include "boost/actor/detail/object_array.hpp"
 
-namespace cppa { namespace detail {
+namespace boost {
+namespace actor {
+namespace detail {
 
 object_array::object_array() : super(true) { }
 
@@ -66,4 +68,5 @@ const std::string* object_array::tuple_type_names() const {
     return nullptr; // get_tuple_type_names(*this);
 }
 
-} } // namespace cppa::detail
+} } // namespace actor
+} // namespace boost::detail

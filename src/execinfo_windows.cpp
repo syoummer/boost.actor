@@ -64,9 +64,10 @@
 #include <sstream>
 #include <iostream>
 
-#include "cppa/detail/execinfo_windows.hpp"
+#include "boost/actor/detail/execinfo_windows.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 namespace detail {
 
 int backtrace(void** buffer, int size) {
@@ -87,4 +88,5 @@ void backtrace_symbols_fd(void* const* buffer, int size, int fd) {
 }
 
 } // namespace detail
-} // namespace cppa
+} // namespace actor
+} // namespace boost

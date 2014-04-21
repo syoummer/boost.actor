@@ -18,12 +18,12 @@
 #include <iostream>
 #include <functional>
 
-#include "cppa/opt.hpp"
-#include "cppa/cppa.hpp"
+#include "boost/actor/opt.hpp"
+#include "boost/actor/cppa.hpp"
 
 using namespace std;
-using namespace cppa;
-using namespace cppa::placeholders;
+using namespace boost::actor;
+using namespace boost::actor::placeholders;
 
 // our "service"
 void calculator(event_based_actor* self) {

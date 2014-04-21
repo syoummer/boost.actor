@@ -28,11 +28,11 @@
 \******************************************************************************/
 
 
-#include "cppa/config.hpp"
+#include "boost/actor/config.hpp"
 
 #include <limits>
 #include <thread>
-#include "cppa/util/shared_spinlock.hpp"
+#include "boost/actor/util/shared_spinlock.hpp"
 
 namespace {
 
@@ -40,7 +40,8 @@ inline long min_long() { return std::numeric_limits<long>::min(); }
 
 } // namespace <anonymous>
 
-namespace cppa { namespace util {
+namespace boost {
+namespace actor { namespace util {
 
 shared_spinlock::shared_spinlock() : m_flag(0) {
 
@@ -97,4 +98,5 @@ bool shared_spinlock::try_lock_shared() {
     return (v >= 0) ? m_flag.compare_exchange_weak(v, v + 1) : false;
 }
 
-} } // namespace cppa::util
+} } // namespace actor
+} // namespace boost::util

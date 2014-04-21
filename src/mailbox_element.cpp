@@ -28,9 +28,10 @@
 \******************************************************************************/
 
 
-#include "cppa/mailbox_element.hpp"
+#include "boost/actor/mailbox_element.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 mailbox_element::mailbox_element(msg_hdr_cref hdr, any_tuple data)
         : next(nullptr), marked(false), sender(hdr.sender)
@@ -38,4 +39,5 @@ mailbox_element::mailbox_element(msg_hdr_cref hdr, any_tuple data)
 
 mailbox_element::~mailbox_element() { }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

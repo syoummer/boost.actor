@@ -28,10 +28,11 @@
 \******************************************************************************/
 
 
-#include "cppa/continue_helper.hpp"
-#include "cppa/event_based_actor.hpp"
+#include "boost/actor/continue_helper.hpp"
+#include "boost/actor/event_based_actor.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 continue_helper::continue_helper(message_id mid, local_actor* self)
         : m_mid(mid), m_self(self) { }
@@ -42,8 +43,9 @@ continue_helper& continue_helper::continue_with(behavior::continuation_fun f) {
         behavior cpy = *ref_opt;
         *ref_opt = cpy.add_continuation(std::move(f));
     }
-    else { CPPA_LOG_ERROR("failed to add continuation"); }
+    else { BOOST_ACTOR_LOG_ERROR("failed to add continuation"); }
     return *this;
 }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

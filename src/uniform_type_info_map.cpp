@@ -36,55 +36,57 @@
 #include <algorithm>
 #include <type_traits>
 
-#include "cppa/group.hpp"
-#include "cppa/logging.hpp"
-#include "cppa/announce.hpp"
-#include "cppa/any_tuple.hpp"
-#include "cppa/message_header.hpp"
-#include "cppa/abstract_group.hpp"
-#include "cppa/actor_namespace.hpp"
+#include "boost/actor/group.hpp"
+#include "boost/actor/logging.hpp"
+#include "boost/actor/announce.hpp"
+#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/message_header.hpp"
+#include "boost/actor/abstract_group.hpp"
+#include "boost/actor/actor_namespace.hpp"
 
-#include "cppa/util/duration.hpp"
-#include "cppa/util/algorithm.hpp"
-#include "cppa/util/scope_guard.hpp"
-#include "cppa/util/limited_vector.hpp"
-#include "cppa/util/shared_spinlock.hpp"
-#include "cppa/util/shared_lock_guard.hpp"
+#include "boost/actor/util/duration.hpp"
+#include "boost/actor/util/algorithm.hpp"
+#include "boost/actor/util/scope_guard.hpp"
+#include "boost/actor/util/limited_vector.hpp"
+#include "boost/actor/util/shared_spinlock.hpp"
+#include "boost/actor/util/shared_lock_guard.hpp"
 
-#include "cppa/detail/raw_access.hpp"
-#include "cppa/detail/object_array.hpp"
-#include "cppa/detail/uniform_type_info_map.hpp"
-#include "cppa/detail/default_uniform_type_info.hpp"
+#include "boost/actor/detail/raw_access.hpp"
+#include "boost/actor/detail/object_array.hpp"
+#include "boost/actor/detail/uniform_type_info_map.hpp"
+#include "boost/actor/detail/default_uniform_type_info.hpp"
 
-namespace cppa { namespace detail {
+namespace boost {
+namespace actor {
+namespace detail {
 
 // maps demangled names to libcppa names
 // WARNING: this map is sorted, insert new elements *in sorted order* as well!
 /* extern */ const char* mapped_type_names[][2] = {
     { "bool",                                           "bool"                },
-    { "cppa::acceptor_closed_msg",                      "@acceptor_closed"    },
-    { "cppa::actor",                                    "@actor"              },
-    { "cppa::actor_addr",                               "@addr"               },
-    { "cppa::any_tuple",                                "@tuple"              },
-    { "cppa::atom_value",                               "@atom"               },
-    { "cppa::channel",                                  "@channel"            },
-    { "cppa::connection_closed_msg",                    "@conn_closed"        },
-    { "cppa::down_msg",                                 "@down"               },
-    { "cppa::exit_msg",                                 "@exit"               },
-    { "cppa::group",                                    "@group"              },
-    { "cppa::group_down_msg",                           "@group_down"         },
-    { "cppa::intrusive_ptr<cppa::node_id>",             "@proc"               },
-    { "cppa::io::accept_handle",                        "@ac_hdl"             },
-    { "cppa::io::connection_handle",                    "@cn_hdl"             },
-    { "cppa::message_header",                           "@header"             },
-    { "cppa::new_connection_msg",                       "@new_conn"           },
-    { "cppa::new_data_msg",                             "@new_data"           },
-    { "cppa::sync_exited_msg",                          "@sync_exited"        },
-    { "cppa::sync_timeout_msg",                         "@sync_timeout"       },
-    { "cppa::timeout_msg",                              "@timeout"            },
-    { "cppa::unit_t",                                   "@0"                  },
-    { "cppa::util::buffer",                             "@buffer"             },
-    { "cppa::util::duration",                           "@duration"           },
+    { "boost::actor::acceptor_closed_msg",              "@acceptor_closed"    },
+    { "boost::actor::actor",                            "@actor"              },
+    { "boost::actor::actor_addr",                       "@addr"               },
+    { "boost::actor::any_tuple",                        "@tuple"              },
+    { "boost::actor::atom_value",                       "@atom"               },
+    { "boost::actor::channel",                          "@channel"            },
+    { "boost::actor::connection_closed_msg",            "@conn_closed"        },
+    { "boost::actor::down_msg",                         "@down"               },
+    { "boost::actor::exit_msg",                         "@exit"               },
+    { "boost::actor::group",                            "@group"              },
+    { "boost::actor::group_down_msg",                   "@group_down"         },
+    { "boost::actor::intrusive_ptr<boost::actor::node_id>","@proc"               },
+    { "boost::actor::io::accept_handle",                "@ac_hdl"             },
+    { "boost::actor::io::connection_handle",            "@cn_hdl"             },
+    { "boost::actor::message_header",                   "@header"             },
+    { "boost::actor::new_connection_msg",               "@new_conn"           },
+    { "boost::actor::new_data_msg",                     "@new_data"           },
+    { "boost::actor::sync_exited_msg",                  "@sync_exited"        },
+    { "boost::actor::sync_timeout_msg",                 "@sync_timeout"       },
+    { "boost::actor::timeout_msg",                      "@timeout"            },
+    { "boost::actor::unit_t",                           "@0"                  },
+    { "boost::actor::util::buffer",                     "@buffer"             },
+    { "boost::actor::util::duration",                   "@duration"           },
     { "double",                                         "double"              },
     { "float",                                          "float"               },
     { "long double",                                    "@ldouble"            },
@@ -203,7 +205,7 @@ void deserialize_impl(actor& ptr, deserializer* source) {
 
 void serialize_impl(const group& gref, serializer* sink) {
     if (!gref) {
-        CPPA_LOGF_DEBUG("serialized an invalid group");
+        BOOST_ACTOR_LOGF_DEBUG("serialized an invalid group");
         // write an empty string as module name
         std::string empty_string;
         sink->write_value(empty_string);
@@ -253,7 +255,7 @@ void serialize_impl(const channel& chref, serializer* sink) {
                 serialize_impl(tmp, sink);
             }
             else {
-                CPPA_LOGF_ERROR("ptr is neither an actor nor a group");
+                BOOST_ACTOR_LOGF_ERROR("ptr is neither an actor nor a group");
                 wr_nullptr();
             }
         }
@@ -280,7 +282,7 @@ void deserialize_impl(channel& ptrref, deserializer* source) {
             break;
         }
         default: {
-            CPPA_LOGF_ERROR("invalid flag while deserializing 'channel'");
+            BOOST_ACTOR_LOGF_ERROR("invalid flag while deserializing 'channel'");
             throw std::runtime_error("invalid flag");
         }
     }
@@ -296,7 +298,7 @@ void serialize_impl(const any_tuple& tup, serializer* sink) {
         std::string err = "could not get uniform type info for \"";
         err += tname ? *tname : detail::get_tuple_type_names(*tup.vals());
         err += "\"";
-        CPPA_LOGF_ERROR(err);
+        BOOST_ACTOR_LOGF_ERROR(err);
         throw std::runtime_error(err);
     }
     sink->begin_object(uti);
@@ -703,12 +705,12 @@ class default_meta_tuple : public uniform_type_info {
         m_name = name;
         auto elements = util::split(name, '+', false);
         auto uti_map = get_uniform_type_info_map();
-        CPPA_REQUIRE(elements.size() > 0 && elements.front() == "@<>");
+        BOOST_ACTOR_REQUIRE(elements.size() > 0 && elements.front() == "@<>");
         // ignore first element, because it's always "@<>"
         for (size_t i = 1; i != elements.size(); ++i) {
             try { m_elements.push_back(uti_map->by_uniform_name(elements[i])); }
             catch (std::exception&) {
-                CPPA_LOG_ERROR("type name " << elements[i] << " not found");
+                BOOST_ACTOR_LOG_ERROR("type name " << elements[i] << " not found");
             }
         }
     }
@@ -880,8 +882,8 @@ class utim_impl : public uniform_type_info_map {
         *i++ = &m_type_bool;                // bool
         *i++ = &m_type_double;              // double
         *i++ = &m_type_float;               // float
-        CPPA_REQUIRE(i == m_builtin_types.end());
-#       ifdef CPPA_DEBUG_MODE
+        BOOST_ACTOR_REQUIRE(i == m_builtin_types.end());
+#       ifdef BOOST_ACTOR_DEBUG_MODE
         auto cmp = [](pointer lhs, pointer rhs) {
             return strcmp(lhs->name(), rhs->name()) < 0;
         };
@@ -1056,4 +1058,5 @@ uniform_type_info_map* uniform_type_info_map::create_singleton() {
 
 uniform_type_info_map::~uniform_type_info_map() { }
 
-} } // namespace cppa::detail
+} } // namespace actor
+} // namespace boost::detail

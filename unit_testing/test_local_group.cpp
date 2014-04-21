@@ -1,4 +1,4 @@
-#include "cppa/config.hpp"
+#include "boost/actor/config.hpp"
 
 #include <map>
 #include <list>
@@ -8,18 +8,18 @@
 
 #include "test.hpp"
 
-#include "cppa/on.hpp"
-#include "cppa/cppa.hpp"
-#include "cppa/actor.hpp"
-#include "cppa/abstract_group.hpp"
-#include "cppa/ref_counted.hpp"
-#include "cppa/intrusive_ptr.hpp"
+#include "boost/actor/on.hpp"
+#include "boost/actor/cppa.hpp"
+#include "boost/actor/actor.hpp"
+#include "boost/actor/abstract_group.hpp"
+#include "boost/actor/ref_counted.hpp"
+#include "boost/actor/intrusive_ptr.hpp"
 
 using std::cout;
 using std::endl;
 
 using std::string;
-using namespace cppa;
+using namespace boost::actor;
 
 void testee(event_based_actor* self, int current_value, int final_result) {
     self->become(
@@ -29,14 +29,14 @@ void testee(event_based_actor* self, int current_value, int final_result) {
             else testee(self, next, final_result);
         },
         after(std::chrono::seconds(2)) >> [=] {
-            CPPA_UNEXPECTED_TOUT();
+            BOOST_ACTOR_UNEXPECTED_TOUT();
             self->quit(exit_reason::user_shutdown);
         }
     );
 }
 
 int main() {
-    CPPA_TEST(test_local_group);
+    BOOST_ACTOR_TEST(test_local_group);
     /*
     auto foo_group = group::get("local", "foo");
     auto master = spawn_in_group(foo_group, testee, 0, 10);
@@ -53,5 +53,5 @@ int main() {
     await_all_actors_done();
     shutdown();
     */
-    return CPPA_TEST_RESULT();
+    return BOOST_ACTOR_TEST_RESULT();
 }

@@ -6,10 +6,10 @@
 #include <functional>
 
 #include "test.hpp"
-#include "cppa/cppa.hpp"
+#include "boost/actor/cppa.hpp"
 
 using namespace std;
-using namespace cppa;
+using namespace boost::actor;
 
 struct ping { std::int32_t value; };
 
@@ -32,7 +32,7 @@ typedef typed_actor<> client_type;
 server_type::behavior_type server() {
     return {
         [](const ping& p) -> pong {
-            CPPA_CHECKPOINT();
+            BOOST_ACTOR_CHECKPOINT();
             return pong{p.value};
         }
     };
@@ -47,18 +47,18 @@ void run_client(const char* host, std::uint16_t port) {
     }
     catch (std::invalid_argument& e) {
         cout << e.what() << endl;
-        CPPA_CHECKPOINT();
+        BOOST_ACTOR_CHECKPOINT();
     }
     catch (std::exception& e) {
         cerr << "unexpected: " << e.what() << endl;
     }
-    CPPA_CHECKPOINT();
+    BOOST_ACTOR_CHECKPOINT();
     auto serv = typed_remote_actor<server_type::interface>(host, port);
-    CPPA_CHECKPOINT();
+    BOOST_ACTOR_CHECKPOINT();
     scoped_actor self;
     self->sync_send(serv, ping{42}).await(
         [](const pong& p) {
-            CPPA_CHECK_EQUAL(p.value, 42);
+            BOOST_ACTOR_CHECK_EQUAL(p.value, 42);
         }
     );
     anon_send_exit(serv, exit_reason::user_shutdown);
@@ -70,7 +70,7 @@ std::uint16_t run_server() {
     for (;;) {
         try {
             typed_publish(ref, port, "127.0.0.1");
-            CPPA_LOGF_DEBUG("running on port " << port);
+            BOOST_ACTOR_LOGF_DEBUG("running on port " << port);
             return port;
         }
         catch (bind_failure&) {
@@ -86,7 +86,7 @@ int main(int argc, char** argv) {
     auto run_remote_actor = true;
     if (argc > 1) {
         if (strcmp(argv[1], "run_remote_actor=false") == 0) {
-            CPPA_PRINT("don't run remote actor");
+            BOOST_ACTOR_PRINT("don't run remote actor");
             run_remote_actor = false;
         }
         else {
@@ -96,38 +96,38 @@ int main(int argc, char** argv) {
             }
             run_client("localhost",
                        static_cast<std::uint16_t>(std::stoi(kvp["port"])));
-            CPPA_CHECKPOINT();
+            BOOST_ACTOR_CHECKPOINT();
             await_all_actors_done();
             shutdown();
-            return CPPA_TEST_RESULT();
+            return BOOST_ACTOR_TEST_RESULT();
         }
     }
-    CPPA_CHECKPOINT();
+    BOOST_ACTOR_CHECKPOINT();
     auto port = run_server();
-    CPPA_CHECKPOINT();
+    BOOST_ACTOR_CHECKPOINT();
     if (run_remote_actor) {
-        CPPA_CHECKPOINT();
+        BOOST_ACTOR_CHECKPOINT();
         thread child;
         ostringstream oss;
         oss << argv[0] << " run=remote_actor port=" << port << to_dev_null;
         // execute client_part() in a separate process,
         // connected via localhost socket
         child = thread([&oss]() {
-            CPPA_LOGC_TRACE("NONE", "main$thread_launcher", "");
+            BOOST_ACTOR_LOGC_TRACE("NONE", "main$thread_launcher", "");
             string cmdstr = oss.str();
             if (system(cmdstr.c_str()) != 0) {
-                CPPA_PRINTERR("FATAL: command \"" << cmdstr << "\" failed!");
+                BOOST_ACTOR_PRINTERR("FATAL: command \"" << cmdstr << "\" failed!");
                 abort();
             }
         });
-        CPPA_CHECKPOINT();
+        BOOST_ACTOR_CHECKPOINT();
         child.join();
     }
     else {
-        CPPA_PRINT("actor published at port " << port);
+        BOOST_ACTOR_PRINT("actor published at port " << port);
     }
-    CPPA_CHECKPOINT();
+    BOOST_ACTOR_CHECKPOINT();
     await_all_actors_done();
     shutdown();
-    return CPPA_TEST_RESULT();
+    return BOOST_ACTOR_TEST_RESULT();
 }

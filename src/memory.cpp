@@ -31,18 +31,20 @@
 #include <vector>
 #include <typeinfo>
 
-#include "cppa/detail/memory.hpp"
-#include "cppa/mailbox_element.hpp"
+#include "boost/actor/detail/memory.hpp"
+#include "boost/actor/mailbox_element.hpp"
 
 using namespace std;
 
-#ifdef CPPA_DISABLE_MEM_MANAGEMENT
+#ifdef BOOST_ACTOR_DISABLE_MEM_MANAGEMENT
 
 int cppa_memory_keep_compiler_happy() { return 0; }
 
-#else // CPPA_DISABLE_MEM_MANAGEMENT
+#else // BOOST_ACTOR_DISABLE_MEM_MANAGEMENT
 
-namespace cppa { namespace detail {
+namespace boost {
+namespace actor {
+namespace detail {
 
 namespace {
 
@@ -90,6 +92,7 @@ void memory::add_cache_map_entry(const type_info* tinf, memory_cache* instance) 
 
 instance_wrapper::~instance_wrapper() { }
 
-} } // namespace cppa::detail
+} } // namespace actor
+} // namespace boost::detail
 
-#endif // CPPA_DISABLE_MEM_MANAGEMENT
+#endif // BOOST_ACTOR_DISABLE_MEM_MANAGEMENT

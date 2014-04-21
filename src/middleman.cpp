@@ -36,52 +36,54 @@
 #include <iostream>
 #include <stdexcept>
 
-#include "cppa/on.hpp"
-#include "cppa/actor.hpp"
-#include "cppa/match.hpp"
-#include "cppa/config.hpp"
-#include "cppa/logging.hpp"
-#include "cppa/node_id.hpp"
-#include "cppa/to_string.hpp"
-#include "cppa/actor_proxy.hpp"
-#include "cppa/binary_serializer.hpp"
-#include "cppa/uniform_type_info.hpp"
-#include "cppa/binary_deserializer.hpp"
+#include "boost/actor/on.hpp"
+#include "boost/actor/actor.hpp"
+#include "boost/actor/match.hpp"
+#include "boost/actor/config.hpp"
+#include "boost/actor/logging.hpp"
+#include "boost/actor/node_id.hpp"
+#include "boost/actor/to_string.hpp"
+#include "boost/actor/actor_proxy.hpp"
+#include "boost/actor/binary_serializer.hpp"
+#include "boost/actor/uniform_type_info.hpp"
+#include "boost/actor/binary_deserializer.hpp"
 
-#include "cppa/util/buffer.hpp"
-#include "cppa/util/algorithm.hpp"
-#include "cppa/util/ripemd_160.hpp"
-#include "cppa/util/get_root_uuid.hpp"
-#include "cppa/util/get_mac_addresses.hpp"
+#include "boost/actor/util/buffer.hpp"
+#include "boost/actor/util/algorithm.hpp"
+#include "boost/actor/util/ripemd_160.hpp"
+#include "boost/actor/util/get_root_uuid.hpp"
+#include "boost/actor/util/get_mac_addresses.hpp"
 
-#include "cppa/io/peer.hpp"
-#include "cppa/io/acceptor.hpp"
-#include "cppa/io/middleman.hpp"
-#include "cppa/io/input_stream.hpp"
-#include "cppa/io/output_stream.hpp"
-#include "cppa/io/peer_acceptor.hpp"
-#include "cppa/io/remote_actor_proxy.hpp"
-#include "cppa/io/default_message_queue.hpp"
-#include "cppa/io/middleman_event_handler.hpp"
+#include "boost/actor/io/peer.hpp"
+#include "boost/actor/io/acceptor.hpp"
+#include "boost/actor/io/middleman.hpp"
+#include "boost/actor/io/input_stream.hpp"
+#include "boost/actor/io/output_stream.hpp"
+#include "boost/actor/io/peer_acceptor.hpp"
+#include "boost/actor/io/remote_actor_proxy.hpp"
+#include "boost/actor/io/default_message_queue.hpp"
+#include "boost/actor/io/middleman_event_handler.hpp"
 
-#include "cppa/detail/fd_util.hpp"
-#include "cppa/detail/actor_registry.hpp"
+#include "boost/actor/detail/fd_util.hpp"
+#include "boost/actor/detail/actor_registry.hpp"
 
-#include "cppa/intrusive/single_reader_queue.hpp"
+#include "boost/actor/intrusive/single_reader_queue.hpp"
 
-#ifdef CPPA_WINDOWS
+#ifdef BOOST_ACTOR_WINDOWS
 #   include <io.h>
 #   include <fcntl.h>
 #endif
 
 using namespace std;
 
-namespace cppa { namespace io {
+namespace boost {
+namespace actor {
+namespace io {
 
 void notify_queue_event(native_socket_type fd) {
     char dummy = 0;
     // on unix, we have file handles, on windows, we actually have sockets
-#   ifdef CPPA_WINDOWS
+#   ifdef BOOST_ACTOR_WINDOWS
     auto res = ::send(fd, &dummy, sizeof(dummy), 0);
 #   else
     auto res = ::write(fd, &dummy, sizeof(dummy));
@@ -94,7 +96,7 @@ size_t num_queue_events(native_socket_type fd) {
     static constexpr size_t num_dummies = 64;
     char dummies[num_dummies];
     // on unix, we have file handles, on windows, we actually have sockets
-#   ifdef CPPA_WINDOWS
+#   ifdef BOOST_ACTOR_WINDOWS
     auto read_result = ::recv(fd, dummies, num_dummies, 0);
 #   else
     auto read_result = ::read(fd, dummies, num_dummies);
@@ -105,8 +107,8 @@ size_t num_queue_events(native_socket_type fd) {
             return 0;
         }
         else {
-            CPPA_LOGF_ERROR("cannot read from pipe");
-            CPPA_CRITICAL("cannot read from pipe");
+            BOOST_ACTOR_LOGF_ERROR("cannot read from pipe");
+            BOOST_ACTOR_CRITICAL("cannot read from pipe");
         }
     }
     return static_cast<size_t>(read_result);
@@ -131,12 +133,12 @@ class middleman_event {
 };
 
 void middleman::continue_writer(continuable* ptr) {
-    CPPA_LOG_TRACE(CPPA_ARG(ptr));
+    BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_ARG(ptr));
     m_handler->add_later(ptr, event::write);
 }
 
 void middleman::stop_writer(continuable* ptr) {
-    CPPA_LOG_TRACE(CPPA_ARG(ptr));
+    BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_ARG(ptr));
     m_handler->erase_later(ptr, event::write);
 }
 
@@ -145,12 +147,12 @@ bool middleman::has_writer(continuable* ptr) {
 }
 
 void middleman::continue_reader(continuable* ptr) {
-    CPPA_LOG_TRACE(CPPA_ARG(ptr));
+    BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_ARG(ptr));
     m_handler->add_later(ptr, event::read);
 }
 
 void middleman::stop_reader(continuable* ptr) {
-    CPPA_LOG_TRACE(CPPA_ARG(ptr));
+    BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_ARG(ptr));
     m_handler->erase_later(ptr, event::read);
 }
 
@@ -181,7 +183,7 @@ class middleman_impl : public middleman {
     }
 
     bool register_peer(const node_id& node, peer* ptr) override {
-        CPPA_LOG_TRACE("node = " << to_string(node) << ", ptr = " << ptr);
+        BOOST_ACTOR_LOG_TRACE("node = " << to_string(node) << ", ptr = " << ptr);
         auto& entry = m_peers[node];
         if (entry.impl == nullptr) {
             if (entry.queue == nullptr) entry.queue.emplace();
@@ -191,27 +193,27 @@ class middleman_impl : public middleman {
                 auto tmp = entry.queue->pop();
                 ptr->enqueue(tmp.first, tmp.second);
             }
-            CPPA_LOG_INFO("peer " << to_string(node) << " added");
+            BOOST_ACTOR_LOG_INFO("peer " << to_string(node) << " added");
             return true;
         }
         else {
-            CPPA_LOG_WARNING("peer " << to_string(node) << " already defined, "
+            BOOST_ACTOR_LOG_WARNING("peer " << to_string(node) << " already defined, "
                              "multiple calls to remote_actor()?");
             return false;
         }
     }
 
     peer* get_peer(const node_id& node) override {
-        CPPA_LOG_TRACE(CPPA_TARG(node, to_string));
+        BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_TARG(node, to_string));
         auto i = m_peers.find(node);
         // future work (?): we *could* try to be smart here and try to
         // route all messages to node via other known peers in the network
         // if i->second.impl == nullptr
         if (i != m_peers.end() && i->second.impl != nullptr) {
-            CPPA_LOG_DEBUG("result = " << i->second.impl);
+            BOOST_ACTOR_LOG_DEBUG("result = " << i->second.impl);
             return i->second.impl;
         }
-        CPPA_LOG_DEBUG("result = nullptr");
+        BOOST_ACTOR_LOG_DEBUG("result = nullptr");
         return nullptr;
     }
 
@@ -233,9 +235,9 @@ class middleman_impl : public middleman {
                  any_tuple msg                  ) override {
         auto& entry = m_peers[node];
         if (entry.impl) {
-            CPPA_REQUIRE(entry.queue != nullptr);
+            BOOST_ACTOR_REQUIRE(entry.queue != nullptr);
             if (!entry.impl->has_unwritten_data()) {
-                CPPA_REQUIRE(entry.queue->empty());
+                BOOST_ACTOR_REQUIRE(entry.queue->empty());
                 entry.impl->enqueue(hdr, msg);
                 return;
             }
@@ -245,9 +247,9 @@ class middleman_impl : public middleman {
     }
 
     void last_proxy_exited(peer* pptr) override {
-        CPPA_REQUIRE(pptr != nullptr);
-        CPPA_REQUIRE(pptr->m_queue != nullptr);
-        CPPA_LOG_TRACE(CPPA_ARG(pptr)
+        BOOST_ACTOR_REQUIRE(pptr != nullptr);
+        BOOST_ACTOR_REQUIRE(pptr->m_queue != nullptr);
+        BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_ARG(pptr)
                        << ", pptr->node() = " << to_string(pptr->node()));
         if (pptr->stop_on_last_proxy_exited() && pptr->queue().empty()) {
             stop_reader(pptr);
@@ -257,17 +259,17 @@ class middleman_impl : public middleman {
     void new_peer(const input_stream_ptr& in,
                   const output_stream_ptr& out,
                   const node_id_ptr& node = nullptr) override {
-        CPPA_LOG_TRACE("");
+        BOOST_ACTOR_LOG_TRACE("");
         auto ptr = new peer(this, in, out, node);
         continue_reader(ptr);
         if (node) register_peer(*node, ptr);
     }
 
     void del_peer(peer* pptr) override {
-        CPPA_LOG_TRACE(CPPA_ARG(pptr));
+        BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_ARG(pptr));
         auto i = m_peers.find(pptr->node());
         if (i != m_peers.end()) {
-            CPPA_LOG_DEBUG_IF(i->second.impl != pptr,
+            BOOST_ACTOR_LOG_DEBUG_IF(i->second.impl != pptr,
                               "node " << to_string(pptr->node())
                               << " does not exist in m_peers");
             if (i->second.impl == pptr) {
@@ -278,7 +280,7 @@ class middleman_impl : public middleman {
 
     void register_acceptor(const actor_addr& aa, peer_acceptor* ptr) override {
         run_later([=] {
-            CPPA_LOGC_TRACE("cppa::io::middleman",
+            BOOST_ACTOR_LOGC_TRACE("cppa::io::middleman",
                             "register_acceptor$lambda", "");
             m_acceptors[aa].push_back(ptr);
             continue_reader(ptr);
@@ -288,11 +290,11 @@ class middleman_impl : public middleman {
  protected:
 
     void initialize() override {
-        CPPA_LOG_TRACE("");
-#       ifdef CPPA_WINDOWS
+        BOOST_ACTOR_LOG_TRACE("");
+#       ifdef BOOST_ACTOR_WINDOWS
         WSADATA WinsockData;
         if (WSAStartup(MAKEWORD(2, 2), &WinsockData) != 0) {
-            CPPA_CRITICAL("WSAStartup failed");
+            BOOST_ACTOR_CRITICAL("WSAStartup failed");
         }
 #       endif
         m_node = compute_node_id();
@@ -317,29 +319,28 @@ class middleman_impl : public middleman {
     }
 
     void destroy() override {
-        CPPA_LOG_TRACE("");
+        BOOST_ACTOR_LOG_TRACE("");
         run_later([this] {
-            CPPA_LOGM_TRACE("destroy$helper", "");
+            BOOST_ACTOR_LOGM_TRACE("destroy$helper", "");
             this->m_done = true;
         });
         m_thread.join();
         closesocket(m_pipe_out);
         closesocket(m_pipe_in);
-#       ifdef CPPA_WINDOWS
+#       ifdef BOOST_ACTOR_WINDOWS
         WSACleanup();
 #       endif
     }
 
  private:
 
-    static cppa::node_id_ptr compute_node_id() {
-        using namespace cppa::util;
+    static node_id_ptr compute_node_id() {
         auto macs = util::get_mac_addresses();
         auto hd_serial_and_mac_addr = util::join(macs.begin(), macs.end())
                                     + util::get_root_uuid();
-        cppa::node_id::host_id_type node_id;
-        ripemd_160(node_id, hd_serial_and_mac_addr);
-        return new cppa::node_id(static_cast<uint32_t>(getpid()), node_id);
+        node_id::host_id_type nid;
+        util::ripemd_160(nid, hd_serial_and_mac_addr);
+        return new node_id(static_cast<uint32_t>(getpid()), nid);
     }
 
     inline void quit() { m_done = true; }
@@ -384,26 +385,26 @@ class middleman_overseer : public continuable {
     }
 
     continue_reading_result continue_reading() {
-        CPPA_LOG_TRACE("");
+        BOOST_ACTOR_LOG_TRACE("");
         // on MacOS, recv() on a pipe fd will fail,
         // on Windows, our pipe is actually composed of two sockets
         // and there's no read() function to read from sockets
         auto events = num_queue_events(read_handle());
-        CPPA_LOG_DEBUG("read " << events << " messages from queue");
+        BOOST_ACTOR_LOG_DEBUG("read " << events << " messages from queue");
         for (size_t i = 0; i < events; ++i) {
             unique_ptr<middleman_event> msg(m_queue.try_pop());
             if (!msg) {
-                CPPA_LOG_ERROR("nullptr dequeued");
-                CPPA_CRITICAL("nullptr dequeued");
+                BOOST_ACTOR_LOG_ERROR("nullptr dequeued");
+                BOOST_ACTOR_CRITICAL("nullptr dequeued");
             }
-            CPPA_LOGF_DEBUG("execute run_later functor");
+            BOOST_ACTOR_LOGF_DEBUG("execute run_later functor");
             (*msg)();
         }
         return continue_reading_result::continue_later;
     }
 
     void io_failed(event_bitmask) override {
-        CPPA_CRITICAL("IO on pipe failed");
+        BOOST_ACTOR_CRITICAL("IO on pipe failed");
     }
 
  private:
@@ -419,8 +420,8 @@ middleman::~middleman() { }
 
 void middleman_loop(middleman_impl* impl) {
     middleman_event_handler* handler = impl->m_handler.get();
-    CPPA_LOGF_TRACE("run middleman loop");
-    CPPA_LOGF_INFO("middleman runs at "
+    BOOST_ACTOR_LOGF_TRACE("run middleman loop");
+    BOOST_ACTOR_LOGF_INFO("middleman runs at "
                    << to_string(impl->node()));
     handler->init();
     impl->continue_reader(new middleman_overseer(impl->m_pipe_out,
@@ -429,24 +430,24 @@ void middleman_loop(middleman_impl* impl) {
     while (!impl->done()) {
         handler->poll([&](event_bitmask mask, continuable* io) {
             switch (mask) {
-                default: CPPA_CRITICAL("invalid event");
+                default: BOOST_ACTOR_CRITICAL("invalid event");
                 case event::none:
                     // should not happen
-                    CPPA_LOGF_WARNING("polled an event::none event");
+                    BOOST_ACTOR_LOGF_WARNING("polled an event::none event");
                     break;
                 case event::both:
                 case event::write:
-                    CPPA_LOGF_DEBUG("handle event::write for " << io);
+                    BOOST_ACTOR_LOGF_DEBUG("handle event::write for " << io);
                     switch (io->continue_writing()) {
                         case continue_writing_result::failure:
                             io->io_failed(event::write);
                             impl->stop_writer(io);
-                            CPPA_LOGF_DEBUG("writer removed because "
+                            BOOST_ACTOR_LOGF_DEBUG("writer removed because "
                                             "of an error");
                             break;
                         case continue_writing_result::closed:
                             impl->stop_writer(io);
-                            CPPA_LOGF_DEBUG("writer removed because "
+                            BOOST_ACTOR_LOGF_DEBUG("writer removed because "
                                             "connection has been closed");
                             break;
                         case continue_writing_result::done:
@@ -458,20 +459,20 @@ void middleman_loop(middleman_impl* impl) {
                     }
                     if (mask == event::write) break;
                     // else: fall through
-                    CPPA_LOGF_DEBUG("handle event::both; fall through");
-                    CPPA_ANNOTATE_FALLTHROUGH;
+                    BOOST_ACTOR_LOGF_DEBUG("handle event::both; fall through");
+                    BOOST_ACTOR_ANNOTATE_FALLTHROUGH;
                 case event::read: {
-                    CPPA_LOGF_DEBUG("handle event::read for " << io);
+                    BOOST_ACTOR_LOGF_DEBUG("handle event::read for " << io);
                     switch (io->continue_reading()) {
                         case continue_reading_result::failure:
                             io->io_failed(event::read);
                             impl->stop_reader(io);
-                            CPPA_LOGF_DEBUG("peer removed because a "
+                            BOOST_ACTOR_LOGF_DEBUG("peer removed because a "
                                             "read error has occured");
                             break;
                         case continue_reading_result::closed:
                             impl->stop_reader(io);
-                            CPPA_LOGF_DEBUG("peer removed because "
+                            BOOST_ACTOR_LOGF_DEBUG("peer removed because "
                                             "connection has been closed");
                             break;
                         case continue_reading_result::continue_later:
@@ -481,7 +482,7 @@ void middleman_loop(middleman_impl* impl) {
                     break;
                 }
                 case event::error: {
-                    CPPA_LOGF_DEBUG("event::error; remove peer " << io);
+                    BOOST_ACTOR_LOGF_DEBUG("event::error; remove peer " << io);
                     io->io_failed(event::write);
                     io->io_failed(event::read);
                     impl->stop_reader(io);
@@ -490,14 +491,14 @@ void middleman_loop(middleman_impl* impl) {
             }
         });
     }
-    CPPA_LOGF_DEBUG("event loop done, erase all readers");
+    BOOST_ACTOR_LOGF_DEBUG("event loop done, erase all readers");
     // make sure to write everything before shutting down
     handler->for_each_reader([handler](continuable* ptr) {
         handler->erase_later(ptr, event::read);
     });
     handler->update();
-    CPPA_LOGF_DEBUG("flush outgoing messages");
-    CPPA_LOGF_DEBUG_IF(handler->num_sockets() == 0,
+    BOOST_ACTOR_LOGF_DEBUG("flush outgoing messages");
+    BOOST_ACTOR_LOGF_DEBUG_IF(handler->num_sockets() == 0,
                        "nothing to flush, no writer left");
     while (handler->num_sockets() > 0) {
         handler->poll([&](event_bitmask mask, continuable* io) {
@@ -507,7 +508,7 @@ void middleman_loop(middleman_impl* impl) {
                     switch (io->continue_writing()) {
                         case continue_writing_result::failure:
                             io->io_failed(event::write);
-                            CPPA_ANNOTATE_FALLTHROUGH;
+                            BOOST_ACTOR_ANNOTATE_FALLTHROUGH;
                         case continue_writing_result::closed:
                         case continue_writing_result::done:
                             handler->erase_later(io, event::write);
@@ -523,14 +524,14 @@ void middleman_loop(middleman_impl* impl) {
                     handler->erase_later(io, event::both);
                     break;
                 default:
-                    CPPA_LOGF_WARNING("event::read event during shutdown");
+                    BOOST_ACTOR_LOGF_WARNING("event::read event during shutdown");
                     handler->erase_later(io, event::read);
                     break;
             }
         });
         handler->update();
     }
-    CPPA_LOGF_DEBUG("middleman loop done");
+    BOOST_ACTOR_LOGF_DEBUG("middleman loop done");
 }
 
 middleman* middleman::create_singleton() {
@@ -555,4 +556,5 @@ size_t max_msg_size()
   return default_max_msg_size;
 }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

@@ -30,12 +30,14 @@
 
 #include <iterator>
 
-#include "cppa/local_actor.hpp"
-#include "cppa/detail/behavior_stack.hpp"
+#include "boost/actor/local_actor.hpp"
+#include "boost/actor/detail/behavior_stack.hpp"
 
 using namespace std;
 
-namespace cppa { namespace detail {
+namespace boost {
+namespace actor {
+namespace detail {
 
 struct behavior_stack_mover : iterator<output_iterator_tag, void, void, void, void>{
 
@@ -88,4 +90,5 @@ void behavior_stack::clear() {
     }
 }
 
-} } // namespace cppa::detail
+} } // namespace actor
+} // namespace boost::detail

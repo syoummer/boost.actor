@@ -35,25 +35,26 @@
 #include <iostream>
 #include <algorithm>
 
-#include "cppa/atom.hpp"
-#include "cppa/object.hpp"
-#include "cppa/to_string.hpp"
-#include "cppa/serializer.hpp"
-#include "cppa/singletons.hpp"
-#include "cppa/from_string.hpp"
-#include "cppa/deserializer.hpp"
-#include "cppa/skip_message.hpp"
-#include "cppa/actor_namespace.hpp"
-#include "cppa/primitive_variant.hpp"
-#include "cppa/uniform_type_info.hpp"
+#include "boost/actor/atom.hpp"
+#include "boost/actor/object.hpp"
+#include "boost/actor/to_string.hpp"
+#include "boost/actor/serializer.hpp"
+#include "boost/actor/singletons.hpp"
+#include "boost/actor/from_string.hpp"
+#include "boost/actor/deserializer.hpp"
+#include "boost/actor/skip_message.hpp"
+#include "boost/actor/actor_namespace.hpp"
+#include "boost/actor/primitive_variant.hpp"
+#include "boost/actor/uniform_type_info.hpp"
 
-#include "cppa/util/algorithm.hpp"
+#include "boost/actor/util/algorithm.hpp"
 
-#include "cppa/detail/uniform_type_info_map.hpp"
+#include "boost/actor/detail/uniform_type_info_map.hpp"
 
 using namespace std;
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 namespace {
 
@@ -533,4 +534,5 @@ std::ostream& operator<<(std::ostream& out, skip_message_t) {
      return out << "skip_message";
 }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

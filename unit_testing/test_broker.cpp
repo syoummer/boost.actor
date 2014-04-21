@@ -32,17 +32,17 @@
 #include <iostream>
 
 #include "test.hpp"
-#include "cppa/cppa.hpp"
+#include "boost/actor/cppa.hpp"
 
 using namespace std;
-using namespace cppa;
+using namespace boost::actor;
 
-void ping(cppa::event_based_actor* self, size_t num_pings) {
-    CPPA_CHECKPOINT();
+void ping(event_based_actor* self, size_t num_pings) {
+    BOOST_ACTOR_CHECKPOINT();
     auto count = std::make_shared<size_t>(0);
     self->become (
         on(atom("kickoff"), arg_match) >> [=](const actor& pong) {
-            CPPA_CHECKPOINT();
+            BOOST_ACTOR_CHECKPOINT();
             self->send(pong, atom("ping"), 1);
             self->become (
                 on(atom("pong"), arg_match)
@@ -50,19 +50,19 @@ void ping(cppa::event_based_actor* self, size_t num_pings) {
                     if (++*count >= num_pings) self->quit();
                     return make_cow_tuple(atom("ping"), value + 1);
                 },
-                others() >> CPPA_UNEXPECTED_MSG_CB(self)
+                others() >> BOOST_ACTOR_UNEXPECTED_MSG_CB(self)
             );
         },
-        others() >> CPPA_UNEXPECTED_MSG_CB(self)
+        others() >> BOOST_ACTOR_UNEXPECTED_MSG_CB(self)
     );
 }
 
-void pong(cppa::event_based_actor* self) {
-    CPPA_CHECKPOINT();
+void pong(event_based_actor* self) {
+    BOOST_ACTOR_CHECKPOINT();
     self->become  (
         on(atom("ping"), arg_match)
         >> [=](int value) -> cow_tuple<atom_value, int> {
-            CPPA_CHECKPOINT();
+            BOOST_ACTOR_CHECKPOINT();
             self->monitor(self->last_sender());
             // set next behavior
             self->become (
@@ -72,32 +72,32 @@ void pong(cppa::event_based_actor* self) {
                 on_arg_match >> [=](const down_msg& dm) {
                     self->quit(dm.reason);
                 },
-                others() >> CPPA_UNEXPECTED_MSG_CB(self)
+                others() >> BOOST_ACTOR_UNEXPECTED_MSG_CB(self)
             );
             // reply to 'ping'
             return {atom("pong"), value};
         },
-        others() >> CPPA_UNEXPECTED_MSG_CB(self)
+        others() >> BOOST_ACTOR_UNEXPECTED_MSG_CB(self)
     );
 }
 
 void peer(io::broker* self, io::connection_handle hdl, const actor& buddy) {
-    CPPA_CHECKPOINT();
-    CPPA_CHECK(self != nullptr);
-    CPPA_CHECK(buddy != invalid_actor);
+    BOOST_ACTOR_CHECKPOINT();
+    BOOST_ACTOR_CHECK(self != nullptr);
+    BOOST_ACTOR_CHECK(buddy != invalid_actor);
     self->monitor(buddy);
     if (self->num_connections() == 0) {
         cerr << "num_connections() != 1" << endl;
         throw std::logic_error("num_connections() != 1");
     }
     auto write = [=](atom_value type, int value) {
-        CPPA_LOGF_DEBUG("write: " << value);
+        BOOST_ACTOR_LOGF_DEBUG("write: " << value);
         self->write(hdl, sizeof(type), &type);
         self->write(hdl, sizeof(value), &value);
     };
     self->become (
         [=](const connection_closed_msg&) {
-            CPPA_PRINT("received connection_closed_msg");
+            BOOST_ACTOR_PRINT("received connection_closed_msg");
             self->quit();
         },
         [=](const new_data_msg& msg) {
@@ -116,71 +116,71 @@ void peer(io::broker* self, io::connection_handle hdl, const actor& buddy) {
         [=](const down_msg& dm) {
             if (dm.source == buddy) self->quit(dm.reason);
         },
-        others() >> CPPA_UNEXPECTED_MSG_CB(self)
+        others() >> BOOST_ACTOR_UNEXPECTED_MSG_CB(self)
     );
 }
 
 void peer_acceptor(io::broker* self, const actor& buddy) {
-    CPPA_CHECKPOINT();
+    BOOST_ACTOR_CHECKPOINT();
     self->become (
         [=](const new_connection_msg& msg) {
-            CPPA_CHECKPOINT();
-            CPPA_PRINT("received new_connection_msg");
+            BOOST_ACTOR_CHECKPOINT();
+            BOOST_ACTOR_PRINT("received new_connection_msg");
             self->fork(peer, msg.handle, buddy);
             self->quit();
         },
-        others() >> CPPA_UNEXPECTED_MSG_CB(self)
+        others() >> BOOST_ACTOR_UNEXPECTED_MSG_CB(self)
     );
 }
 
 int main(int argc, char** argv) {
-    CPPA_TEST(test_broker);
+    BOOST_ACTOR_TEST(test_broker);
     string app_path = argv[0];
     if (argc == 3) {
         if (strcmp(argv[1], "mode=client") == 0) {
-            CPPA_CHECKPOINT();
+            BOOST_ACTOR_CHECKPOINT();
             run_client_part(get_kv_pairs(argc, argv), [](uint16_t port) {
-                CPPA_CHECKPOINT();
+                BOOST_ACTOR_CHECKPOINT();
                 auto p = spawn(ping, 10);
-                CPPA_CHECKPOINT();
+                BOOST_ACTOR_CHECKPOINT();
                 auto cl = spawn_io(peer, "localhost", port, p);
-                CPPA_CHECKPOINT();
+                BOOST_ACTOR_CHECKPOINT();
                 anon_send(p, atom("kickoff"), cl);
-                CPPA_CHECKPOINT();
+                BOOST_ACTOR_CHECKPOINT();
             });
-            CPPA_CHECKPOINT();
-            return CPPA_TEST_RESULT();
+            BOOST_ACTOR_CHECKPOINT();
+            return BOOST_ACTOR_TEST_RESULT();
         }
-        return CPPA_TEST_RESULT();
+        return BOOST_ACTOR_TEST_RESULT();
     }
     else if (argc > 1) {
         cerr << "usage: " << app_path << " [mode=client port={PORT}]" << endl;
         return -1;
     }
-    CPPA_CHECKPOINT();
+    BOOST_ACTOR_CHECKPOINT();
     auto p = spawn(pong);
     uint16_t port = 4242;
     for (;;) {
         try {
             spawn_io_server(peer_acceptor, port, p);
-            CPPA_CHECKPOINT();
+            BOOST_ACTOR_CHECKPOINT();
             ostringstream oss;
             oss << app_path << " mode=client port=" << port << to_dev_null;
             thread child{[&oss] {
-                CPPA_LOGC_TRACE("NONE", "main$thread_launcher", "");
+                BOOST_ACTOR_LOGC_TRACE("NONE", "main$thread_launcher", "");
                 auto cmdstr = oss.str();
                 if (system(cmdstr.c_str()) != 0) {
-                    CPPA_PRINTERR("FATAL: command failed: " << cmdstr);
+                    BOOST_ACTOR_PRINTERR("FATAL: command failed: " << cmdstr);
                     abort();
                 }
             }};
-            CPPA_CHECKPOINT();
+            BOOST_ACTOR_CHECKPOINT();
             child.join();
-            CPPA_CHECKPOINT();
+            BOOST_ACTOR_CHECKPOINT();
             await_all_actors_done();
-            CPPA_CHECKPOINT();
+            BOOST_ACTOR_CHECKPOINT();
             shutdown();
-            return CPPA_TEST_RESULT();
+            return BOOST_ACTOR_TEST_RESULT();
         }
         catch (bind_failure&) {
             // try next port

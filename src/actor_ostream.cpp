@@ -28,14 +28,15 @@
 \******************************************************************************/
 
 
-#include "cppa/cppa.hpp"
-#include "cppa/scheduler.hpp"
-#include "cppa/singletons.hpp"
-#include "cppa/local_actor.hpp"
-#include "cppa/scoped_actor.hpp"
-#include "cppa/actor_ostream.hpp"
+#include "boost/actor/cppa.hpp"
+#include "boost/actor/scheduler.hpp"
+#include "boost/actor/singletons.hpp"
+#include "boost/actor/local_actor.hpp"
+#include "boost/actor/scoped_actor.hpp"
+#include "boost/actor/actor_ostream.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 actor_ostream::actor_ostream(actor self) : m_self(std::move(self)) {
     m_printer = get_scheduling_coordinator()->printer();
@@ -51,15 +52,16 @@ actor_ostream& actor_ostream::flush() {
     return *this;
 }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost
 
 namespace std {
 
-cppa::actor_ostream& endl(cppa::actor_ostream& o) {
+boost::actor::actor_ostream& endl(boost::actor::actor_ostream& o) {
     return o.write("\n");
 }
 
-cppa::actor_ostream& flush(cppa::actor_ostream& o) {
+boost::actor::actor_ostream& flush(boost::actor::actor_ostream& o) {
     return o.flush();
 }
 

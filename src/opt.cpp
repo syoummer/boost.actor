@@ -30,12 +30,13 @@
 
 #include <iomanip>
 #include <algorithm>
-#include "cppa/opt.hpp"
+#include "boost/actor/opt.hpp"
 
 using namespace std;
-using cppa::placeholders::_x1;
+using boost::actor::placeholders::_x1;
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 detail::opt1_rvalue_builder<true> on_opt1(char short_opt,
                                          string long_opt,
@@ -129,4 +130,5 @@ function<void()> print_desc_and_exit(options_description* desc,
     };
 }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

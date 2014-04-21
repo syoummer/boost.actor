@@ -28,10 +28,11 @@
 \******************************************************************************/
 
 
-#include "cppa/logging.hpp"
-#include "cppa/detail/functor_based_blocking_actor.hpp"
+#include "boost/actor/logging.hpp"
+#include "boost/actor/detail/functor_based_blocking_actor.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 namespace detail {
 
 void functor_based_blocking_actor::create(blocking_actor*, act_fun fun) {
@@ -39,9 +40,10 @@ void functor_based_blocking_actor::create(blocking_actor*, act_fun fun) {
 }
 
 void functor_based_blocking_actor::act() {
-    CPPA_LOG_TRACE("");
+    BOOST_ACTOR_LOG_TRACE("");
     m_act(this);
 }
 
 } // namespace detail
-} // namespace cppa
+} // namespace actor
+} // namespace boost

@@ -32,17 +32,17 @@
 #include <errno.h>
 #include <iostream>
 
-#include "cppa/config.hpp"
-#include "cppa/logging.hpp"
-#include "cppa/exception.hpp"
+#include "boost/actor/config.hpp"
+#include "boost/actor/logging.hpp"
+#include "boost/actor/exception.hpp"
 
-#include "cppa/io/stream.hpp"
-#include "cppa/io/ipv4_acceptor.hpp"
-#include "cppa/io/ipv4_io_stream.hpp"
+#include "boost/actor/io/stream.hpp"
+#include "boost/actor/io/ipv4_acceptor.hpp"
+#include "boost/actor/io/ipv4_io_stream.hpp"
 
-#include "cppa/detail/fd_util.hpp"
+#include "boost/actor/detail/fd_util.hpp"
 
-#ifdef CPPA_WINDOWS
+#ifdef BOOST_ACTOR_WINDOWS
 #   include <winsock2.h>
 #   include <ws2tcpip.h>
 #else
@@ -55,9 +55,11 @@
 #   include <netinet/tcp.h>
 #endif
 
-namespace cppa { namespace io {
+namespace boost {
+namespace actor {
+namespace io {
 
-using namespace ::cppa::detail::fd_util;
+using namespace ::boost::actor::detail::fd_util;
 
 namespace {
 
@@ -108,9 +110,9 @@ ipv4_acceptor::ipv4_acceptor(native_socket_type fd, bool nonblocking)
 
 std::unique_ptr<acceptor> ipv4_acceptor::create(std::uint16_t port,
                                                 const char* addr) {
-    CPPA_LOGM_TRACE("ipv4_acceptor", CPPA_ARG(port) << ", addr = "
+    BOOST_ACTOR_LOGM_TRACE("ipv4_acceptor", BOOST_ACTOR_ARG(port) << ", addr = "
                                      << (addr ? addr : "nullptr"));
-#   ifdef CPPA_WINDOWS
+#   ifdef BOOST_ACTOR_WINDOWS
     // ensure that TCP has been initialized via WSAStartup
     cppa::get_middleman();
 #   endif
@@ -145,7 +147,7 @@ std::unique_ptr<acceptor> ipv4_acceptor::create(std::uint16_t port,
     nonblocking(sockfd, true);
     // ok, no exceptions
     sguard.release();
-    CPPA_LOGM_DEBUG("ipv4_acceptor", "sockfd = " << sockfd);
+    BOOST_ACTOR_LOGM_DEBUG("ipv4_acceptor", "sockfd = " << sockfd);
     return std::unique_ptr<ipv4_acceptor>(new ipv4_acceptor(sockfd, true));
 }
 
@@ -179,4 +181,5 @@ optional<stream_ptr_pair> ipv4_acceptor::try_accept_connection() {
     return none;
 }
 
-} } // namespace cppa::detail
+} } // namespace actor
+} // namespace boost::detail

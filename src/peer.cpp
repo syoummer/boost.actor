@@ -31,33 +31,35 @@
 #include <cstring>
 #include <cstdint>
 
-#include "cppa/on.hpp"
-#include "cppa/cppa.hpp"
-#include "cppa/actor.hpp"
-#include "cppa/match.hpp"
-#include "cppa/logging.hpp"
-#include "cppa/to_string.hpp"
-#include "cppa/singletons.hpp"
-#include "cppa/exit_reason.hpp"
-#include "cppa/actor_proxy.hpp"
-#include "cppa/message_header.hpp"
-#include "cppa/binary_serializer.hpp"
-#include "cppa/binary_deserializer.hpp"
+#include "boost/actor/on.hpp"
+#include "boost/actor/cppa.hpp"
+#include "boost/actor/actor.hpp"
+#include "boost/actor/match.hpp"
+#include "boost/actor/logging.hpp"
+#include "boost/actor/to_string.hpp"
+#include "boost/actor/singletons.hpp"
+#include "boost/actor/exit_reason.hpp"
+#include "boost/actor/actor_proxy.hpp"
+#include "boost/actor/message_header.hpp"
+#include "boost/actor/binary_serializer.hpp"
+#include "boost/actor/binary_deserializer.hpp"
 
-#include "cppa/util/algorithm.hpp"
+#include "boost/actor/util/algorithm.hpp"
 
-#include "cppa/detail/demangle.hpp"
-#include "cppa/detail/raw_access.hpp"
-#include "cppa/detail/actor_registry.hpp"
-#include "cppa/detail/singleton_manager.hpp"
-#include "cppa/detail/uniform_type_info_map.hpp"
+#include "boost/actor/detail/demangle.hpp"
+#include "boost/actor/detail/raw_access.hpp"
+#include "boost/actor/detail/actor_registry.hpp"
+#include "boost/actor/detail/singleton_manager.hpp"
+#include "boost/actor/detail/uniform_type_info_map.hpp"
 
-#include "cppa/io/peer.hpp"
-#include "cppa/io/middleman.hpp"
+#include "boost/actor/io/peer.hpp"
+#include "boost/actor/io/middleman.hpp"
 
 using namespace std;
 
-namespace cppa { namespace io {
+namespace boost {
+namespace actor {
+namespace io {
 
 peer::peer(middleman* parent,
            const input_stream_ptr& in,
@@ -77,7 +79,7 @@ peer::peer(middleman* parent,
 }
 
 void peer::io_failed(event_bitmask mask) {
-    CPPA_LOG_TRACE("node = " << (m_node ? to_string(*m_node) : "nullptr")
+    BOOST_ACTOR_LOG_TRACE("node = " << (m_node ? to_string(*m_node) : "nullptr")
                    << " mask = " << mask);
     // make sure this code is executed only once by filtering for read failure
     if (mask == event::read && m_node) {
@@ -95,7 +97,7 @@ void peer::io_failed(event_bitmask mask) {
 }
 
 continue_reading_result peer::continue_reading() {
-    CPPA_LOG_TRACE("");
+    BOOST_ACTOR_LOG_TRACE("");
     for (;;) {
         try { m_rd_buf.append_from(m_in.get()); }
         catch (exception&) {
@@ -121,9 +123,9 @@ continue_reading_result peer::continue_reading() {
                               << std::endl;
                     return continue_reading_result::failure;
                 }
-                CPPA_LOG_DEBUG("read process info: " << to_string(*m_node));
+                BOOST_ACTOR_LOG_DEBUG("read process info: " << to_string(*m_node));
                 if (!parent()->register_peer(*m_node, this)) {
-                    CPPA_LOG_ERROR("multiple incoming connections "
+                    BOOST_ACTOR_LOG_ERROR("multiple incoming connections "
                                    "from the same node");
                     return continue_reading_result::failure;
                 }
@@ -153,12 +155,12 @@ continue_reading_result peer::continue_reading() {
                     m_meta_msg->deserialize(&msg, &bd);
                 }
                 catch (exception& e) {
-                    CPPA_LOG_ERROR("exception during read_message: "
+                    BOOST_ACTOR_LOG_ERROR("exception during read_message: "
                                    << detail::demangle(typeid(e))
                                    << ", what(): " << e.what());
                     return continue_reading_result::failure;
                 }
-                CPPA_LOG_DEBUG("deserialized: " << to_string(hdr) << " " << to_string(msg));
+                BOOST_ACTOR_LOG_DEBUG("deserialized: " << to_string(hdr) << " " << to_string(msg));
                 match(msg) (
                     // monitor messages are sent automatically whenever
                     // actor_proxy_cache creates a new proxy
@@ -197,24 +199,24 @@ continue_reading_result peer::continue_reading() {
 void peer::monitor(const actor_addr&,
                    const node_id_ptr& node,
                    actor_id aid) {
-    CPPA_LOG_TRACE(CPPA_MARG(node, get) << ", " << CPPA_ARG(aid));
+    BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_MARG(node, get) << ", " << BOOST_ACTOR_ARG(aid));
     if (!node) {
-        CPPA_LOG_ERROR("received MONITOR from invalid peer");
+        BOOST_ACTOR_LOG_ERROR("received MONITOR from invalid peer");
         return;
     }
     auto entry = get_actor_registry()->get_entry(aid);
     auto pself = parent()->node();
 
     if (*node == *pself) {
-        CPPA_LOG_ERROR("received 'MONITOR' from pself");
+        BOOST_ACTOR_LOG_ERROR("received 'MONITOR' from pself");
     }
     else if (entry.first == nullptr) {
         if (entry.second == exit_reason::not_exited) {
-            CPPA_LOG_ERROR("received MONITOR for unknown "
+            BOOST_ACTOR_LOG_ERROR("received MONITOR for unknown "
                            "actor id: " << aid);
         }
         else {
-            CPPA_LOG_DEBUG("received MONITOR for an actor "
+            BOOST_ACTOR_LOG_DEBUG("received MONITOR for an actor "
                            "that already finished "
                            "execution; reply KILL_PROXY");
             // this actor already finished execution;
@@ -224,11 +226,11 @@ void peer::monitor(const actor_addr&,
         }
     }
     else {
-        CPPA_LOG_DEBUG("attach functor to " << entry.first.get());
+        BOOST_ACTOR_LOG_DEBUG("attach functor to " << entry.first.get());
         auto mm = parent();
         entry.first->attach_functor([=](uint32_t reason) {
             mm->run_later([=] {
-                CPPA_LOGC_TRACE("cppa::io::peer",
+                BOOST_ACTOR_LOGC_TRACE("cppa::io::peer",
                                 "monitor$kill_proxy_helper",
                                 "reason = " << reason);
                 auto p = mm->get_peer(*node);
@@ -242,26 +244,26 @@ void peer::kill_proxy(const actor_addr& sender,
                       const node_id_ptr& node,
                       actor_id aid,
                       std::uint32_t reason) {
-    CPPA_LOG_TRACE(CPPA_TARG(sender, to_string)
+    BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_TARG(sender, to_string)
                    << ", node = " << (node ? to_string(*node) : "-invalid-")
-                   << ", " << CPPA_ARG(aid)
-                   << ", " << CPPA_ARG(reason));
+                   << ", " << BOOST_ACTOR_ARG(aid)
+                   << ", " << BOOST_ACTOR_ARG(reason));
     if (!node) {
-        CPPA_LOG_ERROR("node = nullptr");
+        BOOST_ACTOR_LOG_ERROR("node = nullptr");
         return;
     }
     if (sender != nullptr) {
-        CPPA_LOG_ERROR("sender != nullptr");
+        BOOST_ACTOR_LOG_ERROR("sender != nullptr");
         return;
     }
     auto proxy = parent()->get_namespace().get(*node, aid);
     if (proxy) {
-        CPPA_LOG_DEBUG("received KILL_PROXY for " << aid
+        BOOST_ACTOR_LOG_DEBUG("received KILL_PROXY for " << aid
                        << ":" << to_string(*node));
         send_as(proxy, proxy, atom("KILL_PROXY"), reason);
     }
     else {
-        CPPA_LOG_INFO("received KILL_PROXY for " << aid
+        BOOST_ACTOR_LOG_INFO("received KILL_PROXY for " << aid
                       << ":" << to_string(*node)
                       << "but didn't found a matching instance "
                       << "in proxy cache");
@@ -269,7 +271,7 @@ void peer::kill_proxy(const actor_addr& sender,
 }
 
 void peer::deliver(msg_hdr_cref hdr, any_tuple msg) {
-    CPPA_LOG_TRACE("");
+    BOOST_ACTOR_LOG_TRACE("");
     if (hdr.sender && hdr.sender.is_remote()) {
         // is_remote() is guaranteed to return true if and only if
         // the actor is derived from actor_proxy, hence we do not
@@ -284,10 +286,10 @@ void peer::link(const actor_addr& lhs, const actor_addr& rhs) {
     // this message is sent from default_actor_proxy in link_to and
     // establish_backling to cause the original actor (sender) to establish
     // a link to ptr as well
-    CPPA_LOG_TRACE(CPPA_TARG(lhs, to_string) << ", "
-                   << CPPA_TARG(rhs, to_string));
-    CPPA_LOG_ERROR_IF(!lhs, "received 'LINK' from invalid sender");
-    CPPA_LOG_ERROR_IF(!rhs, "received 'LINK' with invalid receiver");
+    BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_TARG(lhs, to_string) << ", "
+                   << BOOST_ACTOR_TARG(rhs, to_string));
+    BOOST_ACTOR_LOG_ERROR_IF(!lhs, "received 'LINK' from invalid sender");
+    BOOST_ACTOR_LOG_ERROR_IF(!rhs, "received 'LINK' with invalid receiver");
     if (!lhs || !rhs) return;
     auto locally_link_proxy = [](const actor_addr& proxy, const actor_addr& addr) {
         // again, no need to to use a dynamic_cast here
@@ -305,15 +307,15 @@ void peer::link(const actor_addr& lhs, const actor_addr& rhs) {
         case 0x01: // receiver is remote
             locally_link_proxy(rhs, lhs);
             break;
-        default: CPPA_LOG_ERROR("logic error");
+        default: BOOST_ACTOR_LOG_ERROR("logic error");
     }
 }
 
 void peer::unlink(const actor_addr& lhs, const actor_addr& rhs) {
-    CPPA_LOG_TRACE(CPPA_TARG(lhs, to_string) << ", "
-                   << CPPA_TARG(rhs, to_string));
-    CPPA_LOG_ERROR_IF(!lhs, "received 'UNLINK' from invalid sender");
-    CPPA_LOG_ERROR_IF(!rhs, "received 'UNLINK' with invalid target");
+    BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_TARG(lhs, to_string) << ", "
+                   << BOOST_ACTOR_TARG(rhs, to_string));
+    BOOST_ACTOR_LOG_ERROR_IF(!lhs, "received 'UNLINK' from invalid sender");
+    BOOST_ACTOR_LOG_ERROR_IF(!rhs, "received 'UNLINK' with invalid target");
     if (!lhs || !rhs) return;
     auto locally_unlink_proxy = [](const actor_addr& proxy, const actor_addr& addr) {
         // again, no need to to use a dynamic_cast here
@@ -331,12 +333,12 @@ void peer::unlink(const actor_addr& lhs, const actor_addr& rhs) {
         case 0x01: // receiver is remote
             locally_unlink_proxy(rhs, lhs);
             break;
-        default: CPPA_LOG_ERROR("logic error");
+        default: BOOST_ACTOR_LOG_ERROR("logic error");
     }
 }
 
 continue_writing_result peer::continue_writing() {
-    CPPA_LOG_TRACE("");
+    BOOST_ACTOR_LOG_TRACE("");
     auto result = super::continue_writing();
     while (result == continue_writing_result::done && !queue().empty()) {
         auto tmp = queue().pop();
@@ -364,7 +366,7 @@ void peer::add_type_if_needed(const std::string& tname) {
 }
 
 void peer::enqueue_impl(msg_hdr_cref hdr, const any_tuple& msg) {
-    CPPA_LOG_TRACE("");
+    BOOST_ACTOR_LOG_TRACE("");
     auto tname = msg.tuple_type_names();
     add_type_if_needed((tname) ? *tname : detail::get_tuple_type_names(*msg.vals()));
     uint32_t size = 0;
@@ -374,13 +376,13 @@ void peer::enqueue_impl(msg_hdr_cref hdr, const any_tuple& msg) {
     wbuf.write(sizeof(uint32_t), &size);
     try { bs << hdr << msg; }
     catch (exception& e) {
-        CPPA_LOG_ERROR(to_verbose_string(e));
+        BOOST_ACTOR_LOG_ERROR(to_verbose_string(e));
         cerr << "*** exception in peer::enqueue; "
              << to_verbose_string(e)
              << endl;
         return;
     }
-    CPPA_LOG_DEBUG("serialized: " << to_string(hdr) << " " << to_string(msg));
+    BOOST_ACTOR_LOG_DEBUG("serialized: " << to_string(hdr) << " " << to_string(msg));
     size =   static_cast<std::uint32_t>((wbuf.size() - before))
            - static_cast<std::uint32_t>(sizeof(std::uint32_t));
     // update size in buffer
@@ -393,10 +395,11 @@ void peer::enqueue(msg_hdr_cref hdr, const any_tuple& msg) {
 }
 
 void peer::dispose() {
-    CPPA_LOG_TRACE(CPPA_ARG(this));
+    BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_ARG(this));
     parent()->get_namespace().erase(*m_node);
     parent()->del_peer(this);
     delete this;
 }
 
-} } // namespace cppa::network
+} } // namespace actor
+} // namespace boost::network

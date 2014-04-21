@@ -30,20 +30,21 @@
 
 #include <utility>
 
-#include "cppa/local_actor.hpp"
-#include "cppa/response_promise.hpp"
+#include "boost/actor/local_actor.hpp"
+#include "boost/actor/response_promise.hpp"
 
-#include "cppa/detail/raw_access.hpp"
+#include "boost/actor/detail/raw_access.hpp"
 
 using std::move;
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 response_promise::response_promise(const actor_addr& from,
                                    const actor_addr& to,
                                    const message_id& id)
 : m_from(from), m_to(to), m_id(id) {
-    CPPA_REQUIRE(id.is_response() || !id.valid());
+    BOOST_ACTOR_REQUIRE(id.is_response() || !id.valid());
 }
 
 void response_promise::deliver(any_tuple msg) {
@@ -55,4 +56,5 @@ void response_promise::deliver(any_tuple msg) {
     }
 }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

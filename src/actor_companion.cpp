@@ -28,9 +28,10 @@
 \******************************************************************************/
 
 
-#include "cppa/actor_companion.hpp"
+#include "boost/actor/actor_companion.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 void actor_companion::disconnect(std::uint32_t rsn) {
     enqueue_handler tmp;
@@ -54,4 +55,5 @@ void actor_companion::enqueue(msg_hdr_cref hdr, any_tuple ct, execution_unit*) {
     m_on_enqueue(std::move(ptr));
 }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

@@ -31,36 +31,33 @@
 #include <atomic>
 #include <iostream>
 
-#include "cppa/logging.hpp"
-#include "cppa/scheduler.hpp"
-#include "cppa/exception.hpp"
-#include "cppa/any_tuple.hpp"
-#include "cppa/local_actor.hpp"
+#include "boost/actor/logging.hpp"
+#include "boost/actor/scheduler.hpp"
+#include "boost/actor/exception.hpp"
+#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/local_actor.hpp"
 
-#include "cppa/io/middleman.hpp"
+#include "boost/actor/io/middleman.hpp"
 
-#include "cppa/detail/group_manager.hpp"
-#include "cppa/detail/actor_registry.hpp"
-#include "cppa/detail/singleton_manager.hpp"
-#include "cppa/detail/uniform_type_info_map.hpp"
+#include "boost/actor/detail/group_manager.hpp"
+#include "boost/actor/detail/actor_registry.hpp"
+#include "boost/actor/detail/singleton_manager.hpp"
+#include "boost/actor/detail/uniform_type_info_map.hpp"
 
-#ifdef CPPA_OPENCL
-#  include "cppa/opencl/opencl_metainfo.hpp"
-#else
-namespace cppa { namespace opencl {
+namespace boost {
+namespace actor {
 
-class opencl_metainfo : public detail::singleton_mixin<opencl_metainfo> { };
+void shutdown() { detail::singleton_manager::shutdown(); }
 
-} } // namespace cppa::opencl
-#endif
+} // namespace actor
+} // namespace boost
 
-namespace cppa { void shutdown() { detail::singleton_manager::shutdown(); } }
-
-namespace cppa { namespace detail {
+namespace boost {
+namespace actor {
+namespace detail {
 
 namespace {
 
-std::atomic<opencl::opencl_metainfo*> s_opencl_metainfo;
 std::atomic<uniform_type_info_map*> s_uniform_type_info_map;
 std::atomic<io::middleman*> s_middleman;
 std::atomic<actor_registry*> s_actor_registry;
@@ -71,30 +68,19 @@ std::atomic<logging*> s_logger;
 } // namespace <anonymous>
 
 void singleton_manager::shutdown() {
-    CPPA_LOGF_DEBUG("shutdown scheduler");
+    BOOST_ACTOR_LOGF_DEBUG("shutdown scheduler");
     destroy(s_scheduling_coordinator);
-    CPPA_LOGF_DEBUG("shutdown middleman");
+    BOOST_ACTOR_LOGF_DEBUG("shutdown middleman");
     destroy(s_middleman);
     std::atomic_thread_fence(std::memory_order_seq_cst);
     // it's safe to delete all other singletons now
-    CPPA_LOGF_DEBUG("close OpenCL metainfo");
-    destroy(s_opencl_metainfo);
-    CPPA_LOGF_DEBUG("close actor registry");
+    BOOST_ACTOR_LOGF_DEBUG("close actor registry");
     destroy(s_actor_registry);
-    CPPA_LOGF_DEBUG("shutdown group manager");
+    BOOST_ACTOR_LOGF_DEBUG("shutdown group manager");
     destroy(s_group_manager);
-    CPPA_LOGF_DEBUG("clear type info map");
+    BOOST_ACTOR_LOGF_DEBUG("clear type info map");
     destroy(s_uniform_type_info_map);
     destroy(s_logger);
-}
-
-opencl::opencl_metainfo* singleton_manager::get_opencl_metainfo() {
-#   ifdef CPPA_OPENCL
-    return lazy_get(s_opencl_metainfo);
-#   else
-    CPPA_LOGF_ERROR("libcppa was compiled without OpenCL support");
-    throw std::logic_error("libcppa was compiled without OpenCL support");
-#   endif
 }
 
 actor_registry* singleton_manager::get_actor_registry() {
@@ -121,4 +107,5 @@ io::middleman* singleton_manager::get_middleman() {
     return lazy_get(s_middleman);
 }
 
-} } // namespace cppa::detail
+} } // namespace actor
+} // namespace boost::detail

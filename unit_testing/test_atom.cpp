@@ -4,27 +4,29 @@
 
 #include "test.hpp"
 
-#include "cppa/cppa.hpp"
-#include "cppa/scoped_actor.hpp"
+#include "boost/actor/cppa.hpp"
+#include "boost/actor/scoped_actor.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 inline std::ostream& operator<<(std::ostream& out, const atom_value& a) {
     return (out << to_string(a));
 }
-}
+} // namespace actor
+} // namespace boost
 
 using std::cout;
 using std::endl;
 using std::string;
 
-using namespace cppa;
-using namespace cppa::util;
+using namespace boost::actor;
+using namespace boost::actor::util;
 
 namespace { constexpr auto s_foo = atom("FooBar"); }
 
 template<atom_value AtomValue, typename... Types>
 void foo() {
-    CPPA_PRINT("foo(" << static_cast<std::uint64_t>(AtomValue)
+    BOOST_ACTOR_PRINT("foo(" << static_cast<std::uint64_t>(AtomValue)
                       << " = " << to_string(AtomValue) << ")");
 }
 
@@ -39,15 +41,15 @@ struct mirror {
 
 int main() {
     bool matched_pattern[3] = { false, false, false };
-        CPPA_TEST(test_atom);
+    BOOST_ACTOR_TEST(test_atom);
     // check if there are leading bits that distinguish "zzz" and "000 "
-    CPPA_CHECK_NOT_EQUAL(atom("zzz"), atom("000 "));
+    BOOST_ACTOR_CHECK_NOT_EQUAL(atom("zzz"), atom("000 "));
     // check if there are leading bits that distinguish "abc" and " abc"
-    CPPA_CHECK_NOT_EQUAL(atom("abc"), atom(" abc"));
+    BOOST_ACTOR_CHECK_NOT_EQUAL(atom("abc"), atom(" abc"));
     // 'illegal' characters are mapped to whitespaces
-    CPPA_CHECK_EQUAL(atom("   "), atom("@!?"));
+    BOOST_ACTOR_CHECK_EQUAL(atom("   "), atom("@!?"));
     // check to_string impl.
-    CPPA_CHECK_EQUAL(to_string(s_foo), "FooBar");
+    BOOST_ACTOR_CHECK_EQUAL(to_string(s_foo), "FooBar");
     scoped_actor self;
     mirror m(self.get());
     m(atom("foo"), static_cast<std::uint32_t>(42));
@@ -58,22 +60,22 @@ int main() {
     self->receive_for(i, 3) (
         on<atom("foo"), std::uint32_t>() >> [&](std::uint32_t value) {
             matched_pattern[0] = true;
-            CPPA_CHECK_EQUAL(value, 42);
+            BOOST_ACTOR_CHECK_EQUAL(value, 42);
         },
         on<atom(":Attach"), atom(":Baz"), string>() >> [&](const string& str) {
             matched_pattern[1] = true;
-            CPPA_CHECK_EQUAL(str, "cstring");
+            BOOST_ACTOR_CHECK_EQUAL(str, "cstring");
         },
         on<atom("a"), atom("b"), atom("c"), float>() >> [&](float value) {
             matched_pattern[2] = true;
-            CPPA_CHECK_EQUAL(value, 23.f);
+            BOOST_ACTOR_CHECK_EQUAL(value, 23.f);
         }
     );
-    CPPA_CHECK(matched_pattern[0] && matched_pattern[1] && matched_pattern[2]);
+    BOOST_ACTOR_CHECK(matched_pattern[0] && matched_pattern[1] && matched_pattern[2]);
     self->receive (
         // "erase" message { atom("b"), atom("a"), atom("c"), 23.f }
-        others() >> CPPA_CHECKPOINT_CB(),
-        after(std::chrono::seconds(0)) >> CPPA_UNEXPECTED_TOUT_CB()
+        others() >> BOOST_ACTOR_CHECKPOINT_CB(),
+        after(std::chrono::seconds(0)) >> BOOST_ACTOR_UNEXPECTED_TOUT_CB()
     );
-    return CPPA_TEST_RESULT();
+    return BOOST_ACTOR_TEST_RESULT();
 }

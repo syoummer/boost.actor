@@ -32,10 +32,10 @@
 #include <stdlib.h>
 
 
-#include "cppa/config.hpp"
-#include "cppa/exception.hpp"
+#include "boost/actor/config.hpp"
+#include "boost/actor/exception.hpp"
 
-#ifdef CPPA_WINDOWS
+#ifdef BOOST_ACTOR_WINDOWS
 #   include <winerror.h>
 #else
 #   include <errno.h>
@@ -53,7 +53,7 @@ std::string ae_what(std::uint32_t reason) {
 
 std::string be_what(int err_code) {
     switch (err_code) {
-#   ifndef CPPA_WINDOWS
+#   ifndef BOOST_ACTOR_WINDOWS
         case EACCES: return "EACCES: address protected; root access needed";
         case EADDRINUSE: return "EADDRINUSE: address already in use";
         case EBADF: return "EBADF: no valid socket descriptor";
@@ -76,7 +76,8 @@ std::string be_what(int err_code) {
 } // namespace <anonymous>
 
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 cppa_exception::~cppa_exception() { }
 
@@ -110,4 +111,5 @@ bind_failure::bind_failure(int err_code) : network_error(be_what(err_code)) {
 
 bind_failure::~bind_failure() { }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

@@ -28,13 +28,14 @@
 \******************************************************************************/
 
 
-#include "cppa/actor.hpp"
-#include "cppa/channel.hpp"
-#include "cppa/any_tuple.hpp"
+#include "boost/actor/actor.hpp"
+#include "boost/actor/channel.hpp"
+#include "boost/actor/any_tuple.hpp"
 
-#include "cppa/detail/raw_access.hpp"
+#include "boost/actor/detail/raw_access.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 channel::channel(const actor& other) : m_ptr(detail::raw_access::get(other)) { }
 
@@ -62,4 +63,5 @@ intptr_t channel::compare(const abstract_channel* other) const {
     return compare(m_ptr.get(), other);
 }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

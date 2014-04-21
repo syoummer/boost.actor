@@ -28,18 +28,19 @@
 \******************************************************************************/
 
 
-#include "cppa/cppa.hpp"
-#include "cppa/abstract_group.hpp"
-#include "cppa/any_tuple.hpp"
-#include "cppa/singletons.hpp"
-#include "cppa/util/shared_spinlock.hpp"
-#include "cppa/util/shared_lock_guard.hpp"
-#include "cppa/util/upgrade_lock_guard.hpp"
+#include "boost/actor/cppa.hpp"
+#include "boost/actor/abstract_group.hpp"
+#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/singletons.hpp"
+#include "boost/actor/util/shared_spinlock.hpp"
+#include "boost/actor/util/shared_lock_guard.hpp"
+#include "boost/actor/util/upgrade_lock_guard.hpp"
 
-#include "cppa/detail/group_manager.hpp"
-#include "cppa/detail/singleton_manager.hpp"
+#include "boost/actor/detail/group_manager.hpp"
+#include "boost/actor/detail/singleton_manager.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 abstract_group::subscription::subscription(const channel& s,
                                   const intrusive_ptr<abstract_group>& g)
@@ -102,4 +103,5 @@ abstract_group::module::~module() { }
 
 abstract_group::~abstract_group() { }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

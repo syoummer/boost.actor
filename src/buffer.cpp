@@ -33,11 +33,12 @@
 #include <cstring>
 #include <utility>
 
-#include "cppa/cppa.hpp"
-#include "cppa/util/buffer.hpp"
-#include "cppa/io/input_stream.hpp"
+#include "boost/actor/cppa.hpp"
+#include "boost/actor/util/buffer.hpp"
+#include "boost/actor/io/input_stream.hpp"
 
-namespace cppa { namespace util {
+namespace boost {
+namespace actor { namespace util {
 
 namespace {
 
@@ -164,11 +165,12 @@ void buffer::write(buffer&& other, buffer_write_policy wp) {
 }
 
 void buffer::append_from(io::input_stream* istream) {
-    CPPA_REQUIRE(remaining() > 0);
+    BOOST_ACTOR_REQUIRE(remaining() > 0);
     auto num_bytes = istream->read_some(wr_ptr(), remaining());
     if (num_bytes > 0) {
         inc_size(num_bytes);
     }
 }
 
-} } // namespace cppa::util
+} } // namespace actor
+} // namespace boost::util

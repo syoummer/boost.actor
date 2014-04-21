@@ -28,14 +28,15 @@
 \******************************************************************************/
 
 
-#include "cppa/group.hpp"
-#include "cppa/channel.hpp"
-#include "cppa/any_tuple.hpp"
-#include "cppa/singletons.hpp"
+#include "boost/actor/group.hpp"
+#include "boost/actor/channel.hpp"
+#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/singletons.hpp"
 
-#include "cppa/detail/group_manager.hpp"
+#include "boost/actor/detail/group_manager.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 group::group(const invalid_group_t&) : m_ptr(nullptr) { }
 
@@ -66,4 +67,5 @@ abstract_group::module_ptr group::get_module(const std::string& module_name) {
     return get_group_manager()->get_module(module_name);
 }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

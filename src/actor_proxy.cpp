@@ -31,22 +31,23 @@
 #include <utility>
 #include <iostream>
 
-#include "cppa/atom.hpp"
-#include "cppa/to_string.hpp"
-#include "cppa/any_tuple.hpp"
-#include "cppa/scheduler.hpp"
-#include "cppa/singletons.hpp"
-#include "cppa/actor_proxy.hpp"
-#include "cppa/exit_reason.hpp"
+#include "boost/actor/atom.hpp"
+#include "boost/actor/to_string.hpp"
+#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/scheduler.hpp"
+#include "boost/actor/singletons.hpp"
+#include "boost/actor/actor_proxy.hpp"
+#include "boost/actor/exit_reason.hpp"
 
-#include "cppa/io/middleman.hpp"
+#include "boost/actor/io/middleman.hpp"
 
-#include "cppa/detail/types_array.hpp"
-#include "cppa/detail/singleton_manager.hpp"
+#include "boost/actor/detail/types_array.hpp"
+#include "boost/actor/detail/singleton_manager.hpp"
 
 using namespace std;
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 actor_proxy::~actor_proxy() { }
 
@@ -54,4 +55,5 @@ actor_proxy::actor_proxy(actor_id mid) : super(mid) {
     m_node = get_middleman()->node();
 }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

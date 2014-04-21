@@ -30,16 +30,18 @@
 
 #include <stdexcept>
 
-#include "cppa/config.hpp"
-#include "cppa/detail/demangle.hpp"
+#include "boost/actor/config.hpp"
+#include "boost/actor/detail/demangle.hpp"
 
-#if defined(CPPA_GCC) || defined(CPPA_CLANG)
+#if defined(BOOST_ACTOR_GCC) || defined(BOOST_ACTOR_CLANG)
 #include <cxxabi.h>
 #endif
 
 #include <stdlib.h>
 
-namespace cppa { namespace detail {
+namespace boost {
+namespace actor {
+namespace detail {
 
 std::string demangle(const char* decorated) {
     size_t size;
@@ -81,7 +83,7 @@ std::string demangle(const char* decorated) {
             c = *++cstr;
         }
     }
-#   ifdef CPPA_CLANG
+#   ifdef BOOST_ACTOR_CLANG
     // replace "std::__1::" with "std::" (fixes strange clang names)
     std::string needle = "std::__1::";
     std::string fixed_string = "std::";
@@ -96,4 +98,5 @@ std::string demangle(const std::type_info& tinf) {
     return demangle(tinf.name());
 }
 
-} } // namespace cppa::detail
+} } // namespace actor
+} // namespace boost::detail

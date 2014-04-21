@@ -28,20 +28,24 @@
 \******************************************************************************/
 
 
-#include "cppa/to_string.hpp"
+#include "boost/actor/to_string.hpp"
 
-#include "cppa/config.hpp"
-#include "cppa/partial_function.hpp"
+#include "boost/actor/config.hpp"
+#include "boost/actor/partial_function.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 partial_function::partial_function(impl_ptr ptr) : m_impl(std::move(ptr)) { }
 
 void detail::behavior_impl::handle_timeout() { }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost
 
-namespace cppa { namespace detail {
+namespace boost {
+namespace actor {
+namespace detail {
 
 behavior_impl_ptr combine(behavior_impl_ptr lhs, const partial_function& rhs) {
     return lhs->or_else(rhs.as_behavior_impl());
@@ -55,4 +59,5 @@ behavior_impl_ptr extract(const partial_function& arg) {
     return arg.as_behavior_impl();
 }
 
-} } // namespace cppa::detail
+} } // namespace actor
+} // namespace boost::detail

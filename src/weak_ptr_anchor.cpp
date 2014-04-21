@@ -30,9 +30,10 @@
 
 #include <mutex> // std::lock_guard
 
-#include "cppa/weak_ptr_anchor.hpp"
+#include "boost/actor/weak_ptr_anchor.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 weak_ptr_anchor::~weak_ptr_anchor() { }
 
@@ -48,4 +49,5 @@ bool weak_ptr_anchor::try_expire() {
     return false;
 }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

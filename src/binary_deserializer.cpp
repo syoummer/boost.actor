@@ -38,16 +38,17 @@
 #include <stdexcept>
 #include <type_traits>
 
-#include "cppa/logging.hpp"
-#include "cppa/type_lookup_table.hpp"
-#include "cppa/binary_deserializer.hpp"
+#include "boost/actor/logging.hpp"
+#include "boost/actor/type_lookup_table.hpp"
+#include "boost/actor/binary_deserializer.hpp"
 
-#include "cppa/detail/ieee_754.hpp"
-#include "cppa/detail/uniform_type_info_map.hpp"
+#include "boost/actor/detail/ieee_754.hpp"
+#include "boost/actor/detail/uniform_type_info_map.hpp"
 
 using namespace std;
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 namespace {
 
@@ -63,7 +64,7 @@ pointer advanced(pointer ptr, size_t num_bytes) {
 
 inline void range_check(pointer begin, pointer end, size_t read_size) {
     if (advanced(begin, read_size) > end) {
-        CPPA_LOGF(CPPA_ERROR, "range_check failed");
+        BOOST_ACTOR_LOGF(BOOST_ACTOR_ERROR, "range_check failed");
         throw out_of_range("binary_deserializer::read_range()");
     }
 }
@@ -200,7 +201,7 @@ const uniform_type_info* binary_deserializer::begin_object() {
 void binary_deserializer::end_object() { }
 
 size_t binary_deserializer::begin_sequence() {
-    CPPA_LOG_TRACE("");
+    BOOST_ACTOR_LOG_TRACE("");
     static_assert(sizeof(size_t) >= sizeof(uint32_t),
                   "sizeof(size_t) < sizeof(uint32_t)");
     uint32_t result;
@@ -233,4 +234,5 @@ void binary_deserializer::read_raw(size_t num_bytes, void* storage) {
     m_pos = advanced(m_pos, num_bytes);
 }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

@@ -28,12 +28,14 @@
 \******************************************************************************/
 
 
-#include "cppa/detail/decorated_tuple.hpp"
+#include "boost/actor/detail/decorated_tuple.hpp"
 
-namespace cppa { namespace detail {
+namespace boost {
+namespace actor {
+namespace detail {
 
 void* decorated_tuple::mutable_at(size_t pos) {
-    CPPA_REQUIRE(pos < size());
+    BOOST_ACTOR_REQUIRE(pos < size());
     return m_decorated->mutable_at(m_mapping[pos]);
 }
 
@@ -46,12 +48,12 @@ decorated_tuple* decorated_tuple::copy() const {
 }
 
 const void* decorated_tuple::at(size_t pos) const {
-    CPPA_REQUIRE(pos < size());
+    BOOST_ACTOR_REQUIRE(pos < size());
     return m_decorated->at(m_mapping[pos]);
 }
 
 const uniform_type_info* decorated_tuple::type_at(size_t pos) const {
-    CPPA_REQUIRE(pos < size());
+    BOOST_ACTOR_REQUIRE(pos < size());
     return m_decorated->type_at(m_mapping[pos]);
 }
 
@@ -60,7 +62,7 @@ auto decorated_tuple::type_token() const -> rtti {
 }
 
 void decorated_tuple::init() {
-    CPPA_REQUIRE(   m_mapping.empty()
+    BOOST_ACTOR_REQUIRE(   m_mapping.empty()
                  ||   *(std::max_element(m_mapping.begin(), m_mapping.end()))
                     < static_cast<const pointer&>(m_decorated)->size());
 }
@@ -101,4 +103,5 @@ const std::string* decorated_tuple::tuple_type_names() const {
     return &result;
 }
 
-} } // namespace cppa::detail
+} } // namespace actor
+} // namespace boost::detail

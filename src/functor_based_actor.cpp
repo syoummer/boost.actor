@@ -28,9 +28,10 @@
 \******************************************************************************/
 
 
-#include "cppa/detail/functor_based_actor.hpp"
+#include "boost/actor/detail/functor_based_actor.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 namespace detail {
 
 behavior functor_based_actor::make_behavior() {
@@ -38,4 +39,5 @@ behavior functor_based_actor::make_behavior() {
 }
 
 } // namespace detail
-} // namespace cppa
+} // namespace actor
+} // namespace boost

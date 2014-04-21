@@ -5,9 +5,9 @@
 #include <chrono>
 #include <cstdlib>
 #include <iostream>
-#include "cppa/cppa.hpp"
+#include "boost/actor/cppa.hpp"
 
-using namespace cppa;
+using namespace boost::actor;
 using std::endl;
 
 int main() {

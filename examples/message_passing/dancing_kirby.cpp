@@ -5,13 +5,13 @@
 #include <chrono>
 #include <iostream>
 #include <algorithm>
-#include "cppa/cppa.hpp"
+#include "boost/actor/cppa.hpp"
 
 using std::cout;
 using std::endl;
 using std::pair;
 
-using namespace cppa;
+using namespace boost::actor;
 
 // ASCII art figures
 constexpr const char* figures[] = {

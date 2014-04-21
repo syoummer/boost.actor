@@ -28,13 +28,15 @@
 \******************************************************************************/
 
 
-#include "cppa/serializer.hpp"
+#include "boost/actor/serializer.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 serializer::serializer(actor_namespace* ns, type_lookup_table* it)
 : m_namespace{ns}, m_outgoing_types{it} { }
 
 serializer::~serializer() { }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

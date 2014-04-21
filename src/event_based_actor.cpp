@@ -28,12 +28,13 @@
 \******************************************************************************/
 
 
-#include "cppa/scheduler.hpp"
-#include "cppa/singletons.hpp"
-#include "cppa/message_id.hpp"
-#include "cppa/event_based_actor.hpp"
+#include "boost/actor/scheduler.hpp"
+#include "boost/actor/singletons.hpp"
+#include "boost/actor/message_id.hpp"
+#include "boost/actor/event_based_actor.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 event_based_actor::event_based_actor() : m_initialized(false) { }
 
@@ -43,4 +44,5 @@ void event_based_actor::forward_to(const actor& whom) {
     forward_message(whom, message_priority::normal);
 }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

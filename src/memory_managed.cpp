@@ -28,12 +28,14 @@
 \******************************************************************************/
 
 
-#include "cppa/memory_managed.hpp"
+#include "boost/actor/memory_managed.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 memory_managed::~memory_managed() { }
 
 void memory_managed::request_deletion() { delete this; }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

@@ -31,7 +31,7 @@
 #include <iterator>
 
 #include "test.hpp"
-#include "cppa/intrusive/single_reader_queue.hpp"
+#include "boost/actor/intrusive/single_reader_queue.hpp"
 
 using std::begin;
 using std::end;
@@ -57,29 +57,29 @@ inline bool operator==(int lhs, const iint& rhs) {
     return lhs == rhs.value;
 }
 
-typedef cppa::intrusive::single_reader_queue<iint> iint_queue;
+typedef boost::actor::intrusive::single_reader_queue<iint> iint_queue;
 
 int main() {
-    CPPA_TEST(test_intrusive_containers);
+    BOOST_ACTOR_TEST(test_intrusive_containers);
 
-    cppa::intrusive::single_reader_queue<iint> q;
+    boost::actor::intrusive::single_reader_queue<iint> q;
     q.enqueue(new iint(1));
     q.enqueue(new iint(2));
     q.enqueue(new iint(3));
 
-    CPPA_CHECK_EQUAL(3, s_iint_instances);
+    BOOST_ACTOR_CHECK_EQUAL(3, s_iint_instances);
 
     auto x = q.try_pop();
-    CPPA_CHECK_EQUAL(x->value, 1);
+    BOOST_ACTOR_CHECK_EQUAL(x->value, 1);
     delete x;
     x = q.try_pop();
-    CPPA_CHECK_EQUAL(x->value, 2);
+    BOOST_ACTOR_CHECK_EQUAL(x->value, 2);
     delete x;
     x = q.try_pop();
-    CPPA_CHECK_EQUAL(x->value, 3);
+    BOOST_ACTOR_CHECK_EQUAL(x->value, 3);
     delete x;
     x = q.try_pop();
-    CPPA_CHECK(x == nullptr);
+    BOOST_ACTOR_CHECK(x == nullptr);
 
-    return CPPA_TEST_RESULT();
+    return BOOST_ACTOR_TEST_RESULT();
 }

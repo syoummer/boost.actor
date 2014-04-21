@@ -28,10 +28,11 @@
 \******************************************************************************/
 
 
-#include "cppa/any_tuple.hpp"
-#include "cppa/singletons.hpp"
+#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/singletons.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 any_tuple::any_tuple(detail::abstract_tuple* ptr) : m_vals(ptr) { }
 
@@ -49,34 +50,34 @@ void any_tuple::reset() {
 }
 
 void* any_tuple::mutable_at(size_t p) {
-    CPPA_REQUIRE(m_vals != nullptr);
+    BOOST_ACTOR_REQUIRE(m_vals != nullptr);
     return m_vals->mutable_at(p);
 }
 
 const void* any_tuple::at(size_t p) const {
-    CPPA_REQUIRE(m_vals != nullptr);
+    BOOST_ACTOR_REQUIRE(m_vals != nullptr);
     return m_vals->at(p);
 }
 
 const uniform_type_info* any_tuple::type_at(size_t p) const {
-    CPPA_REQUIRE(m_vals != nullptr);
+    BOOST_ACTOR_REQUIRE(m_vals != nullptr);
     return m_vals->type_at(p);
 }
 
 bool any_tuple::equals(const any_tuple& other) const {
-    CPPA_REQUIRE(m_vals != nullptr);
+    BOOST_ACTOR_REQUIRE(m_vals != nullptr);
     return m_vals->equals(*other.vals());
 }
 
 any_tuple any_tuple::drop(size_t n) const {
-    CPPA_REQUIRE(m_vals != nullptr);
+    BOOST_ACTOR_REQUIRE(m_vals != nullptr);
     if (n == 0) return *this;
     if (n >= size()) return any_tuple{};
     return any_tuple{detail::decorated_tuple::create(m_vals, n)};
 }
 
 any_tuple any_tuple::drop_right(size_t n) const {
-    CPPA_REQUIRE(m_vals != nullptr);
+    BOOST_ACTOR_REQUIRE(m_vals != nullptr);
     using namespace std;
     if (n == 0) return *this;
     if (n >= size()) return any_tuple{};
@@ -86,4 +87,5 @@ any_tuple any_tuple::drop_right(size_t n) const {
     return any_tuple{detail::decorated_tuple::create(m_vals, move(mapping))};
 }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

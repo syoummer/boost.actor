@@ -31,11 +31,12 @@
 #include <vector>
 #include <string>
 #include <sstream>
-#include "cppa/match.hpp"
+#include "boost/actor/match.hpp"
 
 using namespace std;
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 detail::match_helper match_split(const std::string& str, char delim, bool keep_empties) {
     vector<string> result;
@@ -47,4 +48,5 @@ detail::match_helper match_split(const std::string& str, char delim, bool keep_e
     return match(any_tuple::view(std::move(result)));
 }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

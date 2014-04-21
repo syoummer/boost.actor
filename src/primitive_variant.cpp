@@ -30,13 +30,14 @@
 
 #include <typeinfo>
 
-#include "cppa/primitive_variant.hpp"
+#include "boost/actor/primitive_variant.hpp"
 
-#include "cppa/util/algorithm.hpp"
+#include "boost/actor/util/algorithm.hpp"
 
-#include "cppa/detail/type_to_ptype.hpp"
+#include "boost/actor/detail/type_to_ptype.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 namespace {
 
@@ -169,4 +170,5 @@ void primitive_variant::destroy() {
     m_ptype = pt_null;
 }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

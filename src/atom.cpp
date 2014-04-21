@@ -28,9 +28,10 @@
 \******************************************************************************/
 
 
-#include "cppa/atom.hpp"
+#include "boost/actor/atom.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 std::string to_string(const atom_value& what) {
     auto x = static_cast<std::uint64_t>(what);
@@ -51,4 +52,5 @@ std::string to_string(const atom_value& what) {
     return result;
 }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

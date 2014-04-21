@@ -28,10 +28,12 @@
 \******************************************************************************/
 
 
-#include "cppa/execution_unit.hpp"
+#include "boost/actor/execution_unit.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 execution_unit::~execution_unit() { }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

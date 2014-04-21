@@ -35,18 +35,18 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-#include "cppa/config.hpp"
-#include "cppa/node_id.hpp"
-#include "cppa/serializer.hpp"
-#include "cppa/singletons.hpp"
-#include "cppa/primitive_variant.hpp"
+#include "boost/actor/config.hpp"
+#include "boost/actor/node_id.hpp"
+#include "boost/actor/serializer.hpp"
+#include "boost/actor/singletons.hpp"
+#include "boost/actor/primitive_variant.hpp"
 
-#include "cppa/io/middleman.hpp"
+#include "boost/actor/io/middleman.hpp"
 
-#include "cppa/util/algorithm.hpp"
-#include "cppa/util/ripemd_160.hpp"
-#include "cppa/util/get_root_uuid.hpp"
-#include "cppa/util/get_mac_addresses.hpp"
+#include "boost/actor/util/algorithm.hpp"
+#include "boost/actor/util/ripemd_160.hpp"
+#include "boost/actor/util/get_root_uuid.hpp"
+#include "boost/actor/util/get_mac_addresses.hpp"
 
 namespace {
 
@@ -67,7 +67,8 @@ std::uint8_t hex_char_value(char c) {
 
 } // namespace <anonymous>
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 void host_id_from_string(const std::string& hash,
                          node_id::host_id_type& node_id) {
@@ -164,4 +165,5 @@ std::string to_string(const node_id_ptr& what) {
     return oss.str();
 }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

@@ -34,8 +34,8 @@
 #include <cassert>
 #include <iostream>
 
-#include "cppa/cppa.hpp"
-#include "cppa/opencl.hpp"
+#include "boost/actor/cppa.hpp"
+#include "boost/actor/opencl.hpp"
 
 using namespace std;
 using namespace cppa;

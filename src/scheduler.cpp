@@ -34,23 +34,24 @@
 #include <iostream>
 #include <condition_variable>
 
-#include "cppa/on.hpp"
-#include "cppa/policy.hpp"
-#include "cppa/logging.hpp"
-#include "cppa/anything.hpp"
-#include "cppa/to_string.hpp"
-#include "cppa/scheduler.hpp"
-#include "cppa/local_actor.hpp"
-#include "cppa/scoped_actor.hpp"
-#include "cppa/system_messages.hpp"
+#include "boost/actor/on.hpp"
+#include "boost/actor/policy.hpp"
+#include "boost/actor/logging.hpp"
+#include "boost/actor/anything.hpp"
+#include "boost/actor/to_string.hpp"
+#include "boost/actor/scheduler.hpp"
+#include "boost/actor/local_actor.hpp"
+#include "boost/actor/scoped_actor.hpp"
+#include "boost/actor/system_messages.hpp"
 
-#include "cppa/detail/proper_actor.hpp"
-#include "cppa/detail/actor_registry.hpp"
-#include "cppa/detail/singleton_manager.hpp"
+#include "boost/actor/detail/proper_actor.hpp"
+#include "boost/actor/detail/actor_registry.hpp"
+#include "boost/actor/detail/singleton_manager.hpp"
 
 using std::move;
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 namespace scheduler {
 
@@ -137,7 +138,7 @@ class timer_actor final : public detail::proper_actor<blocking_actor,
                 done = true;
             },
             others() >> [&]() {
-#               ifdef CPPA_DEBUG_MODE
+#               ifdef BOOST_ACTOR_DEBUG_MODE
                     std::cerr << "coordinator::timer_loop: UNKNOWN MESSAGE: "
                               << to_string(msg_ptr->msg)
                               << std::endl;
@@ -240,9 +241,9 @@ class coordinator::shutdown_helper : public resumable {
     void detach_from_scheduler() override { }
 
     resumable::resume_result resume(detail::cs_thread*, execution_unit* ptr) {
-        CPPA_LOG_DEBUG("shutdown_helper::resume => shutdown worker");
+        BOOST_ACTOR_LOG_DEBUG("shutdown_helper::resume => shutdown worker");
         auto wptr = dynamic_cast<worker*>(ptr);
-        CPPA_REQUIRE(wptr != nullptr);
+        BOOST_ACTOR_REQUIRE(wptr != nullptr);
         std::unique_lock<std::mutex> guard(mtx);
         last_worker = wptr;
         cv.notify_all();
@@ -278,12 +279,12 @@ void coordinator::initialize() {
 }
 
 void coordinator::destroy() {
-    CPPA_LOG_TRACE("");
+    BOOST_ACTOR_LOG_TRACE("");
     // shutdown workers
     shutdown_helper sh;
     std::vector<worker*> alive_workers;
     for (auto& w : m_workers) alive_workers.push_back(&w);
-    CPPA_LOG_DEBUG("enqueue shutdown_helper into each worker");
+    BOOST_ACTOR_LOG_DEBUG("enqueue shutdown_helper into each worker");
     while (!alive_workers.empty()) {
         alive_workers.back()->external_enqueue(&sh);
         // since jobs can be stolen, we cannot assume that we have
@@ -299,17 +300,17 @@ void coordinator::destroy() {
         alive_workers.erase(i);
     }
     // shutdown utility actors
-    CPPA_LOG_DEBUG("send 'DIE' messages to timer & printer");
+    BOOST_ACTOR_LOG_DEBUG("send 'DIE' messages to timer & printer");
     auto msg = make_any_tuple(atom("DIE"));
     m_timer->enqueue({invalid_actor_addr, nullptr}, msg, nullptr);
     m_printer->enqueue({invalid_actor_addr, nullptr}, msg, nullptr);
-    CPPA_LOG_DEBUG("join threads of utility actors");
+    BOOST_ACTOR_LOG_DEBUG("join threads of utility actors");
     m_timer_thread.join();
     m_printer_thread.join();
     // join each worker thread for good manners
-    CPPA_LOG_DEBUG("join threads of workers");
+    BOOST_ACTOR_LOG_DEBUG("join threads of workers");
     for (auto& w : m_workers) w.m_this_thread.join();
-    CPPA_LOG_DEBUG("detach all resumables from all workers");
+    BOOST_ACTOR_LOG_DEBUG("detach all resumables from all workers");
     for (auto& w : m_workers) {
         auto next = [&] { return w.m_exposed_queue.try_pop(); };
         for (auto job = next(); job != nullptr; job = next()) {
@@ -340,8 +341,8 @@ void coordinator::enqueue(resumable* what) {
  *                          implementation of worker                          *
  ******************************************************************************/
 
-#define CPPA_LOG_DEBUG_WORKER(msg)                                             \
-    CPPA_LOG_DEBUG("worker " << m_id << ": " << msg)
+#define BOOST_ACTOR_LOG_DEBUG_WORKER(msg)                                             \
+    BOOST_ACTOR_LOG_DEBUG("worker " << m_id << ": " << msg)
 
 worker::worker(worker&& other) {
     *this = std::move(other); // delegate to move assignment operator
@@ -374,7 +375,7 @@ void worker::start(size_t id, coordinator* parent) {
 }
 
 void worker::run() {
-    CPPA_LOG_TRACE(CPPA_ARG(m_id));
+    BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_ARG(m_id));
     // local variables
     detail::cs_thread fself;
     job_ptr job = nullptr;
@@ -383,7 +384,7 @@ void worker::run() {
         if (!m_job_list.empty()) {
             job = m_job_list.back();
             m_job_list.pop_back();
-            CPPA_LOG_DEBUG_WORKER("got job from m_job_list");
+            BOOST_ACTOR_LOG_DEBUG_WORKER("got job from m_job_list");
             return true;
         }
         return false;
@@ -392,14 +393,14 @@ void worker::run() {
         for (int i = 1; i < 101; ++i) {
             job = m_exposed_queue.try_pop();
             if (job) {
-                CPPA_LOG_DEBUG_WORKER("got job with aggressive polling");
+                BOOST_ACTOR_LOG_DEBUG_WORKER("got job with aggressive polling");
                 return true;
             }
             // try to steal every 10 poll attempts
             if ((i % 10) == 0) {
                 job = raid();
                 if (job) {
-                    CPPA_LOG_DEBUG_WORKER("got job with aggressive polling");
+                    BOOST_ACTOR_LOG_DEBUG_WORKER("got job with aggressive polling");
                     return true;
                 }
             }
@@ -411,14 +412,14 @@ void worker::run() {
         for (int i = 1; i < 550; ++i) {
             job =  m_exposed_queue.try_pop();
             if (job) {
-                CPPA_LOG_DEBUG_WORKER("got job with moderate polling");
+                BOOST_ACTOR_LOG_DEBUG_WORKER("got job with moderate polling");
                 return true;
             }
             // try to steal every 5 poll attempts
             if ((i % 5) == 0) {
                 job = raid();
                 if (job) {
-                    CPPA_LOG_DEBUG_WORKER("got job with moderate polling");
+                    BOOST_ACTOR_LOG_DEBUG_WORKER("got job with moderate polling");
                     return true;
                 }
             }
@@ -430,13 +431,13 @@ void worker::run() {
         for (;;) {
             job =  m_exposed_queue.try_pop();
             if (job) {
-                CPPA_LOG_DEBUG_WORKER("got job with relaxed polling");
+                BOOST_ACTOR_LOG_DEBUG_WORKER("got job with relaxed polling");
                 return true;
             }
             // always try to steal at this stage
             job = raid();
             if (job) {
-                CPPA_LOG_DEBUG_WORKER("got job with relaxed polling");
+                BOOST_ACTOR_LOG_DEBUG_WORKER("got job with relaxed polling");
                 return true;
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -445,7 +446,7 @@ void worker::run() {
     // scheduling loop
     for (;;) {
         local_poll() || aggressive_poll() || moderate_poll() || relaxed_poll();
-        CPPA_PUSH_AID_FROM_PTR(dynamic_cast<abstract_actor*>(job));
+        BOOST_ACTOR_PUSH_AID_FROM_PTR(dynamic_cast<abstract_actor*>(job));
         switch (job->resume(&fself, this)) {
             case resumable::done: {
                 job->detach_from_scheduler();
@@ -488,7 +489,7 @@ worker::job_ptr worker::raid() {
         if (m_last_victim != m_id) {
             auto job = m_parent->worker_by_id(m_last_victim).try_steal();
             if (job) {
-                CPPA_LOG_DEBUG_WORKER("successfully stolen a job from "
+                BOOST_ACTOR_LOG_DEBUG_WORKER("successfully stolen a job from "
                                       << m_last_victim);
                 return job;
             }
@@ -502,10 +503,11 @@ void worker::external_enqueue(job_ptr ptr) {
 }
 
 void worker::exec_later(job_ptr ptr) {
-    CPPA_REQUIRE(std::this_thread::get_id() == m_this_thread.get_id());
+    BOOST_ACTOR_REQUIRE(std::this_thread::get_id() == m_this_thread.get_id());
     m_job_list.push_back(ptr);
 }
 
 } // namespace scheduler
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

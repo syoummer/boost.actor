@@ -12,13 +12,13 @@
 
 #include <cstdint>
 #include <iostream>
-#include "cppa/cppa.hpp"
-#include "cppa/to_string.hpp"
+#include "boost/actor/cppa.hpp"
+#include "boost/actor/to_string.hpp"
 
 using std::cout;
 using std::endl;
 
-using namespace cppa;
+using namespace boost::actor;
 
 namespace {
 

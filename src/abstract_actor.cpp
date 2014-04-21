@@ -28,33 +28,34 @@
 \******************************************************************************/
 
 
-#include "cppa/config.hpp"
+#include "boost/actor/config.hpp"
 
 #include <map>
 #include <mutex>
 #include <atomic>
 #include <stdexcept>
 
-#include "cppa/atom.hpp"
-#include "cppa/config.hpp"
-#include "cppa/logging.hpp"
-#include "cppa/any_tuple.hpp"
-#include "cppa/singletons.hpp"
-#include "cppa/actor_addr.hpp"
-#include "cppa/abstract_actor.hpp"
-#include "cppa/message_header.hpp"
-#include "cppa/system_messages.hpp"
+#include "boost/actor/atom.hpp"
+#include "boost/actor/config.hpp"
+#include "boost/actor/logging.hpp"
+#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/singletons.hpp"
+#include "boost/actor/actor_addr.hpp"
+#include "boost/actor/abstract_actor.hpp"
+#include "boost/actor/message_header.hpp"
+#include "boost/actor/system_messages.hpp"
 
-#include "cppa/io/middleman.hpp"
+#include "boost/actor/io/middleman.hpp"
 
-#include "cppa/util/shared_spinlock.hpp"
-#include "cppa/util/shared_lock_guard.hpp"
+#include "boost/actor/util/shared_spinlock.hpp"
+#include "boost/actor/util/shared_lock_guard.hpp"
 
-#include "cppa/detail/raw_access.hpp"
-#include "cppa/detail/actor_registry.hpp"
-#include "cppa/detail/singleton_manager.hpp"
+#include "boost/actor/detail/raw_access.hpp"
+#include "boost/actor/detail/actor_registry.hpp"
+#include "boost/actor/detail/singleton_manager.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 namespace { typedef std::unique_lock<std::mutex> guard_type; }
 
@@ -175,7 +176,7 @@ bool abstract_actor::unlink_from_impl(const actor_addr& other) {
     auto ptr = detail::raw_access::get(other);
     if (!exited() && ptr->remove_backlink(address())) {
         auto i = std::find(m_links.begin(), m_links.end(), ptr);
-        CPPA_REQUIRE(i != m_links.end());
+        BOOST_ACTOR_REQUIRE(i != m_links.end());
         m_links.erase(i);
         return true;
     }
@@ -188,9 +189,9 @@ actor_addr abstract_actor::address() const {
 
 void abstract_actor::cleanup(std::uint32_t reason) {
     // log as 'actor'
-    CPPA_LOGM_TRACE("cppa::actor", CPPA_ARG(m_id) << ", " << CPPA_ARG(reason)
-                    << ", " << CPPA_ARG(m_is_proxy));
-    CPPA_REQUIRE(reason != exit_reason::not_exited);
+    BOOST_ACTOR_LOGM_TRACE("cppa::actor", BOOST_ACTOR_ARG(m_id) << ", " << BOOST_ACTOR_ARG(reason)
+                    << ", " << BOOST_ACTOR_ARG(m_is_proxy));
+    BOOST_ACTOR_REQUIRE(reason != exit_reason::not_exited);
     // move everyhting out of the critical section before processing it
     decltype(m_links) mlinks;
     decltype(m_attachables) mattachables;
@@ -207,19 +208,19 @@ void abstract_actor::cleanup(std::uint32_t reason) {
         m_links.clear();
         m_attachables.clear();
     }
-    CPPA_LOGC_INFO_IF(not is_proxy(), "cppa::actor", __func__,
+    BOOST_ACTOR_LOGC_INFO_IF(not is_proxy(), "cppa::actor", __func__,
                       "actor with ID " << m_id << " had " << mlinks.size()
                       << " links and " << mattachables.size()
                       << " attached functors; exit reason = " << reason
                       << ", class = " << detail::demangle(typeid(*this)));
     // send exit messages
     auto msg = make_any_tuple(exit_msg{address(), reason});
-    CPPA_LOGM_DEBUG("cppa::actor", "send EXIT to " << mlinks.size() << " links");
+    BOOST_ACTOR_LOGM_DEBUG("cppa::actor", "send EXIT to " << mlinks.size() << " links");
     for (auto& aptr : mlinks) {
         aptr->enqueue({address(), aptr, message_id{}.with_high_priority()},
                       msg, m_host);
     }
-    CPPA_LOGM_DEBUG("cppa::actor", "run " << mattachables.size()
+    BOOST_ACTOR_LOGM_DEBUG("cppa::actor", "run " << mattachables.size()
                                    << " attachables");
     for (attachable_ptr& ptr : mattachables) {
         ptr->actor_exited(reason);
@@ -231,4 +232,5 @@ std::set<std::string> abstract_actor::interface() const {
     return std::set<std::string>{};
 }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

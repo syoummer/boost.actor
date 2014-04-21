@@ -28,9 +28,9 @@
 \******************************************************************************/
 
 
-#include "cppa/config.hpp"
+#include "boost/actor/config.hpp"
 
-#if defined(CPPA_LINUX) && !defined(CPPA_POLL_IMPL)
+#if defined(BOOST_ACTOR_LINUX) && !defined(BOOST_ACTOR_POLL_IMPL)
 
 #include <ios>
 #include <string>
@@ -39,10 +39,12 @@
 #include <string.h>
 #include <sys/epoll.h>
 
-#include "cppa/logging.hpp"
-#include "cppa/io/middleman_event_handler.hpp"
+#include "boost/actor/logging.hpp"
+#include "boost/actor/io/middleman_event_handler.hpp"
 
-namespace cppa { namespace io {
+namespace boost {
+namespace actor {
+namespace io {
 
 namespace {
 
@@ -71,14 +73,14 @@ class middleman_event_handler_impl : public middleman_event_handler {
  protected:
 
     void poll_impl() {
-        CPPA_REQUIRE(m_meta.empty() == false);
+        BOOST_ACTOR_REQUIRE(m_meta.empty() == false);
         int presult = -1;
         while (presult < 0) {
             presult = epoll_wait(m_epollfd,
                                  m_epollset.data(),
                                  static_cast<int>(m_epollset.size()),
                                  -1);
-            CPPA_LOG_DEBUG("epoll_wait on " << num_sockets()
+            BOOST_ACTOR_LOG_DEBUG("epoll_wait on " << num_sockets()
                            << " sockets returned " << presult);
             if (presult < 0) {
                 switch (errno) {
@@ -89,7 +91,7 @@ class middleman_event_handler_impl : public middleman_event_handler {
                     }
                     default: {
                         perror("epoll_wait() failed");
-                        CPPA_CRITICAL("epoll_wait() failed");
+                        BOOST_ACTOR_CRITICAL("epoll_wait() failed");
                     }
                 }
             }
@@ -101,7 +103,7 @@ class middleman_event_handler_impl : public middleman_event_handler {
                                        output_event,
                                        error_event>(iter->events);
             auto ptr = reinterpret_cast<continuable*>(iter->data.ptr);
-            CPPA_REQUIRE(eb != event::none);
+            BOOST_ACTOR_REQUIRE(eb != event::none);
             m_events.emplace_back(eb, ptr);
         }
     }
@@ -116,7 +118,7 @@ class middleman_event_handler_impl : public middleman_event_handler {
         ee.data.ptr = ptr;
         switch (new_bitmask) {
             case event::none:
-                CPPA_REQUIRE(me == fd_meta_event::erase);
+                BOOST_ACTOR_REQUIRE(me == fd_meta_event::erase);
                 ee.events = 0;
                 break;
             case event::read:
@@ -127,7 +129,7 @@ class middleman_event_handler_impl : public middleman_event_handler {
             case event::both:
                 ee.events = EPOLLIN | EPOLLRDHUP | EPOLLOUT;
                 break;
-            default: CPPA_CRITICAL("invalid event bitmask");
+            default: BOOST_ACTOR_CRITICAL("invalid event bitmask");
         }
         switch (me) {
             case fd_meta_event::add:
@@ -139,26 +141,26 @@ class middleman_event_handler_impl : public middleman_event_handler {
             case fd_meta_event::mod:
                 operation = EPOLL_CTL_MOD;
                 break;
-            default: CPPA_CRITICAL("invalid fd_meta_event");
+            default: BOOST_ACTOR_CRITICAL("invalid fd_meta_event");
         }
         if (epoll_ctl(m_epollfd, operation, fd, &ee) < 0) {
             switch (errno) {
                 // supplied file descriptor is already registered
                 case EEXIST: {
-                    CPPA_LOG_ERROR("file descriptor registered twice");
+                    BOOST_ACTOR_LOG_ERROR("file descriptor registered twice");
                     break;
                 }
                 // op was EPOLL_CTL_MOD or EPOLL_CTL_DEL,
                 // and fd is not registered with this epoll instance.
                 case ENOENT: {
-                    CPPA_LOG_ERROR("cannot delete file descriptor "
+                    BOOST_ACTOR_LOG_ERROR("cannot delete file descriptor "
                                    "because it isn't registered");
                     break;
                 }
                 default: {
-                    CPPA_LOG_ERROR(strerror(errno));
+                    BOOST_ACTOR_LOG_ERROR(strerror(errno));
                     perror("epoll_ctl() failed");
-                    CPPA_CRITICAL("epoll_ctl() failed");
+                    BOOST_ACTOR_CRITICAL("epoll_ctl() failed");
                 }
             }
         }
@@ -177,10 +179,11 @@ std::unique_ptr<middleman_event_handler> middleman_event_handler::create() {
     return std::unique_ptr<middleman_event_handler>{new middleman_event_handler_impl};
 }
 
-} } // namespace cppa::io
+} } // namespace actor
+} // namespace boost::io
 
-#else // defined(CPPA_LINUX) && !defined(CPPA_POLL_IMPL)
+#else // defined(BOOST_ACTOR_LINUX) && !defined(BOOST_ACTOR_POLL_IMPL)
 
 int keep_compiler_happy_for_epoll_impl() { return 42; }
 
-#endif // defined(CPPA_LINUX) && !defined(CPPA_POLL_IMPL)
+#endif // defined(BOOST_ACTOR_LINUX) && !defined(BOOST_ACTOR_POLL_IMPL)

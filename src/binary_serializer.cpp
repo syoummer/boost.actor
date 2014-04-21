@@ -36,16 +36,17 @@
 #include <cstring>
 #include <type_traits>
 
-#include "cppa/config.hpp"
-#include "cppa/primitive_variant.hpp"
-#include "cppa/binary_serializer.hpp"
-#include "cppa/type_lookup_table.hpp"
+#include "boost/actor/config.hpp"
+#include "boost/actor/primitive_variant.hpp"
+#include "boost/actor/binary_serializer.hpp"
+#include "boost/actor/type_lookup_table.hpp"
 
-#include "cppa/detail/ieee_754.hpp"
+#include "boost/actor/detail/ieee_754.hpp"
 
 using std::enable_if;
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 namespace {
 
@@ -127,7 +128,7 @@ binary_serializer::binary_serializer(util::buffer* buf,
 : super(ns, tbl), m_sink(buf) { }
 
 void binary_serializer::begin_object(const uniform_type_info* uti) {
-    CPPA_REQUIRE(uti != nullptr);
+    BOOST_ACTOR_REQUIRE(uti != nullptr);
     auto ot = outgoing_types();
     std::uint32_t id = (ot) ? ot->id_of(uti) : 0;
     std::uint8_t flag = (id == 0) ? 1 : 0;
@@ -160,4 +161,5 @@ void binary_serializer::write_tuple(size_t size,
     }
 }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

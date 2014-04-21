@@ -5,10 +5,10 @@
 
 #include <cassert>
 #include <iostream>
-#include "cppa/cppa.hpp"
+#include "boost/actor/cppa.hpp"
 
 using std::endl;
-using namespace cppa;
+using namespace boost::actor;
 
 namespace {
 

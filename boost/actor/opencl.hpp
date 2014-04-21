@@ -1,0 +1,220 @@
+/******************************************************************************\
+ *           ___        __                                                    *
+ *          /\_ \    __/\ \                                                   *
+ *          \//\ \  /\_\ \ \____    ___   _____   _____      __               *
+ *            \ \ \ \/\ \ \ '__`\  /'___\/\ '__`\/\ '__`\  /'__`\             *
+ *             \_\ \_\ \ \ \ \L\ \/\ \__/\ \ \L\ \ \ \L\ \/\ \L\.\_           *
+ *             /\____\\ \_\ \_,__/\ \____\\ \ ,__/\ \ ,__/\ \__/.\_\          *
+ *             \/____/ \/_/\/___/  \/____/ \ \ \/  \ \ \/  \/__/\/_/          *
+ *                                          \ \_\   \ \_\                     *
+ *                                           \/_/    \/_/                     *
+ *                                                                            *
+ * Copyright (C) 2011-2013                                                    *
+ * Dominik Charousset <dominik.charousset@haw-hamburg.de>                     *
+ *                                                                            *
+ * This file is part of libcppa.                                              *
+ * libcppa is free software: you can redistribute it and/or modify it under   *
+ * the terms of the GNU Lesser General Public License as published by the     *
+ * Free Software Foundation; either version 2.1 of the License,               *
+ * or (at your option) any later version.                                     *
+ *                                                                            *
+ * libcppa is distributed in the hope that it will be useful,                 *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of             *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.                       *
+ * See the GNU Lesser General Public License for more details.                *
+ *                                                                            *
+ * You should have received a copy of the GNU Lesser General Public License   *
+ * along with libcppa. If not, see <http://www.gnu.org/licenses/>.            *
+\******************************************************************************/
+
+
+#ifndef CPPA_OPENCL_HPP
+#define CPPA_OPENCL_HPP
+
+#include <algorithm>
+#include <functional>
+
+#include "boost/actor/optional.hpp"
+#include "boost/actor/cow_tuple.hpp"
+
+#include "boost/actor/util/call.hpp"
+#include "boost/actor/util/limited_vector.hpp"
+
+#include "boost/actor/opencl/global.hpp"
+#include "boost/actor/opencl/actor_facade.hpp"
+#include "boost/actor/opencl/opencl_metainfo.hpp"
+
+namespace boost {
+namespace actor {
+
+namespace detail {
+
+// converts C arrays, i.e., pointers, to vectors
+template<typename T>
+struct carr_to_vec { typedef T type; };
+
+template<typename T>
+struct carr_to_vec<T*> { typedef std::vector<T> type; };
+
+template<typename Signature, typename SecondSignature = void>
+struct cl_spawn_helper;
+
+template<typename R, typename... Ts>
+struct cl_spawn_helper<R (Ts...), void> {
+
+    using result_type = typename carr_to_vec<R>::type;
+
+    using impl = opencl::actor_facade<
+                     result_type (typename carr_to_vec<
+                                      typename carr_to_vec<Ts>::type
+                                  >::type...)
+                 >;
+    using map_arg_fun = typename impl::arg_mapping;
+    using map_res_fun = typename impl::result_mapping;
+
+    template<typename... Us>
+    actor operator()(map_arg_fun f0,
+                     map_res_fun f1,
+                     const opencl::program& p,
+                     const char* fname,
+                     Us&&... args) const {
+        using std::move;
+        using std::forward;
+        return impl::create(p, fname, move(f0), move(f1), forward<Us>(args)...);
+    }
+
+    template<typename... Us>
+    actor operator()(const opencl::program& p,
+                         const char* fname,
+                         Us&&... args) const {
+        using std::move;
+        using std::forward;
+        map_arg_fun f0 = [] (any_tuple msg) {
+            return tuple_cast<
+                       typename util::rm_const_and_ref<
+                           typename carr_to_vec<Ts>::type
+                       >::type...
+                   >(msg);
+        };
+        map_res_fun f1 = [] (result_type& result) {
+            return make_any_tuple(move(result));
+        };
+        return impl::create(p, fname, move(f0), move(f1), forward<Us>(args)...);
+    }
+
+};
+
+template<typename R, typename... Ts>
+struct cl_spawn_helper<std::function<optional<cow_tuple<Ts...>> (any_tuple)>,
+                       std::function<any_tuple (R&)>>
+: cl_spawn_helper<R (Ts...)> { };
+
+} // namespace detail
+
+/**
+ * @brief Creates a new actor facade for an OpenCL kernel that invokes
+ *        the function named @p fname from @p prog.
+ * @throws std::runtime_error if more than three dimensions are set,
+ *                            <tt>dims.empty()</tt>, or @p clCreateKernel
+ *                            failed.
+ */
+template<typename Signature, typename... Ts>
+inline actor spawn_cl(const opencl::program& prog,
+                      const char* fname,
+                      const opencl::dim_vec& dims,
+                      const opencl::dim_vec& offset = {},
+                      const opencl::dim_vec& local_dims = {},
+                      size_t result_size = 0) {
+    using std::move;
+    detail::cl_spawn_helper<Signature> f;
+    return f(prog, fname, dims, offset, local_dims, result_size);
+}
+
+/**
+ * @brief Compiles @p source and creates a new actor facade for an OpenCL kernel
+ *        that invokes the function named @p fname.
+ * @throws std::runtime_error if more than three dimensions are set,
+ *                            <tt>dims.empty()</tt>, a compilation error
+ *                            occured, or @p clCreateKernel failed.
+ */
+template<typename Signature, typename... Ts>
+inline actor spawn_cl(const char* source,
+                      const char* fname,
+                      const opencl::dim_vec& dims,
+                      const opencl::dim_vec& offset = {},
+                      const opencl::dim_vec& local_dims = {},
+                      size_t result_size = 0) {
+    using std::move;
+    return spawn_cl<Signature, Ts...>(opencl::program::create(source),
+                                      fname,
+                                      dims,
+                                      offset,
+                                      local_dims,
+                                      result_size);
+}
+
+/**
+ * @brief Creates a new actor facade for an OpenCL kernel that invokes
+ *        the function named @p fname from @p prog, using @p map_args
+ *        to extract the function arguments from incoming messages and
+ *        @p map_result to transform the result before sending it as response.
+ * @throws std::runtime_error if more than three dimensions are set,
+ *                            <tt>dims.empty()</tt>, or @p clCreateKernel
+ *                            failed.
+ */
+template<typename MapArgs, typename MapResult>
+inline actor spawn_cl(const opencl::program& prog,
+                      const char* fname,
+                      MapArgs map_args,
+                      MapResult map_result,
+                      const opencl::dim_vec& dims,
+                      const opencl::dim_vec& offset = {},
+                      const opencl::dim_vec& local_dims = {},
+                      size_t result_size = 0) {
+    using std::move;
+    typedef typename util::get_callable_trait<MapArgs>::fun_type f0;
+    typedef typename util::get_callable_trait<MapResult>::fun_type f1;
+    detail::cl_spawn_helper<f0, f1> f;
+    return f(f0{move(map_args)},
+             f1{move(map_result)},
+             prog,
+             fname,
+             dims,
+             offset,
+             local_dims,
+             result_size);
+}
+
+/**
+ * @brief Compiles @p source and creates a new actor facade for an OpenCL kernel
+ *        that invokes the function named @p fname, using @p map_args
+ *        to extract the function arguments from incoming messages and
+ *        @p map_result to transform the result before sending it as response.
+ * @throws std::runtime_error if more than three dimensions are set,
+ *                            <tt>dims.empty()</tt>, a compilation error
+ *                            occured, or @p clCreateKernel failed.
+ */
+template<typename MapArgs, typename MapResult>
+inline actor spawn_cl(const char* source,
+                      const char* fun_name,
+                      MapArgs map_args,
+                      MapResult map_result,
+                      const opencl::dim_vec& dims,
+                      const opencl::dim_vec& offset = {},
+                      const opencl::dim_vec& local_dims = {},
+                      size_t result_size = 0) {
+    using std::move;
+    return spawn_cl(opencl::program::create(source),
+                    fun_name,
+                    move(map_args),
+                    move(map_result),
+                    dims,
+                    offset,
+                    local_dims,
+                    result_size);
+}
+
+} // namespace actor
+} // namespace boost
+
+#endif // CPPA_OPENCL_HPP

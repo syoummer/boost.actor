@@ -28,12 +28,14 @@
 \******************************************************************************/
 
 
-#include "cppa/io/acceptor.hpp"
+#include "boost/actor/io/acceptor.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 namespace io {
 
 acceptor::~acceptor() { }
 
 } // namespace io
-} // namespace cppa
+} // namespace actor
+} // namespace boost

@@ -28,11 +28,11 @@
 \******************************************************************************/
 
 
-#include "cppa/config.hpp"
+#include "boost/actor/config.hpp"
 
-#if !defined(CPPA_LINUX) || defined(CPPA_POLL_IMPL)
+#if !defined(BOOST_ACTOR_LINUX) || defined(BOOST_ACTOR_POLL_IMPL)
 
-#ifndef CPPA_WINDOWS
+#ifndef BOOST_ACTOR_WINDOWS
 #include <poll.h>
 #define SOCKERR errno
 #else
@@ -47,13 +47,15 @@
 #endif
 
 
-#include "cppa/io/middleman_event_handler.hpp"
+#include "boost/actor/io/middleman_event_handler.hpp"
 
 #ifndef POLLRDHUP
 #define POLLRDHUP POLLHUP
 #endif
 
-namespace cppa { namespace io {
+namespace boost {
+namespace actor {
+namespace io {
 
 namespace {
 
@@ -70,7 +72,7 @@ short to_poll_bitmask(event_bitmask mask) {
         case event::read:  return POLLIN;
         case event::write: return POLLOUT;
         case event::both:  return (POLLIN|POLLOUT);
-        default: CPPA_CRITICAL("invalid event bitmask");
+        default: BOOST_ACTOR_CRITICAL("invalid event bitmask");
     }
 }
 
@@ -83,18 +85,18 @@ class middleman_event_handler_impl : public middleman_event_handler {
  protected:
 
     void poll_impl() {
-        CPPA_REQUIRE(m_pollset.empty() == false);
-        CPPA_REQUIRE(m_pollset.size() == m_meta.size());
+        BOOST_ACTOR_REQUIRE(m_pollset.empty() == false);
+        BOOST_ACTOR_REQUIRE(m_pollset.size() == m_meta.size());
         int presult = -1;
         while (presult < 0) {
-#ifdef CPPA_WINDOWS
+#ifdef BOOST_ACTOR_WINDOWS
             presult = ::WSAPoll(m_pollset.data(), m_pollset.size(), -1);
 #else
             presult = ::poll(m_pollset.data(),
                              static_cast<nfds_t>(m_pollset.size()),
                              -1);
 #endif
-            CPPA_LOG_DEBUG("poll() on " << num_sockets()
+            BOOST_ACTOR_LOG_DEBUG("poll() on " << num_sockets()
                            << " sockets returned " << presult);
             if (presult < 0) {
                 switch (SOCKERR) {
@@ -104,14 +106,14 @@ class middleman_event_handler_impl : public middleman_event_handler {
                         break;
                     }
                     case ENOMEM: {
-                        CPPA_LOG_ERROR("poll() failed for reason ENOMEM");
+                        BOOST_ACTOR_LOG_ERROR("poll() failed for reason ENOMEM");
                         // there's not much we can do other than try again
                         // in hope someone else releases memory
                         break;
                     }
                     default: {
                         perror("poll() failed");
-                        CPPA_CRITICAL("poll() failed");
+                        BOOST_ACTOR_CRITICAL("poll() failed");
                     }
                 }
             }
@@ -140,25 +142,25 @@ class middleman_event_handler_impl : public middleman_event_handler {
                 tmp.events = to_poll_bitmask(new_bitmask);
                 tmp.revents = 0;
                 m_pollset.insert(iter, tmp);
-                CPPA_LOG_DEBUG("inserted new element");
+                BOOST_ACTOR_LOG_DEBUG("inserted new element");
                 break;
             }
             case fd_meta_event::erase: {
-                CPPA_LOG_ERROR_IF(iter == last || iter->fd != fd,
+                BOOST_ACTOR_LOG_ERROR_IF(iter == last || iter->fd != fd,
                                   "m_meta and m_pollset out of sync; "
                                   "no element found for fd (cannot erase)");
                 if (iter != last && iter->fd == fd) {
-                    CPPA_LOG_DEBUG("erased element");
+                    BOOST_ACTOR_LOG_DEBUG("erased element");
                     m_pollset.erase(iter);
                 }
                 break;
             }
             case fd_meta_event::mod: {
-                CPPA_LOG_ERROR_IF(iter == last || iter->fd != fd,
+                BOOST_ACTOR_LOG_ERROR_IF(iter == last || iter->fd != fd,
                                   "m_meta and m_pollset out of sync; "
                                   "no element found for fd (cannot erase)");
                 if (iter != last && iter->fd == fd) {
-                    CPPA_LOG_DEBUG("updated bitmask");
+                    BOOST_ACTOR_LOG_DEBUG("updated bitmask");
                     iter->events = to_poll_bitmask(new_bitmask);
                 }
                 break;
@@ -178,10 +180,11 @@ std::unique_ptr<middleman_event_handler> middleman_event_handler::create() {
     return std::unique_ptr<middleman_event_handler>{new middleman_event_handler_impl};
 }
 
-} } // namespace cppa::io
+} } // namespace actor
+} // namespace boost::io
 
-#else // !defined(CPPA_LINUX) || defined(CPPA_POLL_IMPL)
+#else // !defined(BOOST_ACTOR_LINUX) || defined(BOOST_ACTOR_POLL_IMPL)
 
 int keep_compiler_happy_for_poll_impl() { return 42; }
 
-#endif // !defined(CPPA_LINUX) || defined(CPPA_POLL_IMPL)
+#endif // !defined(BOOST_ACTOR_LINUX) || defined(BOOST_ACTOR_POLL_IMPL)

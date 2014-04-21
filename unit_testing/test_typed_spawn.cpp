@@ -28,12 +28,12 @@
 \******************************************************************************/
 
 
-#include "cppa/cppa.hpp"
+#include "boost/actor/cppa.hpp"
 
 #include "test.hpp"
 
 using namespace std;
-using namespace cppa;
+using namespace boost::actor;
 
 namespace {
 
@@ -78,15 +78,15 @@ class typed_server3 : public server_type::base {
 void client(event_based_actor* self, actor parent, server_type serv) {
     self->sync_send(serv, my_request{0, 0}).then(
         [](bool value) -> int {
-            CPPA_CHECK_EQUAL(value, true);
+            BOOST_ACTOR_CHECK_EQUAL(value, true);
             return 42;
         }
     )
     .continue_with([=](int ival) {
-        CPPA_CHECK_EQUAL(ival, 42);
+        BOOST_ACTOR_CHECK_EQUAL(ival, 42);
         self->sync_send(serv, my_request{10, 20}).then(
             [=](bool value) {
-                CPPA_CHECK_EQUAL(value, false);
+                BOOST_ACTOR_CHECK_EQUAL(value, false);
                 self->send(parent, atom("passed"));
             }
         );
@@ -98,32 +98,32 @@ void test_typed_spawn(server_type ts) {
     self->send(ts, my_request{1, 2});
     self->receive(
         on_arg_match >> [](bool value) {
-            CPPA_CHECK_EQUAL(value, false);
+            BOOST_ACTOR_CHECK_EQUAL(value, false);
         }
     );
     self->send(ts, my_request{42, 42});
     self->receive(
         on_arg_match >> [](bool value) {
-            CPPA_CHECK_EQUAL(value, true);
+            BOOST_ACTOR_CHECK_EQUAL(value, true);
         }
     );
     self->sync_send(ts, my_request{10, 20}).await(
         [](bool value) {
-            CPPA_CHECK_EQUAL(value, false);
+            BOOST_ACTOR_CHECK_EQUAL(value, false);
         }
     );
     self->sync_send(ts, my_request{0, 0}).await(
         [](bool value) {
-            CPPA_CHECK_EQUAL(value, true);
+            BOOST_ACTOR_CHECK_EQUAL(value, true);
         }
     );
     self->spawn<monitored>(client, self, ts);
     self->receive(
-        on(atom("passed")) >> CPPA_CHECKPOINT_CB()
+        on(atom("passed")) >> BOOST_ACTOR_CHECKPOINT_CB()
     );
     self->receive(
         on_arg_match >> [](const down_msg& dmsg) {
-            CPPA_CHECK_EQUAL(dmsg.reason, exit_reason::normal);
+            BOOST_ACTOR_CHECK_EQUAL(dmsg.reason, exit_reason::normal);
         }
     );
     self->send_exit(ts, exit_reason::user_shutdown);
@@ -205,17 +205,17 @@ void test_event_testee() {
     self->send(et, "goodbye event testee!");
     typed_actor<replies_to<get_state_msg>::with<string>> sub_et = et;
     // $:: is the anonymous namespace
-    set<string> iface{"cppa::replies_to<$::get_state_msg>::with<@str>",
-                      "cppa::replies_to<@str>::with<void>",
-                      "cppa::replies_to<float>::with<void>",
-                      "cppa::replies_to<@i32>::with<@i32>"};
-    CPPA_CHECK_EQUAL(util::join(sub_et->interface()), util::join(iface));
+    set<string> iface{"boost::actor::replies_to<$::get_state_msg>::with<@str>",
+                      "boost::actor::replies_to<@str>::with<void>",
+                      "boost::actor::replies_to<float>::with<void>",
+                      "boost::actor::replies_to<@i32>::with<@i32>"};
+    BOOST_ACTOR_CHECK_EQUAL(util::join(sub_et->interface()), util::join(iface));
     self->send(sub_et, get_state_msg{});
     // we expect three 42s
     int i = 0;
     self->receive_for(i, 3) (
         [](int value) {
-            CPPA_CHECK_EQUAL(value, 42);
+            BOOST_ACTOR_CHECK_EQUAL(value, 42);
         }
     );
     self->receive (
@@ -223,13 +223,13 @@ void test_event_testee() {
             result = str;
         },
         after(chrono::minutes(1)) >> [&]() {
-            CPPA_LOGF_ERROR("event_testee does not reply");
+            BOOST_ACTOR_LOGF_ERROR("event_testee does not reply");
             throw runtime_error("event_testee does not reply");
         }
     );
     self->send_exit(et, exit_reason::user_shutdown);
     self->await_all_other_actors_done();
-    CPPA_CHECK_EQUAL(result, "wait4int");
+    BOOST_ACTOR_CHECK_EQUAL(result, "wait4int");
 }
 
 /******************************************************************************
@@ -266,11 +266,11 @@ void test_simple_string_reverter() {
     auto aut = self->spawn_typed<monitored>(simple_relay,
                                             spawn_typed(simple_string_reverter),
                                             true);
-    set<string> iface{"cppa::replies_to<@str>::with<@str>"};
-    CPPA_CHECK(aut->interface() == iface);
+    set<string> iface{"boost::actor::replies_to<@str>::with<@str>"};
+    BOOST_ACTOR_CHECK(aut->interface() == iface);
     self->sync_send(aut, "Hello World!").await(
         [](const string& answer) {
-            CPPA_CHECK_EQUAL(answer, "!dlroW olleH");
+            BOOST_ACTOR_CHECK_EQUAL(answer, "!dlroW olleH");
         }
     );
     anon_send_exit(aut, exit_reason::user_shutdown);
@@ -309,7 +309,7 @@ void test_sending_typed_actors() {
     self->send(spawn(foo), 10, aut);
     self->receive(
         on_arg_match >> [](int i) {
-            CPPA_CHECK_EQUAL(i, 100);
+            BOOST_ACTOR_CHECK_EQUAL(i, 100);
         }
     );
     self->send_exit(aut, exit_reason::user_shutdown);
@@ -322,7 +322,7 @@ void test_sending_typed_actors() {
  ******************************************************************************/
 
 int main() {
-    CPPA_TEST(test_typed_spawn);
+    BOOST_ACTOR_TEST(test_typed_spawn);
 
     // announce stuff
     announce<get_state_msg>();
@@ -331,39 +331,39 @@ int main() {
 
     // run test series with typed_server(1|2)
     test_typed_spawn(spawn_typed(typed_server1));
-    CPPA_CHECKPOINT();
+    BOOST_ACTOR_CHECKPOINT();
     await_all_actors_done();
-    CPPA_CHECKPOINT();
+    BOOST_ACTOR_CHECKPOINT();
     test_typed_spawn(spawn_typed(typed_server2));
-    CPPA_CHECKPOINT();
+    BOOST_ACTOR_CHECKPOINT();
     await_all_actors_done();
-    CPPA_CHECKPOINT();
+    BOOST_ACTOR_CHECKPOINT();
     {
         scoped_actor self;
         test_typed_spawn(spawn_typed<typed_server3>("hi there", self));
         self->receive(
-            on("hi there") >> CPPA_CHECKPOINT_CB()
+            on("hi there") >> BOOST_ACTOR_CHECKPOINT_CB()
         );
     }
-    CPPA_CHECKPOINT();
+    BOOST_ACTOR_CHECKPOINT();
     await_all_actors_done();
 
     // run test series with event_testee
     test_event_testee();
-    CPPA_CHECKPOINT();
+    BOOST_ACTOR_CHECKPOINT();
     await_all_actors_done();
 
     // run test series with string reverter
     test_simple_string_reverter();
-    CPPA_CHECKPOINT();
+    BOOST_ACTOR_CHECKPOINT();
     await_all_actors_done();
 
     // run test series with sending of typed actors
     test_sending_typed_actors();
-    CPPA_CHECKPOINT();
+    BOOST_ACTOR_CHECKPOINT();
     await_all_actors_done();
 
     // call it a day
     shutdown();
-    return CPPA_TEST_RESULT();
+    return BOOST_ACTOR_TEST_RESULT();
 }

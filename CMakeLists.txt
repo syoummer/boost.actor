@@ -131,7 +131,6 @@ file(GLOB LIBCPPA_HDRS "cppa/*.hpp"
                        "cppa/detail/*.hpp"
                        "cppa/intrusive/*.hpp"
                        "cppa/io/*.hpp"
-                       "cppa/opencl/*.hpp"
                        "cppa/qtsupport/*.hpp"
                        "cppa/util/*.hpp")
 
@@ -242,18 +241,6 @@ elseif (MINGW)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
   set(LD_FLAGS "ws2_32 -liphlpapi")
 endif ()
-
-if (ENABLE_OPENCL)
-  find_package(OPENCL REQUIRED)
-  set(LD_FLAGS ${LD_FLAGS} ${OPENCL_LIBRARIES})
-  set(INCLUDE_DIRS ${INCLUDE_DIRS} ${OPENCL_INCLUDE_DIR})
-  set(LIBCPPA_SRC
-      ${LIBCPPA_SRC} 
-      src/opencl/global.cpp
-      src/opencl/program.cpp
-      src/opencl/opencl_metainfo.cpp)
-  add_definitions(-DCPPA_OPENCL)
-endif (ENABLE_OPENCL)
 
 if (DISABLE_MEM_MANAGEMENT)
   add_definitions(-DCPPA_DISABLE_MEM_MANAGEMENT)

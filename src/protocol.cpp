@@ -28,14 +28,17 @@
 \******************************************************************************/
 
 
-#include "cppa/logging.hpp"
-#include "cppa/io/protocol.hpp"
-#include "cppa/io/middleman.hpp"
+#include "boost/actor/logging.hpp"
+#include "boost/actor/io/protocol.hpp"
+#include "boost/actor/io/middleman.hpp"
 
-namespace cppa { namespace io {
+namespace boost {
+namespace actor {
+namespace io {
 
 protocol::protocol(middleman* parent) : m_parent(parent) {
-    CPPA_REQUIRE(parent != nullptr);
+    BOOST_ACTOR_REQUIRE(parent != nullptr);
 }
 
-} } // namespace cppa::network
+} } // namespace actor
+} // namespace boost::network

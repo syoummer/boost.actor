@@ -35,29 +35,32 @@
 #include <stdexcept>
 #include <condition_variable>
 
-#include "cppa/cppa.hpp"
-#include "cppa/group.hpp"
-#include "cppa/to_string.hpp"
-#include "cppa/any_tuple.hpp"
-#include "cppa/serializer.hpp"
-#include "cppa/deserializer.hpp"
-#include "cppa/message_header.hpp"
-#include "cppa/event_based_actor.hpp"
+#include "boost/actor/cppa.hpp"
+#include "boost/actor/group.hpp"
+#include "boost/actor/to_string.hpp"
+#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/serializer.hpp"
+#include "boost/actor/deserializer.hpp"
+#include "boost/actor/message_header.hpp"
+#include "boost/actor/event_based_actor.hpp"
 
-#include "cppa/io/middleman.hpp"
+#include "boost/actor/io/middleman.hpp"
 
-#include "cppa/detail/raw_access.hpp"
-#include "cppa/detail/types_array.hpp"
-#include "cppa/detail/group_manager.hpp"
+#include "boost/actor/detail/raw_access.hpp"
+#include "boost/actor/detail/types_array.hpp"
+#include "boost/actor/detail/group_manager.hpp"
 
-#include "cppa/util/shared_spinlock.hpp"
-#include "cppa/util/shared_lock_guard.hpp"
-#include "cppa/util/upgrade_lock_guard.hpp"
-
-namespace {
+#include "boost/actor/util/shared_spinlock.hpp"
+#include "boost/actor/util/shared_lock_guard.hpp"
+#include "boost/actor/util/upgrade_lock_guard.hpp"
 
 using namespace std;
-using namespace cppa;
+
+namespace boost {
+namespace actor {
+namespace detail {
+
+namespace {
 
 typedef lock_guard<util::shared_spinlock> exclusive_guard;
 typedef util::shared_lock_guard<util::shared_spinlock> shared_guard;
@@ -72,8 +75,8 @@ class local_group : public abstract_group {
 
     void send_all_subscribers(msg_hdr_cref hdr, const any_tuple& msg,
                               execution_unit* eu) {
-        CPPA_LOG_TRACE(CPPA_TARG(hdr.sender, to_string) << ", "
-                       << CPPA_TARG(msg, to_string));
+        BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_TARG(hdr.sender, to_string) << ", "
+                       << BOOST_ACTOR_TARG(msg, to_string));
         shared_guard guard(m_mtx);
         for (auto& s : m_subscribers) {
             s->enqueue(hdr, msg, eu);
@@ -81,14 +84,14 @@ class local_group : public abstract_group {
     }
 
     void enqueue(msg_hdr_cref hdr, any_tuple msg, execution_unit* eu) override {
-        CPPA_LOG_TRACE(CPPA_TARG(hdr, to_string) << ", "
-                       << CPPA_TARG(msg, to_string));
+        BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_TARG(hdr, to_string) << ", "
+                       << BOOST_ACTOR_TARG(msg, to_string));
         send_all_subscribers(hdr, msg, eu);
         m_broker->enqueue(hdr, msg, eu);
     }
 
     pair<bool, size_t> add_subscriber(const channel& who) {
-        CPPA_LOG_TRACE(CPPA_TARG(who, to_string));
+        BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_TARG(who, to_string));
         exclusive_guard guard(m_mtx);
         if (who && m_subscribers.insert(who).second) {
             return {true, m_subscribers.size()};
@@ -97,14 +100,14 @@ class local_group : public abstract_group {
     }
 
     pair<bool, size_t> erase_subscriber(const channel& who) {
-        CPPA_LOG_TRACE(CPPA_TARG(who, to_string));
+        BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_TARG(who, to_string));
         exclusive_guard guard(m_mtx);
         auto success = m_subscribers.erase(who) > 0;
         return {success, m_subscribers.size()};
     }
 
     abstract_group::subscription subscribe(const channel& who) {
-        CPPA_LOG_TRACE(CPPA_TARG(who, to_string));
+        BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_TARG(who, to_string));
         if (add_subscriber(who).first) {
             return {who, this};
         }
@@ -112,7 +115,7 @@ class local_group : public abstract_group {
     }
 
     void unsubscribe(const channel& who) {
-        CPPA_LOG_TRACE(CPPA_TARG(who, to_string));
+        BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_TARG(who, to_string));
         erase_subscriber(who);
     }
 
@@ -143,22 +146,22 @@ class local_broker : public event_based_actor {
     behavior make_behavior() override {
         return (
             on(atom("JOIN"), arg_match) >> [=](const actor& other) {
-                CPPA_LOGC_TRACE("cppa::local_broker", "init$JOIN",
-                                CPPA_TARG(other, to_string));
+                BOOST_ACTOR_LOGC_TRACE("cppa::local_broker", "init$JOIN",
+                                BOOST_ACTOR_TARG(other, to_string));
                 if (other && m_acquaintances.insert(other).second) {
                     monitor(other);
                 }
             },
             on(atom("LEAVE"), arg_match) >> [=](const actor& other) {
-                CPPA_LOGC_TRACE("cppa::local_broker", "init$LEAVE",
-                                CPPA_TARG(other, to_string));
+                BOOST_ACTOR_LOGC_TRACE("cppa::local_broker", "init$LEAVE",
+                                BOOST_ACTOR_TARG(other, to_string));
                 if (other && m_acquaintances.erase(other) > 0) {
                     demonitor(other);
                 }
             },
             on(atom("FORWARD"), arg_match) >> [=](const any_tuple& what) {
-                CPPA_LOGC_TRACE("cppa::local_broker", "init$FORWARD",
-                                CPPA_TARG(what, to_string));
+                BOOST_ACTOR_LOGC_TRACE("cppa::local_broker", "init$FORWARD",
+                                BOOST_ACTOR_TARG(what, to_string));
                 // local forwarding
                 message_header hdr{last_sender(), nullptr};
                 m_group->send_all_subscribers(hdr, what, m_host);
@@ -167,8 +170,8 @@ class local_broker : public event_based_actor {
             },
             on_arg_match >> [=](const down_msg&) {
                 auto sender = last_sender();
-                CPPA_LOGC_TRACE("cppa::local_broker", "init$DOWN",
-                                CPPA_TARG(sender, to_string));
+                BOOST_ACTOR_LOGC_TRACE("cppa::local_broker", "init$DOWN",
+                                BOOST_ACTOR_TARG(sender, to_string));
                 if (sender) {
                     auto first = m_acquaintances.begin();
                     auto last = m_acquaintances.end();
@@ -180,8 +183,8 @@ class local_broker : public event_based_actor {
             },
             others() >> [=] {
                 auto msg = last_dequeued();
-                CPPA_LOGC_TRACE("cppa::local_broker", "init$others",
-                                CPPA_TARG(msg, to_string));
+                BOOST_ACTOR_LOGC_TRACE("cppa::local_broker", "init$others",
+                                BOOST_ACTOR_TARG(msg, to_string));
                 send_to_acquaintances(msg);
             }
         );
@@ -192,9 +195,9 @@ class local_broker : public event_based_actor {
     void send_to_acquaintances(const any_tuple& what) {
         // send to all remote subscribers
         auto sender = last_sender();
-        CPPA_LOG_DEBUG("forward message to " << m_acquaintances.size()
-                       << " acquaintances; " << CPPA_TSARG(sender)
-                       << ", " << CPPA_TSARG(what));
+        BOOST_ACTOR_LOG_DEBUG("forward message to " << m_acquaintances.size()
+                       << " acquaintances; " << BOOST_ACTOR_TSARG(sender)
+                       << ", " << BOOST_ACTOR_TSARG(what));
         for (auto& acquaintance : m_acquaintances) {
             acquaintance->enqueue({sender, acquaintance}, what, m_host);
         }
@@ -220,14 +223,14 @@ class local_group_proxy : public local_group {
     template<typename... Ts>
     local_group_proxy(actor remote_broker, Ts&&... args)
     : super(false, forward<Ts>(args)...) {
-        CPPA_REQUIRE(m_broker == invalid_actor);
-        CPPA_REQUIRE(remote_broker != invalid_actor);
+        BOOST_ACTOR_REQUIRE(m_broker == invalid_actor);
+        BOOST_ACTOR_REQUIRE(remote_broker != invalid_actor);
         m_broker = move(remote_broker);
         m_proxy_broker = spawn<proxy_broker, hidden>(this);
     }
 
     abstract_group::subscription subscribe(const channel& who) {
-        CPPA_LOG_TRACE(CPPA_TSARG(who));
+        BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_TSARG(who));
         auto res = add_subscriber(who);
         if (res.first) {
             if (res.second == 1) {
@@ -236,12 +239,12 @@ class local_group_proxy : public local_group {
             }
             return {who, this};
         }
-        CPPA_LOG_WARNING("channel " << to_string(who) << " already joined");
+        BOOST_ACTOR_LOG_WARNING("channel " << to_string(who) << " already joined");
         return {};
     }
 
     void unsubscribe(const channel& who) {
-        CPPA_LOG_TRACE(CPPA_TSARG(who));
+        BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_TSARG(who));
         auto res = erase_subscriber(who);
         if (res.first && res.second == 0) {
             // leave the remote source,
@@ -341,7 +344,7 @@ class local_group_module : public abstract_group::module {
     void serialize(local_group* ptr, serializer* sink) {
         // serialize identifier & broker
         sink->write_value(ptr->identifier());
-        CPPA_REQUIRE(ptr->broker() != invalid_actor);
+        BOOST_ACTOR_REQUIRE(ptr->broker() != invalid_actor);
         m_actor_utype->serialize(&ptr->broker(), sink);
     }
 
@@ -371,23 +374,23 @@ class remote_group : public abstract_group {
             : super(parent, move(id)), m_decorated(decorated) { }
 
     abstract_group::subscription subscribe(const channel& who) {
-        CPPA_LOG_TRACE(CPPA_TSARG(who));
+        BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_TSARG(who));
         return m_decorated->subscribe(who);
     }
 
     void unsubscribe(const channel&) {
-        CPPA_LOG_ERROR("should never be called");
+        BOOST_ACTOR_LOG_ERROR("should never be called");
     }
 
     void enqueue(msg_hdr_cref hdr, any_tuple msg, execution_unit* eu) override {
-        CPPA_LOG_TRACE("");
+        BOOST_ACTOR_LOG_TRACE("");
         m_decorated->enqueue(hdr, std::move(msg), eu);
     }
 
     void serialize(serializer* sink);
 
     void group_down() {
-        CPPA_LOG_TRACE("");
+        BOOST_ACTOR_LOG_TRACE("");
         group_down_msg gdm{group{this}};
         m_decorated->send_all_subscribers({invalid_actor_addr, nullptr},
                                           make_any_tuple(gdm), nullptr);
@@ -468,12 +471,12 @@ class remote_group_module : public abstract_group::module {
                 peer_map;
         auto peers = std::make_shared<peer_map>();
         m_map->m_worker = spawn<hidden>([=](event_based_actor* self) -> behavior {
-            CPPA_LOGC_TRACE(detail::demangle(typeid(*this_group)),
+            BOOST_ACTOR_LOGC_TRACE(detail::demangle(typeid(*this_group)),
                             "remote_group_module$worker",
                             "");
             return {
                 on(atom("FETCH"), arg_match) >> [=](const string& key) {
-                    CPPA_LOGF_TRACE("");
+                    BOOST_ACTOR_LOGF_TRACE("");
                     // format is group@host:port
                     auto pos1 = key.find('@');
                     auto pos2 = key.find(':');
@@ -520,7 +523,7 @@ class remote_group_module : public abstract_group::module {
                                 }
                             },
                             on<sync_timeout_msg>() >> [sm, key] {
-                                CPPA_LOGF_WARNING("'GET_GROUP' timed out");
+                                BOOST_ACTOR_LOGF_WARNING("'GET_GROUP' timed out");
                                 sm->put(key, nullptr);
                             }
                         );
@@ -543,7 +546,7 @@ class remote_group_module : public abstract_group::module {
                     }
                 },
                 others() >> [=] {
-                    CPPA_LOGF_ERROR("unexpected message: "
+                    BOOST_ACTOR_LOGF_ERROR("unexpected message: "
                                     << to_string(self->last_dequeued()));
                 }
             };
@@ -588,8 +591,6 @@ void remote_group::serialize(serializer* sink) {
 atomic<size_t> m_ad_hoc_id;
 
 } // namespace <anonymous>
-
-namespace cppa { namespace detail {
 
 group_manager::~group_manager() { }
 
@@ -639,4 +640,5 @@ abstract_group::module* group_manager::get_module(const string& module_name) {
     return  (i != m_mmap.end()) ? i->second.get() : nullptr;
 }
 
-} } // namespace cppa::detail
+} } // namespace actor
+} // namespace boost::detail

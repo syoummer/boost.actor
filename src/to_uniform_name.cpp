@@ -37,21 +37,21 @@
 #include <stdexcept>
 #include <algorithm>
 
-#include "cppa/atom.hpp"
-#include "cppa/actor.hpp"
-#include "cppa/abstract_group.hpp"
-#include "cppa/channel.hpp"
-#include "cppa/any_tuple.hpp"
-#include "cppa/any_tuple.hpp"
-#include "cppa/message_header.hpp"
+#include "boost/actor/atom.hpp"
+#include "boost/actor/actor.hpp"
+#include "boost/actor/abstract_group.hpp"
+#include "boost/actor/channel.hpp"
+#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/message_header.hpp"
 
-#include "cppa/util/algorithm.hpp"
-#include "cppa/util/scope_guard.hpp"
+#include "boost/actor/util/algorithm.hpp"
+#include "boost/actor/util/scope_guard.hpp"
 
-#include "cppa/detail/demangle.hpp"
-#include "cppa/detail/to_uniform_name.hpp"
-#include "cppa/detail/singleton_manager.hpp"
-#include "cppa/detail/uniform_type_info_map.hpp"
+#include "boost/actor/detail/demangle.hpp"
+#include "boost/actor/detail/to_uniform_name.hpp"
+#include "boost/actor/detail/singleton_manager.hpp"
+#include "boost/actor/detail/uniform_type_info_map.hpp"
 
 //#define DEBUG_PARSER
 
@@ -72,11 +72,13 @@
 #   define PARSER_OUT(unused1, unused2) static_cast<void>(0)
 #endif
 
+namespace boost {
+namespace actor {
+namespace detail {
+
 namespace {
 
 using namespace std;
-using namespace cppa;
-using namespace detail;
 
 struct platform_int_mapping { const char* name; size_t size; bool is_signed; };
 
@@ -249,7 +251,7 @@ class parse_tree {
         }
         if (result.m_children.empty()) {
             // no children -> leaf node; parse non-template part now
-            CPPA_REQUIRE(subranges.size() < 2);
+            BOOST_ACTOR_REQUIRE(subranges.size() < 2);
             vector<range> non_template_ranges;
             if (subranges.empty()) {
                 non_template_ranges.emplace_back(first, last);
@@ -406,8 +408,6 @@ const char s_an[] = "$";
 
 } // namespace <anonymous>
 
-namespace cppa { namespace detail {
-
 std::string to_uniform_name(const std::string& dname) {
     auto r = parse_tree::parse(begin(dname), end(dname)).compile();
     // replace compiler-dependent "anonmyous namespace" with "@_"
@@ -419,4 +419,6 @@ std::string to_uniform_name(const std::type_info& tinfo) {
     return to_uniform_name(demangle(tinfo.name()));
 }
 
-} } // namespace detail
+} // namespace detail
+} // namespace actor
+} // namespace boost

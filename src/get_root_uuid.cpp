@@ -28,14 +28,14 @@
 \******************************************************************************/
 
 
-#include "cppa/config.hpp"
-#include "cppa/util/get_root_uuid.hpp"
+#include "boost/actor/config.hpp"
+#include "boost/actor/util/get_root_uuid.hpp"
 
 namespace {
 constexpr char uuid_format[] = "FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF";
 } // namespace <anonmyous>
 
-#ifdef CPPA_MACOS
+#ifdef BOOST_ACTOR_MACOS
 
 namespace {
 
@@ -50,7 +50,8 @@ constexpr const char* s_get_uuid = "/usr/sbin/diskutil info / | "
 
 } // namespace <anonymous>
 
-namespace cppa { namespace util {
+namespace boost {
+namespace actor { namespace util {
 
 std::string get_root_uuid() {
     char cbuf[100];
@@ -65,9 +66,10 @@ std::string get_root_uuid() {
     return uuid;
 }
 
-} } // namespace cppa::util
+} } // namespace actor
+} // namespace boost::util
 
-#elif defined(CPPA_LINUX)
+#elif defined(BOOST_ACTOR_LINUX)
 
 #include <vector>
 #include <string>
@@ -86,7 +88,7 @@ std::string get_root_uuid() {
 #include <unistd.h>
 #include <iostream>
 
-#include "cppa/util/algorithm.hpp"
+#include "boost/actor/util/algorithm.hpp"
 
 using namespace std;
 
@@ -116,7 +118,8 @@ bool operator!=(const columns_iterator& lhs, const columns_iterator& rhs) {
     return !(lhs == rhs);
 }
 
-namespace cppa { namespace util {
+namespace boost {
+namespace actor { namespace util {
 
 std::string get_root_uuid() {
     int sck = socket(AF_INET, SOCK_DGRAM, 0);
@@ -185,9 +188,10 @@ std::string get_root_uuid() {
     return uuid;
 }
 
-} } // namespace cppa::util
+} } // namespace actor
+} // namespace boost::util
 
-#elif defined(CPPA_WINDOWS)
+#elif defined(BOOST_ACTOR_WINDOWS)
 
 #include <string>
 #include <iostream>
@@ -198,7 +202,8 @@ std::string get_root_uuid() {
 
 using namespace std;
 
-namespace cppa { namespace util {
+namespace boost {
+namespace actor { namespace util {
 
 namespace { constexpr size_t max_drive_name = MAX_PATH; }
 
@@ -247,7 +252,8 @@ std::string get_root_uuid() {
     return uuid;
 }
 
-} } // namespace cppa::util
+} } // namespace actor
+} // namespace boost::util
 
-#endif // CPPA_WINDOWS
+#endif // BOOST_ACTOR_WINDOWS
 

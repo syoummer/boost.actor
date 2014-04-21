@@ -28,14 +28,15 @@
 \******************************************************************************/
 
 
-#include "cppa/logging.hpp"
-#include "cppa/scheduler.hpp"
-#include "cppa/singletons.hpp"
-#include "cppa/blocking_actor.hpp"
+#include "boost/actor/logging.hpp"
+#include "boost/actor/scheduler.hpp"
+#include "boost/actor/singletons.hpp"
+#include "boost/actor/blocking_actor.hpp"
 
-#include "cppa/detail/actor_registry.hpp"
+#include "boost/actor/detail/actor_registry.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 void blocking_actor::await_all_other_actors_done() {
     get_actor_registry()->await_running_count_equal(1);
@@ -46,4 +47,5 @@ void blocking_actor::quit(std::uint32_t reason) {
     throw actor_exited(reason);
 }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

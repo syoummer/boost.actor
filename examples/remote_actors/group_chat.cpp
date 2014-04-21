@@ -15,12 +15,12 @@
 #include <sstream>
 #include <iostream>
 
-#include "cppa/opt.hpp"
-#include "cppa/cppa.hpp"
+#include "boost/actor/opt.hpp"
+#include "boost/actor/cppa.hpp"
 
 using namespace std;
-using namespace cppa;
-using namespace cppa::placeholders;
+using namespace boost::actor;
+using namespace boost::actor::placeholders;
 
 struct line { string str; };
 

@@ -5,12 +5,12 @@
 #include <type_traits>
 
 #include "test.hpp"
-#include "cppa/detail/cs_thread.hpp"
-#include "cppa/detail/yield_interface.hpp"
+#include "boost/actor/detail/cs_thread.hpp"
+#include "boost/actor/detail/yield_interface.hpp"
 
-using namespace cppa;
-using namespace cppa::util;
-using namespace cppa::detail;
+using namespace boost::actor;
+using namespace boost::actor::util;
+using namespace boost::actor::detail;
 
 struct pseudo_worker {
 
@@ -38,10 +38,10 @@ void coroutine [[noreturn]] (void* worker) {
 }
 
 int main() {
-    CPPA_TEST(test_yield_interface);
-#   ifdef CPPA_DISABLE_CONTEXT_SWITCHING
-    CPPA_PRINT("WARNING: context switching was explicitly "
-               "disabled by defining CPPA_DISABLE_CONTEXT_SWITCHING");
+    BOOST_ACTOR_TEST(test_yield_interface);
+#   ifdef BOOST_ACTOR_DISABLE_CONTEXT_SWITCHING
+    BOOST_ACTOR_PRINT("WARNING: context switching was explicitly "
+               "disabled by defining BOOST_ACTOR_DISABLE_CONTEXT_SWITCHING");
 #   else
     cs_thread fself;
     pseudo_worker worker;
@@ -54,9 +54,9 @@ int main() {
         ++i;
     }
     while (ys != yield_state::done && i < 12);
-    CPPA_CHECK_EQUAL(to_string(ys), "yield_state::done");
-    CPPA_CHECK_EQUAL(worker.m_count, 10);
-    CPPA_CHECK_EQUAL(i, 12);
+    BOOST_ACTOR_CHECK_EQUAL(to_string(ys), "yield_state::done");
+    BOOST_ACTOR_CHECK_EQUAL(worker.m_count, 10);
+    BOOST_ACTOR_CHECK_EQUAL(i, 12);
 #   endif
-    return CPPA_TEST_RESULT();
+    return BOOST_ACTOR_TEST_RESULT();
 }

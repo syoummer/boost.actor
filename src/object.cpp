@@ -30,24 +30,25 @@
 
 #include <algorithm>
 
-#include "cppa/unit.hpp"
-#include "cppa/config.hpp"
-#include "cppa/object.hpp"
-#include "cppa/uniform_type_info.hpp"
+#include "boost/actor/unit.hpp"
+#include "boost/actor/config.hpp"
+#include "boost/actor/object.hpp"
+#include "boost/actor/uniform_type_info.hpp"
 
-#include "cppa/detail/types_array.hpp"
+#include "boost/actor/detail/types_array.hpp"
+
+namespace boost {
+namespace actor {
 
 namespace {
 
-cppa::unit_t s_unit;
+unit_t s_unit;
 
-inline const cppa::uniform_type_info* unit_type() {
-    return cppa::detail::static_types_array<cppa::unit_t>::arr[0];
+inline const uniform_type_info* unit_type() {
+    return detail::static_types_array<unit_t>::arr[0];
 }
 
 } // namespace <anonymous>
-
-namespace cppa {
 
 void object::swap(object& other) {
     std::swap(m_value, other.m_value);
@@ -56,8 +57,8 @@ void object::swap(object& other) {
 
 object::object(void* val, const uniform_type_info* utype)
     : m_value(val), m_type(utype) {
-    CPPA_REQUIRE(val != nullptr);
-    CPPA_REQUIRE(utype != nullptr);
+    BOOST_ACTOR_REQUIRE(val != nullptr);
+    BOOST_ACTOR_REQUIRE(utype != nullptr);
 }
 
 object::object() : m_value(&s_unit), m_type(unit_type()) {
@@ -110,4 +111,5 @@ void* object::mutable_value() {
     return m_value;
 }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

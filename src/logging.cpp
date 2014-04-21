@@ -36,22 +36,23 @@
 #include <pthread.h>
 #include <condition_variable>
 
-#ifndef CPPA_WINDOWS
+#ifndef BOOST_ACTOR_WINDOWS
 #include <unistd.h>
 #include <sys/types.h>
 #endif
 
-#include "cppa/cppa.hpp"
-#include "cppa/logging.hpp"
-#include "cppa/actor_proxy.hpp"
+#include "boost/actor/cppa.hpp"
+#include "boost/actor/logging.hpp"
+#include "boost/actor/actor_proxy.hpp"
 
-#include "cppa/detail/singleton_manager.hpp"
+#include "boost/actor/detail/singleton_manager.hpp"
 
-#include "cppa/intrusive/single_reader_queue.hpp"
+#include "boost/actor/intrusive/single_reader_queue.hpp"
 
 using namespace std;
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 namespace {
 
@@ -85,7 +86,7 @@ class logging_impl : public logging {
         };
         m_thread = thread([this] { (*this)(); });
         std::string msg = "ENTRY log level = ";
-        msg += log_level_lookup_table[CPPA_LOG_LEVEL];
+        msg += log_level_lookup_table[BOOST_ACTOR_LOG_LEVEL];
         log("TRACE", "logging", "run", __FILE__, __LINE__, msg);
     }
 
@@ -182,4 +183,5 @@ actor_id logging::set_aid(actor_id aid) {
     return prev;
 }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

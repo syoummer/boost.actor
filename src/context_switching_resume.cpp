@@ -28,19 +28,20 @@
 \******************************************************************************/
 
 
-#include "cppa/policy/context_switching_resume.hpp"
-#ifndef CPPA_DISABLE_CONTEXT_SWITCHING
+#include "boost/actor/policy/context_switching_resume.hpp"
+#ifndef BOOST_ACTOR_DISABLE_CONTEXT_SWITCHING
 
 #include <iostream>
 
-#include "cppa/cppa.hpp"
-#include "cppa/exception.hpp"
+#include "boost/actor/cppa.hpp"
+#include "boost/actor/exception.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 namespace policy {
 
 void context_switching_resume::trampoline(void* this_ptr) {
-    CPPA_LOGF_TRACE(CPPA_ARG(this_ptr));
+    BOOST_ACTOR_LOGF_TRACE(BOOST_ACTOR_ARG(this_ptr));
     auto self = reinterpret_cast<blocking_actor*>(this_ptr);
     auto shut_actor_down = [self](std::uint32_t reason) {
         if (self->planned_exit_reason() == exit_reason::not_exited) {
@@ -60,16 +61,18 @@ void context_switching_resume::trampoline(void* this_ptr) {
         shut_actor_down(exit_reason::unhandled_exception);
     }
     std::atomic_thread_fence(std::memory_order_seq_cst);
-    CPPA_LOGF_DEBUG("done, yield() back to execution unit");;
+    BOOST_ACTOR_LOGF_DEBUG("done, yield() back to execution unit");;
     detail::yield(detail::yield_state::done);
 }
 
 } // namespace policy
-} // namespace cppa
+} // namespace actor
+} // namespace boost
 
-#else // ifdef CPPA_DISABLE_CONTEXT_SWITCHING
+#else // ifdef BOOST_ACTOR_DISABLE_CONTEXT_SWITCHING
 
-namespace cppa {
+namespace boost {
+namespace actor {
 namespace policy {
 
 void context_switching_resume::trampoline(void*) {
@@ -77,6 +80,7 @@ void context_switching_resume::trampoline(void*) {
 }
 
 } // namespace policy
-} // namespace cppa
+} // namespace actor
+} // namespace boost
 
-#endif // ifdef CPPA_DISABLE_CONTEXT_SWITCHING
+#endif // ifdef BOOST_ACTOR_DISABLE_CONTEXT_SWITCHING

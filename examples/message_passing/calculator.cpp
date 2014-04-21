@@ -5,11 +5,11 @@
 
 #include <cassert>
 #include <iostream>
-#include "cppa/cppa.hpp"
+#include "boost/actor/cppa.hpp"
 
 using std::cout;
 using std::endl;
-using namespace cppa;
+using namespace boost::actor;
 
 // implementation using the blocking API
 void blocking_math_fun(blocking_actor* self) {

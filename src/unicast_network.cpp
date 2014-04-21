@@ -28,7 +28,7 @@
 \******************************************************************************/
 
 
-#include "cppa/config.hpp"
+#include "boost/actor/config.hpp"
 
 #include <ios> // ios_base::failure
 #include <list>
@@ -38,29 +38,29 @@
 #include <stdexcept>
 #include <condition_variable>
 
-#ifndef CPPA_WINDOWS
+#ifndef BOOST_ACTOR_WINDOWS
 #include <netinet/tcp.h>
 #endif
 
-#include "cppa/cppa.hpp"
-#include "cppa/atom.hpp"
-#include "cppa/to_string.hpp"
-#include "cppa/exception.hpp"
-#include "cppa/singletons.hpp"
-#include "cppa/exit_reason.hpp"
-#include "cppa/binary_serializer.hpp"
-#include "cppa/binary_deserializer.hpp"
+#include "boost/actor/cppa.hpp"
+#include "boost/actor/atom.hpp"
+#include "boost/actor/to_string.hpp"
+#include "boost/actor/exception.hpp"
+#include "boost/actor/singletons.hpp"
+#include "boost/actor/exit_reason.hpp"
+#include "boost/actor/binary_serializer.hpp"
+#include "boost/actor/binary_deserializer.hpp"
 
-#include "cppa/detail/raw_access.hpp"
+#include "boost/actor/detail/raw_access.hpp"
 
-#include "cppa/intrusive/single_reader_queue.hpp"
+#include "boost/actor/intrusive/single_reader_queue.hpp"
 
-#include "cppa/io/acceptor.hpp"
-#include "cppa/io/middleman.hpp"
-#include "cppa/io/peer_acceptor.hpp"
-#include "cppa/io/ipv4_acceptor.hpp"
-#include "cppa/io/ipv4_io_stream.hpp"
-#include "cppa/io/remote_actor_proxy.hpp"
+#include "boost/actor/io/acceptor.hpp"
+#include "boost/actor/io/middleman.hpp"
+#include "boost/actor/io/peer_acceptor.hpp"
+#include "boost/actor/io/ipv4_acceptor.hpp"
+#include "boost/actor/io/ipv4_io_stream.hpp"
+#include "boost/actor/io/remote_actor_proxy.hpp"
 
 namespace {
 
@@ -72,7 +72,8 @@ typedef std::set<std::string> string_set;
 
 } // namespace <anonymous>
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 using namespace io;
 
@@ -100,7 +101,7 @@ namespace detail {
 void publish_impl(abstract_actor_ptr ptr, std::unique_ptr<acceptor> aptr) {
     // begin the scenes, we serialze/deserialize as actor
     actor whom{raw_access::unsafe_cast(ptr.get())};
-    CPPA_LOGF_TRACE(CPPA_TARG(whom, to_string) << ", " << CPPA_MARG(aptr, get));
+    BOOST_ACTOR_LOGF_TRACE(BOOST_ACTOR_TARG(whom, to_string) << ", " << BOOST_ACTOR_MARG(aptr, get));
     if (!whom) return;
     get_actor_registry()->put(whom->id(), detail::raw_access::get(whom));
     auto mm = get_middleman();
@@ -111,7 +112,7 @@ void publish_impl(abstract_actor_ptr ptr, std::unique_ptr<acceptor> aptr) {
 }
 
 abstract_actor_ptr remote_actor_impl(stream_ptr_pair io, string_set expected) {
-    CPPA_LOGF_TRACE("io{" << io.first.get() << ", " << io.second.get() << "}");
+    BOOST_ACTOR_LOGF_TRACE("io{" << io.first.get() << ", " << io.second.get() << "}");
     auto mm = get_middleman();
     auto pinf = mm->node();
     std::uint32_t process_id = pinf->process_id();
@@ -193,7 +194,7 @@ abstract_actor_ptr remote_actor_impl(stream_ptr_pair io, string_set expected) {
     auto pinfptr = make_counted<node_id>(peer_pid, peer_node_id);
     if (*pinf == *pinfptr) {
         // this is a local actor, not a remote actor
-        CPPA_LOGF_WARNING("remote_actor() called to access a local actor");
+        BOOST_ACTOR_LOGF_WARNING("remote_actor() called to access a local actor");
         auto ptr = get_actor_registry()->get(remote_aid);
         return ptr;
     }
@@ -202,18 +203,19 @@ abstract_actor_ptr remote_actor_impl(stream_ptr_pair io, string_set expected) {
     std::condition_variable qcv;
     intrusive::single_reader_queue<remote_actor_result> q;
     mm->run_later([mm, io, pinfptr, remote_aid, &q, &qmtx, &qcv] {
-        CPPA_LOGC_TRACE("cppa",
+        BOOST_ACTOR_LOGC_TRACE("cppa",
                         "remote_actor$create_connection", "");
         auto pp = mm->get_peer(*pinfptr);
-        CPPA_LOGF_INFO_IF(pp, "connection already exists (re-use old one)");
+        BOOST_ACTOR_LOGF_INFO_IF(pp, "connection already exists (re-use old one)");
         if (!pp) mm->new_peer(io.first, io.second, pinfptr);
         auto res = mm->get_namespace().get_or_put(pinfptr, remote_aid);
         q.synchronized_enqueue(qmtx, qcv, new remote_actor_result{0, res});
     });
     std::unique_ptr<remote_actor_result> result(q.synchronized_pop(qmtx, qcv));
-    CPPA_LOGF_DEBUG(CPPA_MARG(result, get));
+    BOOST_ACTOR_LOGF_DEBUG(BOOST_ACTOR_MARG(result, get));
     return raw_access::get(result->value);
 }
 
 } // namespace detail
-} // namespace cppa
+} // namespace actor
+} // namespace boost

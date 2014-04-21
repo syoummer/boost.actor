@@ -36,22 +36,22 @@
 
 #include <arpa/inet.h>
 
-#include "cppa/cppa.hpp"
-#include "cppa/logging.hpp"
-#include "cppa/singletons.hpp"
+#include "boost/actor/cppa.hpp"
+#include "boost/actor/logging.hpp"
+#include "boost/actor/singletons.hpp"
 
-#include "cppa/io/broker.hpp"
-#include "cppa/io/middleman.hpp"
-#include "cppa/io/ipv4_acceptor.hpp"
-#include "cppa/io/ipv4_io_stream.hpp"
+#include "boost/actor/io/broker.hpp"
+#include "boost/actor/io/middleman.hpp"
+#include "boost/actor/io/ipv4_acceptor.hpp"
+#include "boost/actor/io/ipv4_io_stream.hpp"
 
-CPPA_PUSH_WARNINGS
+BOOST_ACTOR_PUSH_WARNINGS
 #include "pingpong.pb.h"
-CPPA_POP_WARNINGS
+BOOST_ACTOR_POP_WARNINGS
 
 using namespace std;
-using namespace cppa;
-using namespace cppa::io;
+using namespace boost::actor;
+using namespace boost::actor::io;
 
 void print_on_exit(const actor& ptr, const std::string& name) {
     ptr->attach_functor([=](std::uint32_t reason) {

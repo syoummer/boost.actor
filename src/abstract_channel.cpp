@@ -28,10 +28,12 @@
 \******************************************************************************/
 
 
-#include "cppa/abstract_channel.hpp"
+#include "boost/actor/abstract_channel.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 abstract_channel::~abstract_channel() { }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

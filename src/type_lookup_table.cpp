@@ -30,12 +30,13 @@
 
 #include <algorithm>
 
-#include "cppa/singletons.hpp"
-#include "cppa/type_lookup_table.hpp"
+#include "boost/actor/singletons.hpp"
+#include "boost/actor/type_lookup_table.hpp"
 
-#include "cppa/detail/uniform_type_info_map.hpp"
+#include "boost/actor/detail/uniform_type_info_map.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 type_lookup_table::type_lookup_table() {
     auto uti_map = get_uniform_type_info_map();
@@ -82,7 +83,7 @@ std::uint32_t type_lookup_table::id_of(pointer uti) const {
 
 
 void type_lookup_table::emplace(std::uint32_t id, pointer instance) {
-    CPPA_REQUIRE(instance != nullptr);
+    BOOST_ACTOR_REQUIRE(instance != nullptr);
     value_type kvp{id, instance};
     auto i = find(id);
     if (i == m_data.end()) m_data.push_back(std::move(kvp));
@@ -107,4 +108,5 @@ std::uint32_t type_lookup_table::max_id() const {
 }
 
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

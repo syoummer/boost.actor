@@ -31,18 +31,20 @@
 #include <iostream>
 #include <exception>
 
-#include "cppa/logging.hpp"
-#include "cppa/node_id.hpp"
-#include "cppa/to_string.hpp"
+#include "boost/actor/logging.hpp"
+#include "boost/actor/node_id.hpp"
+#include "boost/actor/to_string.hpp"
 
-#include "cppa/io/peer.hpp"
-#include "cppa/io/peer_acceptor.hpp"
+#include "boost/actor/io/peer.hpp"
+#include "boost/actor/io/peer_acceptor.hpp"
 
-#include "cppa/detail/demangle.hpp"
+#include "boost/actor/detail/demangle.hpp"
 
 using namespace std;
 
-namespace cppa { namespace io {
+namespace boost {
+namespace actor {
+namespace io {
 
 peer_acceptor::peer_acceptor(middleman* parent,
                              acceptor_uptr aur,
@@ -52,12 +54,12 @@ peer_acceptor::peer_acceptor(middleman* parent,
         , m_aa(addr), m_sigs(std::move(sigs)) { }
 
 continue_reading_result peer_acceptor::continue_reading() {
-    CPPA_LOG_TRACE("");
+    BOOST_ACTOR_LOG_TRACE("");
     for (;;) {
         optional<stream_ptr_pair> opt{none};
         try { opt = m_ptr->try_accept_connection(); }
         catch (exception& e) {
-            CPPA_LOG_ERROR(to_verbose_string(e));
+            BOOST_ACTOR_LOG_ERROR(to_verbose_string(e));
             static_cast<void>(e); // keep compiler happy
             return continue_reading_result::failure;
         }
@@ -83,7 +85,7 @@ continue_reading_result peer_acceptor::continue_reading() {
                 m_parent->new_peer(pair.first, pair.second);
             }
             catch (exception& e) {
-                CPPA_LOG_ERROR(to_verbose_string(e));
+                BOOST_ACTOR_LOG_ERROR(to_verbose_string(e));
                 cerr << "*** exception while sending actor and process id; "
                      << to_verbose_string(e)
                      << endl;
@@ -94,7 +96,7 @@ continue_reading_result peer_acceptor::continue_reading() {
 }
 
 void peer_acceptor::io_failed(event_bitmask) {
-    CPPA_LOG_INFO("removed peer_acceptor "
+    BOOST_ACTOR_LOG_INFO("removed peer_acceptor "
                   << this << " due to an IO failure");
 }
 
@@ -103,4 +105,5 @@ void peer_acceptor::dispose() {
     delete this;
 }
 
-} } // namespace cppa::network
+} } // namespace actor
+} // namespace boost::network

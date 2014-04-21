@@ -32,22 +32,24 @@
 #include <limits>
 #include <stdexcept>
 
-#include "cppa/logging.hpp"
-#include "cppa/attachable.hpp"
-#include "cppa/exit_reason.hpp"
-#include "cppa/detail/actor_registry.hpp"
-#include "cppa/util/shared_lock_guard.hpp"
-#include "cppa/util/upgrade_lock_guard.hpp"
+#include "boost/actor/logging.hpp"
+#include "boost/actor/attachable.hpp"
+#include "boost/actor/exit_reason.hpp"
+#include "boost/actor/detail/actor_registry.hpp"
+#include "boost/actor/util/shared_lock_guard.hpp"
+#include "boost/actor/util/upgrade_lock_guard.hpp"
+
+namespace boost {
+namespace actor {
+namespace detail {
 
 namespace {
 
-typedef std::lock_guard<cppa::util::shared_spinlock> exclusive_guard;
-typedef cppa::util::shared_lock_guard<cppa::util::shared_spinlock> shared_guard;
-typedef cppa::util::upgrade_lock_guard<cppa::util::shared_spinlock> upgrade_guard;
+typedef std::lock_guard<util::shared_spinlock> exclusive_guard;
+typedef util::shared_lock_guard<util::shared_spinlock> shared_guard;
+typedef util::upgrade_lock_guard<util::shared_spinlock> upgrade_guard;
 
 } // namespace <anonymous>
-
-namespace cppa { namespace detail {
 
 actor_registry::~actor_registry() { }
 
@@ -59,7 +61,7 @@ actor_registry::value_type actor_registry::get_entry(actor_id key) const {
     if (i != m_entries.end()) {
         return i->second;
     }
-    CPPA_LOG_DEBUG("key not found: " << key);
+    BOOST_ACTOR_LOG_DEBUG("key not found: " << key);
     return {nullptr, exit_reason::not_exited};
 }
 
@@ -77,7 +79,7 @@ void actor_registry::put(actor_id key, const abstract_actor_ptr& value) {
         }
     }
     if (add_attachable) {
-        CPPA_LOG_INFO("added actor with ID " << key);
+        BOOST_ACTOR_LOG_INFO("added actor with ID " << key);
         struct eraser : attachable {
             actor_id m_id;
             actor_registry* m_registry;
@@ -98,7 +100,7 @@ void actor_registry::erase(actor_id key, std::uint32_t reason) {
     auto i = m_entries.find(key);
     if (i != m_entries.end()) {
         auto& entry = i->second;
-        CPPA_LOG_INFO("erased actor with ID " << key << ", reason " << reason);
+        BOOST_ACTOR_LOG_INFO("erased actor with ID " << key << ", reason " << reason);
         entry.first = nullptr;
         entry.second = reason;
     }
@@ -109,8 +111,8 @@ std::uint32_t actor_registry::next_id() {
 }
 
 void actor_registry::inc_running() {
-#   if CPPA_LOG_LEVEL >= CPPA_DEBUG
-    CPPA_LOG_DEBUG("new value = " << ++m_running);
+#   if BOOST_ACTOR_LOG_LEVEL >= BOOST_ACTOR_DEBUG
+    BOOST_ACTOR_LOG_DEBUG("new value = " << ++m_running);
 #   else
     ++m_running;
 #   endif
@@ -130,16 +132,17 @@ void actor_registry::dec_running() {
         std::unique_lock<std::mutex> guard(m_running_mtx);
         m_running_cv.notify_all();
     }
-    CPPA_LOG_DEBUG(CPPA_ARG(new_val));
+    BOOST_ACTOR_LOG_DEBUG(BOOST_ACTOR_ARG(new_val));
 }
 
 void actor_registry::await_running_count_equal(size_t expected) {
-    CPPA_LOG_TRACE(CPPA_ARG(expected));
+    BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_ARG(expected));
     std::unique_lock<std::mutex> guard{m_running_mtx};
     while (m_running != expected) {
-        CPPA_LOG_DEBUG("count = " << m_running.load());
+        BOOST_ACTOR_LOG_DEBUG("count = " << m_running.load());
         m_running_cv.wait(guard);
     }
 }
 
-} } // namespace cppa::detail
+} } // namespace actor
+} // namespace boost::detail

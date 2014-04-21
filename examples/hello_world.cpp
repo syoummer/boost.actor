@@ -1,9 +1,9 @@
 #include <string>
 #include <iostream>
-#include "cppa/cppa.hpp"
+#include "boost/actor/cppa.hpp"
 
 using namespace std;
-using namespace cppa;
+using namespace boost::actor;
 
 behavior mirror(event_based_actor* self) {
     // return the (initial) actor behavior

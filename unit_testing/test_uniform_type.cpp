@@ -15,16 +15,16 @@
 
 #include "test.hpp"
 
-#include "cppa/atom.hpp"
-#include "cppa/announce.hpp"
-#include "cppa/any_tuple.hpp"
-#include "cppa/serializer.hpp"
-#include "cppa/deserializer.hpp"
-#include "cppa/uniform_type_info.hpp"
-#include "cppa/detail/types_array.hpp"
-#include "cppa/message_header.hpp"
+#include "boost/actor/atom.hpp"
+#include "boost/actor/announce.hpp"
+#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/serializer.hpp"
+#include "boost/actor/deserializer.hpp"
+#include "boost/actor/uniform_type_info.hpp"
+#include "boost/actor/detail/types_array.hpp"
+#include "boost/actor/message_header.hpp"
 
-#include "cppa/util/type_traits.hpp"
+#include "boost/actor/util/type_traits.hpp"
 
 using std::cout;
 using std::endl;
@@ -42,32 +42,32 @@ inline bool operator==(const foo& lhs, const foo& rhs) {
 
 } // namespace <anonymous>
 
-using namespace cppa;
+using namespace boost::actor;
 
 int main() {
-    CPPA_TEST(test_uniform_type);
+    BOOST_ACTOR_TEST(test_uniform_type);
     auto announce1 = announce<foo>(&foo::value);
     auto announce2 = announce<foo>(&foo::value);
     auto announce3 = announce<foo>(&foo::value);
     auto announce4 = announce<foo>(&foo::value);
-    CPPA_CHECK(announce1 == announce2);
-    CPPA_CHECK(announce1 == announce3);
-    CPPA_CHECK(announce1 == announce4);
-    CPPA_CHECK_EQUAL(announce1->name(), "$::foo");
+    BOOST_ACTOR_CHECK(announce1 == announce2);
+    BOOST_ACTOR_CHECK(announce1 == announce3);
+    BOOST_ACTOR_CHECK(announce1 == announce4);
+    BOOST_ACTOR_CHECK_EQUAL(announce1->name(), "$::foo");
     {
         //bar.create_object();
         object obj1 = uniform_typeid<foo>()->create();
         object obj2(obj1);
-        CPPA_CHECK(obj1 == obj2);
+        BOOST_ACTOR_CHECK(obj1 == obj2);
         get_ref<foo>(obj1).value = 42;
-        CPPA_CHECK(obj1 != obj2);
-        CPPA_CHECK_EQUAL(get<foo>(obj1).value, 42);
-        CPPA_CHECK_EQUAL(get<foo>(obj2).value, 0);
+        BOOST_ACTOR_CHECK(obj1 != obj2);
+        BOOST_ACTOR_CHECK_EQUAL(get<foo>(obj1).value, 42);
+        BOOST_ACTOR_CHECK_EQUAL(get<foo>(obj2).value, 0);
     }
     {
         auto uti = uniform_typeid<atom_value>();
-        CPPA_CHECK(uti != nullptr);
-        CPPA_CHECK_EQUAL(uti->name(), "@atom");
+        BOOST_ACTOR_CHECK(uti != nullptr);
+        BOOST_ACTOR_CHECK_EQUAL(uti->name(), "@atom");
     }
     // these types (and only those) are present if
     // the uniform_type_info implementation is correct
@@ -120,13 +120,13 @@ int main() {
         found.insert(tinfo->name());
     }
     // compare the two sets
-    CPPA_CHECK_EQUAL(expected.size(), found.size());
+    BOOST_ACTOR_CHECK_EQUAL(expected.size(), found.size());
     bool expected_equals_found = false;
     if (expected.size() == found.size()) {
         expected_equals_found = std::equal(found.begin(),
                                            found.end(),
                                            expected.begin());
-        CPPA_CHECK(expected_equals_found);
+        BOOST_ACTOR_CHECK(expected_equals_found);
     }
     if (!expected_equals_found) {
         std::string(41, ' ');
@@ -137,8 +137,8 @@ int main() {
         oss << "expected (" << found.size() << ")";
         std::string lhs;
         std::string rhs;
-        CPPA_PRINT(oss.str());
-        CPPA_PRINT(std::string(41, '-'));
+        BOOST_ACTOR_PRINT(oss.str());
+        BOOST_ACTOR_PRINT(std::string(41, '-'));
         auto fi = found.begin();
         auto fe = found.end();
         auto ei = expected.begin();
@@ -147,7 +147,7 @@ int main() {
             if (fi != fe) lhs = *fi++; else lhs.clear();
             if (ei != ee) rhs = *ei++; else rhs.clear();
             lhs.resize(20, ' ');
-            CPPA_PRINT(lhs << "| " << rhs);
+            BOOST_ACTOR_PRINT(lhs << "| " << rhs);
         }
     }
 
@@ -162,7 +162,7 @@ int main() {
                     channel, node_id_ptr
                  >::arr;
 
-    CPPA_CHECK(sarr.is_pure());
+    BOOST_ACTOR_CHECK(sarr.is_pure());
 
     std::vector<const uniform_type_info*> rarr{
         uniform_typeid<std::int8_t>(),
@@ -188,36 +188,36 @@ int main() {
     };
 
     for (size_t i = 0; i < sarr.size; ++i) {
-        CPPA_CHECK_EQUAL(sarr[i]->name(), rarr[i]->name());
-        CPPA_CHECK(sarr[i] == rarr[i]);
+        BOOST_ACTOR_CHECK_EQUAL(sarr[i]->name(), rarr[i]->name());
+        BOOST_ACTOR_CHECK(sarr[i] == rarr[i]);
     }
 
     auto& arr0 = detail::static_types_array<atom_value, std::uint32_t>::arr;
-    CPPA_CHECK(arr0.is_pure());
-    CPPA_CHECK(arr0[0] == uniform_typeid<atom_value>());
-    CPPA_CHECK(arr0[0] == uniform_type_info::from("@atom"));
-    CPPA_CHECK(arr0[1] == uniform_typeid<std::uint32_t>());
-    CPPA_CHECK(arr0[1] == uniform_type_info::from("@u32"));
-    CPPA_CHECK(uniform_type_info::from("@u32") == uniform_typeid<std::uint32_t>());
+    BOOST_ACTOR_CHECK(arr0.is_pure());
+    BOOST_ACTOR_CHECK(arr0[0] == uniform_typeid<atom_value>());
+    BOOST_ACTOR_CHECK(arr0[0] == uniform_type_info::from("@atom"));
+    BOOST_ACTOR_CHECK(arr0[1] == uniform_typeid<std::uint32_t>());
+    BOOST_ACTOR_CHECK(arr0[1] == uniform_type_info::from("@u32"));
+    BOOST_ACTOR_CHECK(uniform_type_info::from("@u32") == uniform_typeid<std::uint32_t>());
 
     auto& arr1 = detail::static_types_array<std::string, std::int8_t>::arr;
-    CPPA_CHECK(arr1[0] == uniform_typeid<std::string>());
-    CPPA_CHECK(arr1[0] == uniform_type_info::from("@str"));
-    CPPA_CHECK(arr1[1] == uniform_typeid<std::int8_t>());
-    CPPA_CHECK(arr1[1] == uniform_type_info::from("@i8"));
+    BOOST_ACTOR_CHECK(arr1[0] == uniform_typeid<std::string>());
+    BOOST_ACTOR_CHECK(arr1[0] == uniform_type_info::from("@str"));
+    BOOST_ACTOR_CHECK(arr1[1] == uniform_typeid<std::int8_t>());
+    BOOST_ACTOR_CHECK(arr1[1] == uniform_type_info::from("@i8"));
 
     auto& arr2 = detail::static_types_array<std::uint8_t, std::int8_t>::arr;
-    CPPA_CHECK(arr2[0] == uniform_typeid<std::uint8_t>());
-    CPPA_CHECK(arr2[0] == uniform_type_info::from("@u8"));
-    CPPA_CHECK(arr2[1] == uniform_typeid<std::int8_t>());
-    CPPA_CHECK(arr2[1] == uniform_type_info::from("@i8"));
+    BOOST_ACTOR_CHECK(arr2[0] == uniform_typeid<std::uint8_t>());
+    BOOST_ACTOR_CHECK(arr2[0] == uniform_type_info::from("@u8"));
+    BOOST_ACTOR_CHECK(arr2[1] == uniform_typeid<std::int8_t>());
+    BOOST_ACTOR_CHECK(arr2[1] == uniform_type_info::from("@i8"));
 
     auto& arr3 = detail::static_types_array<atom_value, std::uint16_t>::arr;
-    CPPA_CHECK(arr3[0] == uniform_typeid<atom_value>());
-    CPPA_CHECK(arr3[0] == uniform_type_info::from("@atom"));
-    CPPA_CHECK(arr3[1] == uniform_typeid<std::uint16_t>());
-    CPPA_CHECK(arr3[1] == uniform_type_info::from("@u16"));
-    CPPA_CHECK(uniform_type_info::from("@u16") == uniform_typeid<std::uint16_t>());
+    BOOST_ACTOR_CHECK(arr3[0] == uniform_typeid<atom_value>());
+    BOOST_ACTOR_CHECK(arr3[0] == uniform_type_info::from("@atom"));
+    BOOST_ACTOR_CHECK(arr3[1] == uniform_typeid<std::uint16_t>());
+    BOOST_ACTOR_CHECK(arr3[1] == uniform_type_info::from("@u16"));
+    BOOST_ACTOR_CHECK(uniform_type_info::from("@u16") == uniform_typeid<std::uint16_t>());
 
-    return CPPA_TEST_RESULT();
+    return BOOST_ACTOR_TEST_RESULT();
 }

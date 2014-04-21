@@ -28,7 +28,7 @@
 \******************************************************************************/
 
 
-#include "cppa/config.hpp"
+#include "boost/actor/config.hpp"
 
 #include <map>
 #include <set>
@@ -40,25 +40,26 @@
 #include <cstdint>
 #include <type_traits>
 
-#include "cppa/atom.hpp"
-#include "cppa/actor.hpp"
-#include "cppa/object.hpp"
-#include "cppa/logging.hpp"
-#include "cppa/any_tuple.hpp"
-#include "cppa/announce.hpp"
-#include "cppa/any_tuple.hpp"
-#include "cppa/intrusive_ptr.hpp"
-#include "cppa/uniform_type_info.hpp"
+#include "boost/actor/atom.hpp"
+#include "boost/actor/actor.hpp"
+#include "boost/actor/object.hpp"
+#include "boost/actor/logging.hpp"
+#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/announce.hpp"
+#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/intrusive_ptr.hpp"
+#include "boost/actor/uniform_type_info.hpp"
 
-#include "cppa/util/duration.hpp"
+#include "boost/actor/util/duration.hpp"
 
-#include "cppa/detail/demangle.hpp"
-#include "cppa/detail/actor_registry.hpp"
-#include "cppa/detail/to_uniform_name.hpp"
-#include "cppa/detail/singleton_manager.hpp"
-#include "cppa/detail/uniform_type_info_map.hpp"
+#include "boost/actor/detail/demangle.hpp"
+#include "boost/actor/detail/actor_registry.hpp"
+#include "boost/actor/detail/to_uniform_name.hpp"
+#include "boost/actor/detail/singleton_manager.hpp"
+#include "boost/actor/detail/uniform_type_info_map.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 namespace { inline detail::uniform_type_info_map& uti_map() {
     return *detail::singleton_manager::get_uniform_type_info_map();
@@ -81,7 +82,7 @@ const uniform_type_info* uniform_type_info::from(const std::type_info& tinf) {
         std::string error = "uniform_type_info::by_type_info(): ";
         error += detail::to_uniform_name(tinf);
         error += " is an unknown typeid name";
-        CPPA_LOGM_ERROR("cppa::uniform_type_info", error);
+        BOOST_ACTOR_LOGM_ERROR("cppa::uniform_type_info", error);
         throw std::runtime_error(error);
     }
     return result;
@@ -109,4 +110,5 @@ const uniform_type_info* uniform_typeid(const std::type_info& tinfo) {
     return uniform_type_info::from(tinfo);
 }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

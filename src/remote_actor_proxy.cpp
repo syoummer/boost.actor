@@ -28,21 +28,23 @@
 \******************************************************************************/
 
 
-#include "cppa/to_string.hpp"
+#include "boost/actor/to_string.hpp"
 
-#include "cppa/logging.hpp"
+#include "boost/actor/logging.hpp"
 
-#include "cppa/io/peer.hpp"
-#include "cppa/io/middleman.hpp"
-#include "cppa/io/remote_actor_proxy.hpp"
+#include "boost/actor/io/peer.hpp"
+#include "boost/actor/io/middleman.hpp"
+#include "boost/actor/io/remote_actor_proxy.hpp"
 
-#include "cppa/detail/memory.hpp"
-#include "cppa/detail/singleton_manager.hpp"
-#include "cppa/detail/sync_request_bouncer.hpp"
+#include "boost/actor/detail/memory.hpp"
+#include "boost/actor/detail/singleton_manager.hpp"
+#include "boost/actor/detail/sync_request_bouncer.hpp"
 
 using namespace std;
 
-namespace cppa { namespace io {
+namespace boost {
+namespace actor {
+namespace io {
 
 inline sync_request_info* new_req_info(actor_addr sptr, message_id id) {
     return detail::memory::create<sync_request_info>(std::move(sptr), id);
@@ -58,8 +60,8 @@ remote_actor_proxy::remote_actor_proxy(actor_id mid,
                                        node_id_ptr pinfo,
                                        middleman* parent)
         : super(mid), m_parent(parent) {
-    CPPA_REQUIRE(parent != nullptr);
-    CPPA_LOG_INFO(CPPA_ARG(mid) << ", " << CPPA_TARG(*pinfo, to_string));
+    BOOST_ACTOR_REQUIRE(parent != nullptr);
+    BOOST_ACTOR_LOG_INFO(BOOST_ACTOR_ARG(mid) << ", " << BOOST_ACTOR_TARG(*pinfo, to_string));
     m_node = std::move(pinfo);
 }
 
@@ -67,10 +69,10 @@ remote_actor_proxy::~remote_actor_proxy() {
     auto aid = m_id;
     auto node = m_node;
     auto mm = m_parent;
-    CPPA_LOG_INFO(CPPA_ARG(m_id) << ", " << CPPA_TSARG(*m_node)
+    BOOST_ACTOR_LOG_INFO(BOOST_ACTOR_ARG(m_id) << ", " << BOOST_ACTOR_TSARG(*m_node)
                    << ", protocol = " << detail::demangle(typeid(*m_parent)));
     mm->run_later([aid, node, mm] {
-        CPPA_LOGC_TRACE("cppa::io::remote_actor_proxy",
+        BOOST_ACTOR_LOGC_TRACE("cppa::io::remote_actor_proxy",
                         "~remote_actor_proxy$run_later",
                         "node = " << to_string(*node) << ", aid " << aid);
         mm->get_namespace().erase(*node, aid);
@@ -98,8 +100,8 @@ void remote_actor_proxy::deliver(msg_hdr_cref hdr, any_tuple msg) {
 }
 
 void remote_actor_proxy::forward_msg(msg_hdr_cref hdr, any_tuple msg) {
-    CPPA_LOG_TRACE(CPPA_ARG(m_id) << ", " << CPPA_TSARG(hdr)
-                   << ", " << CPPA_TSARG(msg));
+    BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_ARG(m_id) << ", " << BOOST_ACTOR_TSARG(hdr)
+                   << ", " << BOOST_ACTOR_TSARG(msg));
     if (hdr.receiver != this) {
         auto cpy = hdr;
         cpy.receiver = this;
@@ -111,7 +113,7 @@ void remote_actor_proxy::forward_msg(msg_hdr_cref hdr, any_tuple msg) {
             case intrusive::enqueue_result::queue_closed: {
                 auto rsn = exit_reason();
                 m_parent->run_later([rsn, hdr] {
-                    CPPA_LOGC_TRACE("cppa::io::remote_actor_proxy",
+                    BOOST_ACTOR_LOGC_TRACE("cppa::io::remote_actor_proxy",
                                     "forward_msg$bouncer",
                                     "bounce message for reason " << rsn);
                     detail::sync_request_bouncer f{rsn};
@@ -120,11 +122,11 @@ void remote_actor_proxy::forward_msg(msg_hdr_cref hdr, any_tuple msg) {
                 return; // no need to forward message
             }
             case intrusive::enqueue_result::success: {
-                CPPA_LOG_DEBUG("enqueued pending request to non-empty queue");
+                BOOST_ACTOR_LOG_DEBUG("enqueued pending request to non-empty queue");
                 break;
             }
             case intrusive::enqueue_result::unblocked_reader: {
-                CPPA_LOG_DEBUG("enqueued pending request to empty queue");
+                BOOST_ACTOR_LOG_DEBUG("enqueued pending request to empty queue");
                 break;
             }
         }
@@ -132,7 +134,7 @@ void remote_actor_proxy::forward_msg(msg_hdr_cref hdr, any_tuple msg) {
     auto node = m_node;
     auto mm = m_parent;
     m_parent->run_later([hdr, msg, node, mm] {
-        CPPA_LOGC_TRACE("cppa::io::remote_actor_proxy",
+        BOOST_ACTOR_LOGC_TRACE("cppa::io::remote_actor_proxy",
                         "forward_msg$forwarder",
                         "");
         mm->deliver(*node, hdr, msg);
@@ -141,24 +143,24 @@ void remote_actor_proxy::forward_msg(msg_hdr_cref hdr, any_tuple msg) {
 
 void remote_actor_proxy::enqueue(msg_hdr_cref hdr, any_tuple msg,
                                  execution_unit*) {
-    CPPA_REQUIRE(m_parent != nullptr);
-    CPPA_LOG_TRACE(CPPA_TARG(hdr, to_string)
-                   << ", " << CPPA_TARG(msg, to_string));
+    BOOST_ACTOR_REQUIRE(m_parent != nullptr);
+    BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_TARG(hdr, to_string)
+                   << ", " << BOOST_ACTOR_TARG(msg, to_string));
     auto& arr = detail::static_types_array<atom_value, uint32_t>::arr;
     if (   msg.size() == 2
         && msg.type_at(0) == arr[0]
         && msg.get_as<atom_value>(0) == atom("KILL_PROXY")
         && msg.type_at(1) == arr[1]) {
-        CPPA_LOG_DEBUG("received KILL_PROXY message");
+        BOOST_ACTOR_LOG_DEBUG("received KILL_PROXY message");
         intrusive_ptr<remote_actor_proxy> _this{this};
         auto reason = msg.get_as<uint32_t>(1);
         m_parent->run_later([_this, reason] {
-            CPPA_LOGC_TRACE("cppa::io::remote_actor_proxy",
+            BOOST_ACTOR_LOGC_TRACE("cppa::io::remote_actor_proxy",
                             "enqueue$kill_proxy_helper",
                             "KILL_PROXY " << to_string(_this->address())
                             << " with exit reason " << reason);
             if (_this->m_pending_requests.closed()) {
-                CPPA_LOG_WARNING("received KILL_PROXY twice");
+                BOOST_ACTOR_LOG_WARNING("received KILL_PROXY twice");
             }
             else {
                 _this->cleanup(reason);
@@ -213,4 +215,5 @@ void remote_actor_proxy::local_unlink_from(const actor_addr& other) {
     unlink_from_impl(other);
 }
 
-} } // namespace cppa::network
+} } // namespace actor
+} // namespace boost::network

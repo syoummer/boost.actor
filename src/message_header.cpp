@@ -28,10 +28,11 @@
 \******************************************************************************/
 
 
-#include "cppa/any_tuple.hpp"
-#include "cppa/message_header.hpp"
+#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/message_header.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 message_header::message_header(actor_addr source,
                                channel dest,
@@ -52,4 +53,5 @@ void message_header::deliver(any_tuple msg) const {
     if (receiver) receiver->enqueue(*this, std::move(msg), nullptr);
 }
 
-} // namespace cppa::network
+} // namespace actor
+} // namespace boost::network

@@ -28,16 +28,17 @@
 \******************************************************************************/
 
 
-#include "cppa/actor.hpp"
-#include "cppa/singletons.hpp"
-#include "cppa/actor_addr.hpp"
-#include "cppa/local_actor.hpp"
+#include "boost/actor/actor.hpp"
+#include "boost/actor/singletons.hpp"
+#include "boost/actor/actor_addr.hpp"
+#include "boost/actor/local_actor.hpp"
 
-#include "cppa/io/middleman.hpp"
+#include "boost/actor/io/middleman.hpp"
 
-#include "cppa/detail/raw_access.hpp"
+#include "boost/actor/detail/raw_access.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 namespace {
 intptr_t compare_impl(const abstract_actor* lhs, const abstract_actor* rhs) {
@@ -74,4 +75,5 @@ bool actor_addr::is_remote() const {
     return m_ptr ? m_ptr->is_proxy() : false;
 }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

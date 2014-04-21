@@ -9,12 +9,12 @@
 #include <sstream>
 #include <iostream>
 
-#include "cppa/cppa.hpp"
+#include "boost/actor/cppa.hpp"
 
 using std::chrono::seconds;
 
 using namespace std;
-using namespace cppa;
+using namespace boost::actor;
 
 namespace {
 

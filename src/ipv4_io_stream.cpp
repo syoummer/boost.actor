@@ -33,13 +33,13 @@
 #include <errno.h>
 #include <iostream>
 
-#include "cppa/config.hpp"
-#include "cppa/logging.hpp"
-#include "cppa/exception.hpp"
-#include "cppa/detail/fd_util.hpp"
-#include "cppa/io/ipv4_io_stream.hpp"
+#include "boost/actor/config.hpp"
+#include "boost/actor/logging.hpp"
+#include "boost/actor/exception.hpp"
+#include "boost/actor/detail/fd_util.hpp"
+#include "boost/actor/io/ipv4_io_stream.hpp"
 
-#ifdef CPPA_WINDOWS
+#ifdef BOOST_ACTOR_WINDOWS
 #   include <ws2tcpip.h>
 #   include <winsock2.h>
 #else
@@ -51,9 +51,11 @@
 #   include <netinet/tcp.h>
 #endif
 
-namespace cppa { namespace io {
+namespace boost {
+namespace actor {
+namespace io {
 
-using namespace ::cppa::detail::fd_util;
+using namespace ::boost::actor::detail::fd_util;
 
 ipv4_io_stream::ipv4_io_stream(native_socket_type fd) : m_fd(fd) { }
 
@@ -117,7 +119,7 @@ void ipv4_io_stream::write(const void* vbuf, size_t len) {
 }
 
 size_t ipv4_io_stream::write_some(const void* buf, size_t len) {
-    CPPA_LOG_TRACE(CPPA_ARG(buf) << ", " << CPPA_ARG(len));
+    BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_ARG(buf) << ", " << BOOST_ACTOR_ARG(len));
     auto send_result = ::send(m_fd, reinterpret_cast<const char*>(buf), len, 0);
     handle_write_result(send_result, true);
     return static_cast<size_t>(send_result);
@@ -131,9 +133,9 @@ io::stream_ptr ipv4_io_stream::from_native_socket(native_socket_type fd) {
 
 io::stream_ptr ipv4_io_stream::connect_to(const char* host,
                                           std::uint16_t port) {
-    CPPA_LOGF_TRACE(CPPA_ARG(host) << ", " << CPPA_ARG(port));
-    CPPA_LOGF_INFO("try to connect to " << host << " on port " << port);
-#   ifdef CPPA_WINDOWS
+    BOOST_ACTOR_LOGF_TRACE(BOOST_ACTOR_ARG(host) << ", " << BOOST_ACTOR_ARG(port));
+    BOOST_ACTOR_LOGF_INFO("try to connect to " << host << " on port " << port);
+#   ifdef BOOST_ACTOR_WINDOWS
     // make sure TCP has been initialized via WSAStartup
     cppa::get_middleman();
 #   endif
@@ -155,16 +157,17 @@ io::stream_ptr ipv4_io_stream::connect_to(const char* host,
             server->h_addr,
             static_cast<size_t>(server->h_length));
     serv_addr.sin_port = htons(port);
-    CPPA_LOGF_DEBUG("call connect()");
+    BOOST_ACTOR_LOGF_DEBUG("call connect()");
     if (connect(fd, (const sockaddr*) &serv_addr, sizeof(serv_addr)) != 0) {
-        CPPA_LOGF_ERROR("could not connect to to " << host
+        BOOST_ACTOR_LOGF_ERROR("could not connect to to " << host
                         << " on port " << port);
         throw network_error("could not connect to host");
     }
-    CPPA_LOGF_DEBUG("enable nodelay + nonblocking for socket");
+    BOOST_ACTOR_LOGF_DEBUG("enable nodelay + nonblocking for socket");
     tcp_nodelay(fd, true);
     nonblocking(fd, true);
     return new ipv4_io_stream(fd);
 }
 
-} } // namespace cppa::detail
+} } // namespace actor
+} // namespace boost::detail

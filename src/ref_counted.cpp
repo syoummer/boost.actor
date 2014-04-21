@@ -29,13 +29,15 @@
 
 
 
-#include "cppa/ref_counted.hpp"
+#include "boost/actor/ref_counted.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 ref_counted::ref_counted() : m_rc(0) { }
 
 ref_counted::~ref_counted() { }
 
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

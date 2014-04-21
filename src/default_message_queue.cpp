@@ -28,12 +28,14 @@
 \******************************************************************************/
 
 
-#include "cppa/io/default_message_queue.hpp"
+#include "boost/actor/io/default_message_queue.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 namespace io {
 
 default_message_queue::~default_message_queue() { }
 
 } // namespace io
-} // namespace cppa
+} // namespace actor
+} // namespace boost

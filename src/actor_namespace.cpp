@@ -30,23 +30,24 @@
 
 #include <utility>
 
-#include "cppa/logging.hpp"
-#include "cppa/node_id.hpp"
-#include "cppa/serializer.hpp"
-#include "cppa/singletons.hpp"
-#include "cppa/deserializer.hpp"
-#include "cppa/actor_namespace.hpp"
+#include "boost/actor/logging.hpp"
+#include "boost/actor/node_id.hpp"
+#include "boost/actor/serializer.hpp"
+#include "boost/actor/singletons.hpp"
+#include "boost/actor/deserializer.hpp"
+#include "boost/actor/actor_namespace.hpp"
 
-#include "cppa/io/middleman.hpp"
-#include "cppa/io/remote_actor_proxy.hpp"
+#include "boost/actor/io/middleman.hpp"
+#include "boost/actor/io/remote_actor_proxy.hpp"
 
-#include "cppa/detail/raw_access.hpp"
-#include "cppa/detail/actor_registry.hpp"
+#include "boost/actor/detail/raw_access.hpp"
+#include "boost/actor/detail/actor_registry.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 void actor_namespace::write(serializer* sink, const actor_addr& addr) {
-    CPPA_REQUIRE(sink != nullptr);
+    BOOST_ACTOR_REQUIRE(sink != nullptr);
     if (!addr) {
         node_id::host_id_type zero;
         std::fill(zero.begin(), zero.end(), 0);
@@ -67,7 +68,7 @@ void actor_namespace::write(serializer* sink, const actor_addr& addr) {
 }
 
 actor_addr actor_namespace::read(deserializer* source) {
-    CPPA_REQUIRE(source != nullptr);
+    BOOST_ACTOR_REQUIRE(source != nullptr);
     node_id::host_id_type hid;
     auto aid = source->read<uint32_t>();                 // actor id
     auto pid = source->read<uint32_t>();                 // process id
@@ -98,9 +99,9 @@ actor_proxy_ptr actor_namespace::get(const node_id& node, actor_id aid) {
     auto i = submap.find(aid);
     if (i != submap.end()) {
         auto result = i->second.promote();
-        CPPA_LOG_INFO_IF(!result, "proxy instance expired; "
-                         << CPPA_TARG(node, to_string)
-                         << ", "<< CPPA_ARG(aid));
+        BOOST_ACTOR_LOG_INFO_IF(!result, "proxy instance expired; "
+                         << BOOST_ACTOR_TARG(node, to_string)
+                         << ", "<< BOOST_ACTOR_ARG(aid));
         if (!result) submap.erase(i);
         return result;
     }
@@ -127,7 +128,7 @@ void actor_namespace::put(const node_id& node,
         if (m_new_element_callback) m_new_element_callback(aid, node);
     }
     else {
-        CPPA_LOG_ERROR("proxy for " << aid << ":"
+        BOOST_ACTOR_LOG_ERROR("proxy for " << aid << ":"
                        << to_string(node) << " already exists");
     }
 }
@@ -137,16 +138,17 @@ auto actor_namespace::proxies(node_id& node) -> proxy_map& {
 }
 
 void actor_namespace::erase(node_id& inf) {
-    CPPA_LOG_TRACE(CPPA_TARG(inf, to_string));
+    BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_TARG(inf, to_string));
     m_proxies.erase(inf);
 }
 
 void actor_namespace::erase(node_id& inf, actor_id aid) {
-    CPPA_LOG_TRACE(CPPA_TARG(inf, to_string) << ", " << CPPA_ARG(aid));
+    BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_TARG(inf, to_string) << ", " << BOOST_ACTOR_ARG(aid));
     auto i = m_proxies.find(inf);
     if (i != m_proxies.end()) {
         i->second.erase(aid);
     }
 }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

@@ -30,15 +30,16 @@
 
 #include <string>
 
-#include "cppa/object.hpp"
-#include "cppa/deserializer.hpp"
-#include "cppa/uniform_type_info.hpp"
+#include "boost/actor/object.hpp"
+#include "boost/actor/deserializer.hpp"
+#include "boost/actor/uniform_type_info.hpp"
 
-#include "cppa/util/buffer.hpp"
+#include "boost/actor/util/buffer.hpp"
 
-#include "cppa/detail/to_uniform_name.hpp"
+#include "boost/actor/detail/to_uniform_name.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 deserializer::deserializer(actor_namespace* ns, type_lookup_table* ot)
 : m_namespace{ns}, m_incoming_types{ot} { }
@@ -51,4 +52,5 @@ void deserializer::read_raw(size_t num_bytes, util::buffer& storage) {
     storage.inc_size(num_bytes);
 }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

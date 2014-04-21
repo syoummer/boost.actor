@@ -11,11 +11,11 @@
 #include <string>
 #include <iostream>
 
-#include "cppa/opt.hpp"
-#include "cppa/cppa.hpp"
+#include "boost/actor/opt.hpp"
+#include "boost/actor/cppa.hpp"
 
 using namespace std;
-using namespace cppa;
+using namespace boost::actor;
 
 int main(int argc, char** argv) {
     uint16_t port = 0;

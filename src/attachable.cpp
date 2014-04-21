@@ -28,13 +28,15 @@
 \******************************************************************************/
 
 
-#include "cppa/attachable.hpp"
+#include "boost/actor/attachable.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 attachable::~attachable() { }
 
 attachable::token::token(const std::type_info& tinfo, const void* vptr)
 : subtype(tinfo), ptr(vptr) { }
 
-} // namespace cppa::detail
+} // namespace actor
+} // namespace boost::detail

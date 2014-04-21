@@ -28,9 +28,11 @@
 \******************************************************************************/
 
 
-#include "cppa/detail/abstract_tuple.hpp"
+#include "boost/actor/detail/abstract_tuple.hpp"
 
-namespace cppa { namespace detail {
+namespace boost {
+namespace actor {
+namespace detail {
 
 abstract_tuple::abstract_tuple(bool is_dynamic) : m_is_dynamic(is_dynamic) { }
 
@@ -65,4 +67,5 @@ std::string get_tuple_type_names(const detail::abstract_tuple& tup) {
     return result;
 }
 
-} } // namespace cppa::detail
+} } // namespace actor
+} // namespace boost::detail

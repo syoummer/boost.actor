@@ -28,12 +28,14 @@
 \******************************************************************************/
 
 
-#include "cppa/io/stream.hpp"
+#include "boost/actor/io/stream.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 namespace io {
 
 stream::~stream() { }
 
 } // namespace io
-} // namespace cppa
+} // namespace actor
+} // namespace boost

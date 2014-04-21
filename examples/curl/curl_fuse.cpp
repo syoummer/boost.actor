@@ -72,7 +72,7 @@
 #include <curl/curl.h>
 
 // libcppa
-#include "cppa/cppa.hpp"
+#include "boost/actor/cppa.hpp"
 
 // disable some clang warnings here caused by CURL and srand(time(nullptr))
 #ifdef __clang__
@@ -80,7 +80,7 @@
 #   pragma clang diagnostic ignored "-Wdisabled-macro-expansion"
 #endif // __clang__
 
-using namespace cppa;
+using namespace boost::actor;
 
 namespace {
 

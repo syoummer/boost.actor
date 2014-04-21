@@ -29,15 +29,16 @@
 
 
 #include <string>
-#include "cppa/cppa.hpp"
-#include "cppa/atom.hpp"
-#include "cppa/logging.hpp"
-#include "cppa/scheduler.hpp"
-#include "cppa/local_actor.hpp"
+#include "boost/actor/cppa.hpp"
+#include "boost/actor/atom.hpp"
+#include "boost/actor/logging.hpp"
+#include "boost/actor/scheduler.hpp"
+#include "boost/actor/local_actor.hpp"
 
-#include "cppa/detail/raw_access.hpp"
+#include "boost/actor/detail/raw_access.hpp"
 
-namespace cppa {
+namespace boost {
+namespace actor {
 
 namespace {
 
@@ -50,8 +51,8 @@ class down_observer : public attachable {
 
     down_observer(actor_addr observer, actor_addr observed)
     : m_observer(std::move(observer)), m_observed(std::move(observed)) {
-        CPPA_REQUIRE(m_observer != nullptr);
-        CPPA_REQUIRE(m_observed != nullptr);
+        BOOST_ACTOR_REQUIRE(m_observer != nullptr);
+        BOOST_ACTOR_REQUIRE(m_observed != nullptr);
     }
 
     void actor_exited(std::uint32_t reason) {
@@ -96,9 +97,9 @@ void local_actor::demonitor(const actor_addr& whom) {
 void local_actor::on_exit() { }
 
 void local_actor::join(const group& what) {
-    CPPA_LOG_TRACE(CPPA_TSARG(what));
+    BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_TSARG(what));
     if (what && m_subscriptions.count(what) == 0) {
-        CPPA_LOG_DEBUG("join group: " << to_string(what));
+        BOOST_ACTOR_LOG_DEBUG("join group: " << to_string(what));
         m_subscriptions.insert(std::make_pair(what, what->subscribe(this)));
     }
 }
@@ -155,7 +156,7 @@ void local_actor::send_exit(const actor_addr& whom, std::uint32_t reason) {
 void local_actor::delayed_send_tuple(message_priority prio,
                                      const channel& dest,
                                      const util::duration& rel_time,
-                                     cppa::any_tuple msg) {
+                                     any_tuple msg) {
     message_id mid;
     if (prio == message_priority::high) mid = mid.with_high_priority();
     get_scheduling_coordinator()->delayed_send({address(), dest, mid},
@@ -170,18 +171,18 @@ response_promise local_actor::make_response_promise() {
 }
 
 void local_actor::cleanup(std::uint32_t reason) {
-    CPPA_LOG_TRACE(CPPA_ARG(reason));
+    BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_ARG(reason));
     m_subscriptions.clear();
     super::cleanup(reason);
 }
 
 void local_actor::quit(std::uint32_t reason) {
-    CPPA_LOG_TRACE("reason = " << reason
+    BOOST_ACTOR_LOG_TRACE("reason = " << reason
                    << ", class " << detail::demangle(typeid(*this)));
     if (reason == exit_reason::unallowed_function_call) {
         // this is the only reason that causes an exception
         cleanup(reason);
-        CPPA_LOG_WARNING("actor tried to use a blocking function");
+        BOOST_ACTOR_LOG_WARNING("actor tried to use a blocking function");
         // when using receive(), the non-blocking nature of event-based
         // actors breaks any assumption the user has about his code,
         // in particular, receive_loop() is a deadlock when not throwing
@@ -221,4 +222,5 @@ void anon_send_exit(const actor_addr& whom, std::uint32_t reason) {
                  make_any_tuple(exit_msg{invalid_actor_addr, reason}), nullptr);
 }
 
-} // namespace cppa
+} // namespace actor
+} // namespace boost

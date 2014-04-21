@@ -3,15 +3,15 @@
 #include <utility>
 #include <iostream>
 
-#include "cppa/cppa.hpp"
-#include "cppa/binary_serializer.hpp"
-#include "cppa/binary_deserializer.hpp"
+#include "boost/actor/cppa.hpp"
+#include "boost/actor/binary_serializer.hpp"
+#include "boost/actor/binary_deserializer.hpp"
 
 using std::cout;
 using std::endl;
 
 using namespace std;
-using namespace cppa;
+using namespace boost::actor;
 
 // POD struct
 struct foo {
