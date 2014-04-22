@@ -35,7 +35,8 @@
 #include <stdexcept>
 #include <type_traits>
 
-#include "boost/actor/none.hpp"
+#include "boost/none.hpp"
+
 #include "boost/actor/unit.hpp"
 #include "boost/actor/optional.hpp"
 #include "boost/actor/skip_message.hpp"

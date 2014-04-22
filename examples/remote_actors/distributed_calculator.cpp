@@ -18,9 +18,12 @@
 #include <iostream>
 #include <functional>
 
+#include "boost/none.hpp"
+
 #include "boost/actor/opt.hpp"
 #include "boost/actor/cppa.hpp"
 
+using boost::none;
 using namespace std;
 using namespace boost::actor;
 using namespace boost::actor::placeholders;

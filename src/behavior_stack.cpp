@@ -30,6 +30,8 @@
 
 #include <iterator>
 
+#include "boost/none.hpp"
+
 #include "boost/actor/local_actor.hpp"
 #include "boost/actor/detail/behavior_stack.hpp"
 

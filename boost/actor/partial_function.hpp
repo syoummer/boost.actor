@@ -37,6 +37,8 @@
 #include <utility>
 #include <type_traits>
 
+#include "boost/none.hpp"
+
 #include "boost/actor/on.hpp"
 #include "boost/actor/behavior.hpp"
 #include "boost/actor/any_tuple.hpp"

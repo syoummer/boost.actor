@@ -119,7 +119,6 @@ boost/actor/message_header.hpp
 boost/actor/message_id.hpp
 boost/actor/message_priority.hpp
 boost/actor/node_id.hpp
-boost/actor/none.hpp
 boost/actor/object.hpp
 boost/actor/on.hpp
 boost/actor/opt.hpp

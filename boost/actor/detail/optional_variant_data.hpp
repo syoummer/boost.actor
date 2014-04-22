@@ -34,8 +34,9 @@
 #include <stdexcept>
 #include <type_traits>
 
+#include "boost/none.hpp"
+
 #include "boost/actor/unit.hpp"
-#include "boost/actor/none.hpp"
 
 #define BOOST_ACTOR_OPTIONAL_VARIANT_DATA_CONCAT(x, y) x ## y
 

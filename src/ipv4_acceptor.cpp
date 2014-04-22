@@ -32,6 +32,8 @@
 #include <errno.h>
 #include <iostream>
 
+#include "boost/none.hpp"
+
 #include "boost/actor/config.hpp"
 #include "boost/actor/logging.hpp"
 #include "boost/actor/exception.hpp"

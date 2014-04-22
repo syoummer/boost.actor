@@ -36,6 +36,8 @@
 #include <iostream>
 #include <type_traits>
 
+#include "boost/none.hpp"
+
 #include "boost/actor/on.hpp"
 #include "boost/actor/logging.hpp"
 #include "boost/actor/behavior.hpp"

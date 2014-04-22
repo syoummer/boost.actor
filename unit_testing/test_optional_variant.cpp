@@ -2,8 +2,14 @@
 #include <functional>
 
 #include "test.hpp"
+
+#include "boost/none.hpp"
+
 #include "boost/actor/cppa.hpp"
 #include "boost/actor/optional_variant.hpp"
+
+using boost::none;
+using boost::none_t;
 
 using namespace std;
 using namespace boost::actor;

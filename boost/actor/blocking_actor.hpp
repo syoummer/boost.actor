@@ -31,6 +31,8 @@
 #ifndef BOOST_ACTOR_BLOCKING_UNTYPED_ACTOR_HPP
 #define BOOST_ACTOR_BLOCKING_UNTYPED_ACTOR_HPP
 
+#include "boost/none.hpp"
+
 #include "boost/actor/on.hpp"
 #include "boost/actor/extend.hpp"
 #include "boost/actor/behavior.hpp"

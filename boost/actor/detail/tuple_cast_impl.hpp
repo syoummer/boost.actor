@@ -31,6 +31,8 @@
 #ifndef BOOST_ACTOR_TUPLE_CAST_IMPL_HPP
 #define BOOST_ACTOR_TUPLE_CAST_IMPL_HPP
 
+#include "boost/none.hpp"
+
 #include "boost/actor/any_tuple.hpp"
 
 #include "boost/actor/detail/matches.hpp"

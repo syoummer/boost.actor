@@ -31,6 +31,8 @@
 #ifndef BOOST_ACTOR_MATCH_EXPR_HPP
 #define BOOST_ACTOR_MATCH_EXPR_HPP
 
+#include "boost/none.hpp"
+
 #include "boost/actor/optional.hpp"
 #include "boost/actor/guard_expr.hpp"
 #include "boost/actor/optional_variant.hpp"

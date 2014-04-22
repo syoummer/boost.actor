@@ -1,5 +1,10 @@
 #include "test.hpp"
+
+#include "boost/none.hpp"
+
 #include "boost/actor/cppa.hpp"
+
+using boost::none;
 
 using namespace std;
 using namespace boost::actor;

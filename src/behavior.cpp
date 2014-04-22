@@ -28,6 +28,8 @@
 \******************************************************************************/
 
 
+#include "boost/none.hpp"
+
 #include "boost/actor/behavior.hpp"
 #include "boost/actor/partial_function.hpp"
 

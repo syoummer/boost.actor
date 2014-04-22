@@ -33,6 +33,8 @@
 
 #include <sstream>
 
+#include "boost/none.hpp"
+
 #include "boost/actor/on.hpp"
 #include "boost/actor/optional.hpp"
 

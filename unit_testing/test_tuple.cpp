@@ -11,6 +11,8 @@
 
 #include "test.hpp"
 
+#include "boost/none.hpp"
+
 #include "boost/actor/on.hpp"
 #include "boost/actor/cppa.hpp"
 #include "boost/actor/cow_tuple.hpp"
@@ -31,6 +33,8 @@
 
 using std::cout;
 using std::endl;
+
+using boost::none;
 
 using namespace boost::actor;
 using namespace boost::actor::detail;

@@ -30,6 +30,9 @@
 
 #include <iomanip>
 #include <algorithm>
+
+#include "boost/none.hpp"
+
 #include "boost/actor/opt.hpp"
 
 using namespace std;

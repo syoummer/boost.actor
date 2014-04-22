@@ -41,7 +41,6 @@
 
 #include "boost/actor/atom.hpp"
 #include "boost/actor/unit.hpp"
-#include "boost/actor/none.hpp"
 #include "boost/actor/node_id.hpp"
 #include "boost/actor/system_messages.hpp"
 

@@ -34,6 +34,8 @@
 #include <functional>
 #include <type_traits>
 
+#include "boost/none.hpp"
+
 #include "boost/actor/match_expr.hpp"
 #include "boost/actor/timeout_definition.hpp"
 

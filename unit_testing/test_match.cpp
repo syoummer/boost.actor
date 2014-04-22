@@ -2,6 +2,9 @@
 #include <functional>
 
 #include "test.hpp"
+
+#include "boost/none.hpp"
+
 #include "boost/actor/cppa.hpp"
 #include "boost/actor/on.hpp"
 #include "boost/actor/match.hpp"
@@ -9,6 +12,8 @@
 #include "boost/actor/to_string.hpp"
 #include "boost/actor/guard_expr.hpp"
 #include "boost/actor/detail/object_array.hpp"
+
+using boost::none;
 
 using namespace std;
 using namespace boost::actor;

@@ -34,7 +34,8 @@
 #include <new>
 #include <utility>
 
-#include "boost/actor/none.hpp"
+#include "boost/none.hpp"
+
 #include "boost/actor/unit.hpp"
 #include "boost/actor/config.hpp"
 
