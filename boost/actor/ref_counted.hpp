@@ -78,6 +78,14 @@ class ref_counted : public memory_managed {
 
 };
 
+inline void intrusive_ptr_add_ref(ref_counted* p) {
+    p->ref();
+}
+
+inline void intrusive_ptr_release(ref_counted* p) {
+    p->deref();
+}
+
 } // namespace actor
 } // namespace boost
 

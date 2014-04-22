@@ -17,7 +17,7 @@
 #include "boost/actor/any_tuple.hpp"
 #include "boost/actor/to_string.hpp"
 #include "boost/actor/tuple_cast.hpp"
-#include "boost/actor/intrusive_ptr.hpp"
+#include "boost/intrusive_ptr.hpp"
 #include "boost/actor/tpartial_function.hpp"
 #include "boost/actor/uniform_type_info.hpp"
 

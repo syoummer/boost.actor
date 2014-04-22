@@ -42,6 +42,7 @@
 #include "boost/actor/io/middleman.hpp"
 #include "boost/actor/io/buffered_writing.hpp"
 
+#include "boost/actor/detail/make_counted.hpp"
 #include "boost/actor/detail/actor_registry.hpp"
 #include "boost/actor/detail/sync_request_bouncer.hpp"
 
@@ -473,7 +474,7 @@ broker_ptr init_and_launch(broker_ptr ptr) {
 broker_ptr broker::from_impl(std::function<behavior (broker*)> fun,
                              input_stream_ptr in,
                              output_stream_ptr out) {
-    return make_counted<default_broker>(move(fun), move(in), move(out));
+    return detail::make_counted<default_broker>(move(fun), move(in), move(out));
 }
 
 
@@ -481,17 +482,17 @@ broker_ptr broker::from_impl(std::function<void (broker*)> fun,
                              input_stream_ptr in,
                              output_stream_ptr out) {
     auto f = [=](broker* ptr) -> behavior { fun(ptr); return behavior{}; };
-    return make_counted<default_broker>(f, move(in), move(out));
+    return detail::make_counted<default_broker>(f, move(in), move(out));
 }
 
 broker_ptr broker::from(std::function<behavior (broker*)> fun, acceptor_uptr in) {
-    return make_counted<default_broker>(move(fun), move(in));
+    return detail::make_counted<default_broker>(move(fun), move(in));
 }
 
 
 broker_ptr broker::from(std::function<void (broker*)> fun, acceptor_uptr in) {
     auto f = [=](broker* ptr) -> behavior { fun(ptr); return behavior{}; };
-    return make_counted<default_broker>(f, move(in));
+    return detail::make_counted<default_broker>(f, move(in));
 }
 
 void broker::erase_io(int id) {
@@ -526,7 +527,7 @@ actor broker::fork_impl(std::function<void (broker*)> fun,
     }
     scribe* sptr = i->second.get(); // non-owning pointer
     auto f = [=](broker* ptr) -> behavior { fun(ptr); return behavior{}; };
-    auto result = make_counted<default_broker>(f, move(i->second));
+    auto result = detail::make_counted<default_broker>(f, move(i->second));
     init_and_launch(result);
     sptr->set_broker(result); // set new broker
     m_io.erase(i);

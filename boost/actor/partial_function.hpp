@@ -41,7 +41,7 @@
 #include "boost/actor/behavior.hpp"
 #include "boost/actor/any_tuple.hpp"
 #include "boost/actor/ref_counted.hpp"
-#include "boost/actor/intrusive_ptr.hpp"
+#include "boost/intrusive_ptr.hpp"
 #include "boost/actor/may_have_timeout.hpp"
 #include "boost/actor/timeout_definition.hpp"
 

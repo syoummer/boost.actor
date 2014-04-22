@@ -13,7 +13,7 @@
 #include "boost/actor/actor.hpp"
 #include "boost/actor/abstract_group.hpp"
 #include "boost/actor/ref_counted.hpp"
-#include "boost/actor/intrusive_ptr.hpp"
+#include "boost/intrusive_ptr.hpp"
 
 using std::cout;
 using std::endl;

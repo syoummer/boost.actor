@@ -88,7 +88,6 @@ boost/actor/get.hpp
 boost/actor/group.hpp
 boost/actor/guard_expr.hpp
 boost/actor/intrusive/single_reader_queue.hpp
-boost/actor/intrusive_ptr.hpp
 boost/actor/io/accept_handle.hpp
 boost/actor/io/acceptor.hpp
 boost/actor/io/broker.hpp
@@ -338,3 +337,4 @@ unit_testing/test_typed_remote_actor.cpp
 unit_testing/test_typed_spawn.cpp
 unit_testing/test_uniform_type.cpp
 unit_testing/test_yield_interface.cpp
+boost/actor/detail/make_counted.hpp

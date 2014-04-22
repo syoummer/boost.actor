@@ -47,7 +47,7 @@
 #include "boost/actor/any_tuple.hpp"
 #include "boost/actor/announce.hpp"
 #include "boost/actor/any_tuple.hpp"
-#include "boost/actor/intrusive_ptr.hpp"
+#include "boost/intrusive_ptr.hpp"
 #include "boost/actor/uniform_type_info.hpp"
 
 #include "boost/actor/util/duration.hpp"

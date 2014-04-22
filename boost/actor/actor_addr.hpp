@@ -35,7 +35,7 @@
 #include <cstdint>
 #include <type_traits>
 
-#include "boost/actor/intrusive_ptr.hpp"
+#include "boost/intrusive_ptr.hpp"
 #include "boost/actor/abstract_actor.hpp"
 
 #include "boost/actor/util/comparable.hpp"

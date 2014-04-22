@@ -35,7 +35,7 @@
 #include "boost/actor/optional.hpp"
 #include "boost/actor/any_tuple.hpp"
 #include "boost/actor/ref_counted.hpp"
-#include "boost/actor/intrusive_ptr.hpp"
+#include "boost/intrusive_ptr.hpp"
 #include "boost/actor/optional_variant.hpp"
 #include "boost/actor/timeout_definition.hpp"
 

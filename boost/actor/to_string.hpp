@@ -41,7 +41,7 @@
 #include "boost/actor/node_id.hpp"
 #include "boost/actor/anything.hpp"
 #include "boost/actor/any_tuple.hpp"
-#include "boost/actor/intrusive_ptr.hpp"
+#include "boost/intrusive_ptr.hpp"
 #include "boost/actor/abstract_group.hpp"
 #include "boost/actor/message_header.hpp"
 #include "boost/actor/uniform_type_info.hpp"

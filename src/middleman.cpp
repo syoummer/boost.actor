@@ -65,6 +65,7 @@
 #include "boost/actor/io/middleman_event_handler.hpp"
 
 #include "boost/actor/detail/fd_util.hpp"
+#include "boost/actor/detail/make_counted.hpp"
 #include "boost/actor/detail/actor_registry.hpp"
 
 #include "boost/actor/intrusive/single_reader_queue.hpp"
@@ -186,7 +187,9 @@ class middleman_impl : public middleman {
         BOOST_ACTOR_LOG_TRACE("node = " << to_string(node) << ", ptr = " << ptr);
         auto& entry = m_peers[node];
         if (entry.impl == nullptr) {
-            if (entry.queue == nullptr) entry.queue.emplace();
+            if (entry.queue == nullptr) {
+                entry.queue = detail::make_counted<default_message_queue>();
+            }
             ptr->set_queue(entry.queue);
             entry.impl = ptr;
             if (!entry.queue->empty()) {
@@ -242,7 +245,9 @@ class middleman_impl : public middleman {
                 return;
             }
         }
-        if (entry.queue == nullptr) entry.queue.emplace();
+        if (entry.queue == nullptr) {
+            entry.queue = detail::make_counted<default_message_queue>();
+        }
         entry.queue->emplace(hdr, msg);
     }
 
@@ -300,7 +305,7 @@ class middleman_impl : public middleman {
         m_node = compute_node_id();
         m_handler = middleman_event_handler::create();
         m_namespace.set_proxy_factory([=](actor_id aid, node_id_ptr ptr) {
-            return make_counted<remote_actor_proxy>(aid, std::move(ptr), this);
+            return detail::make_counted<remote_actor_proxy>(aid, std::move(ptr), this);
         });
         m_namespace.set_new_element_callback([=](actor_id aid,
                                                  const node_id& node) {
@@ -546,13 +551,11 @@ std::atomic<size_t> default_max_msg_size{16 * 1024 * 1024};
 
 } // namespace <anonymous>
 
-void max_msg_size(size_t size)
-{
+void max_msg_size(size_t size) {
   default_max_msg_size = size;
 }
 
-size_t max_msg_size()
-{
+size_t max_msg_size() {
   return default_max_msg_size;
 }
 

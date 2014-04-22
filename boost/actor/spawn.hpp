@@ -41,9 +41,10 @@
 #include "boost/actor/spawn_options.hpp"
 #include "boost/actor/typed_event_based_actor.hpp"
 
-#include "boost/actor/detail/cs_thread.hpp"
 #include "boost/actor/util/type_traits.hpp"
 
+#include "boost/actor/detail/cs_thread.hpp"
+#include "boost/actor/detail/make_counted.hpp"
 #include "boost/actor/detail/proper_actor.hpp"
 #include "boost/actor/detail/typed_actor_util.hpp"
 #include "boost/actor/detail/functor_based_actor.hpp"
@@ -106,7 +107,7 @@ intrusive_ptr<C> spawn_impl(execution_unit* host,
                                       resume_policy,
                                       invoke_policy>;
     using proper_impl = detail::proper_actor<C, policies>;
-    auto ptr = make_counted<proper_impl>(std::forward<Ts>(args)...);
+    auto ptr = detail::make_counted<proper_impl>(std::forward<Ts>(args)...);
     BOOST_ACTOR_LOGF_DEBUG("spawned actor with ID " << ptr->id());
     BOOST_ACTOR_PUSH_AID(ptr->id());
     before_launch_fun(ptr.get());

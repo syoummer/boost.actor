@@ -45,7 +45,7 @@
 #include "boost/actor/attachable.hpp"
 #include "boost/actor/message_id.hpp"
 #include "boost/actor/exit_reason.hpp"
-#include "boost/actor/intrusive_ptr.hpp"
+#include "boost/intrusive_ptr.hpp"
 #include "boost/actor/abstract_channel.hpp"
 
 #include "boost/actor/util/type_traits.hpp"

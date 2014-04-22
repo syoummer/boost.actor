@@ -55,7 +55,7 @@ intptr_t actor::compare(const actor& other) const {
 }
 
 intptr_t actor::compare(const actor_addr& other) const {
-    return m_ptr.compare(other.m_ptr);
+    return static_cast<ptrdiff_t>(m_ptr.get() - other.m_ptr.get());
 }
 
 void actor::swap(actor& other) {

@@ -36,7 +36,7 @@
 #include <type_traits>
 
 #include "boost/actor/ref_counted.hpp"
-#include "boost/actor/intrusive_ptr.hpp"
+#include "boost/intrusive_ptr.hpp"
 #include "boost/actor/weak_ptr_anchor.hpp"
 
 #include "boost/actor/util/shared_spinlock.hpp"

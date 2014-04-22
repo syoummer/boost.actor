@@ -34,7 +34,7 @@
 #include <utility>
 
 #include "boost/actor/singletons.hpp"
-#include "boost/actor/intrusive_ptr.hpp"
+#include "boost/intrusive_ptr.hpp"
 
 #include "boost/actor/io/middleman.hpp"
 

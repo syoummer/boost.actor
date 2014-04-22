@@ -28,69 +28,32 @@
 \******************************************************************************/
 
 
-#ifndef BOOST_ACTOR_WEAK_INTRUSIVE_PTR_HPP
-#define BOOST_ACTOR_WEAK_INTRUSIVE_PTR_HPP
+#ifndef BOOST_ACTOR_DETAIL_MAKE_COUNTED_HPP
+#define BOOST_ACTOR_DETAIL_MAKE_COUNTED_HPP
 
-#include <cstddef>
+#include "boost/intrusive_ptr.hpp"
 
 #include "boost/actor/ref_counted.hpp"
-#include "boost/intrusive_ptr.hpp"
-#include "boost/actor/weak_ptr_anchor.hpp"
-#include "boost/actor/util/comparable.hpp"
+#include "boost/actor/detail/memory.hpp"
 
 namespace boost {
 namespace actor {
+namespace detail {
 
-/**
- * @brief A smart pointer that does not increase the reference count.
- */
-template<typename T>
-class weak_intrusive_ptr : util::comparable<weak_intrusive_ptr<T>> {
+template<typename T, typename... Ts>
+typename std::enable_if<is_memory_cached<T>::value, intrusive_ptr<T>>::type
+make_counted(Ts&&... args) {
+    return {detail::memory::create<T>(std::forward<Ts>(args)...)};
+}
 
- public:
+template<typename T, typename... Ts>
+typename std::enable_if<not is_memory_cached<T>::value, intrusive_ptr<T>>::type
+make_counted(Ts&&... args) {
+    return {new T(std::forward<Ts>(args)...)};
+}
 
-    weak_intrusive_ptr(const intrusive_ptr<T>& from) {
-        if (from) m_anchor = from->get_weak_ptr_anchor();
-    }
-
-    weak_intrusive_ptr() = default;
-    weak_intrusive_ptr(const weak_intrusive_ptr&) = default;
-    weak_intrusive_ptr& operator=(const weak_intrusive_ptr&) = default;
-
-    /**
-     * @brief Promotes this weak pointer to an intrusive_ptr.
-     * @warning Returns @p nullptr if {@link expired()}.
-     */
-    intrusive_ptr<T> promote() {
-        return (m_anchor) ? m_anchor->get<T>() : nullptr;
-    }
-
-    /**
-     * @brief Queries whether the object was already deleted.
-     */
-    bool expired() const {
-        return (m_anchor) ? m_anchor->expired() : true;
-    }
-
-    inline ptrdiff_t compare(const weak_intrusive_ptr& other) const {
-        return static_cast<ptrdiff_t>(m_anchor.get() - other.m_anchor.get());
-    }
-
-    /**
-     * @brief Queries whether this weak pointer is invalid, i.e., does not
-     *        point to an object.
-     */
-    inline bool invalid() const {
-        return m_anchor == nullptr;
-    }
-
- private:
-
-    intrusive_ptr<weak_ptr_anchor> m_anchor;
-
-};
-
+} // namespace detail
 } // namespace actor
 } // namespace boost
 
-#endif // BOOST_ACTOR_WEAK_INTRUSIVE_PTR_HPP
+#endif // BOOST_ACTOR_DETAIL_MAKE_COUNTED_HPP

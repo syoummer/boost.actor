@@ -2,9 +2,11 @@
 #include <cstddef>
 
 #include "test.hpp"
+#include "boost/intrusive_ptr.hpp"
 #include "boost/actor/ref_counted.hpp"
-#include "boost/actor/intrusive_ptr.hpp"
+#include "boost/actor/detail/make_counted.hpp"
 
+using boost::intrusive_ptr;
 using namespace boost::actor;
 
 namespace {
@@ -47,7 +49,7 @@ int main() {
 
     BOOST_ACTOR_TEST(test_intrusive_ptr);
     {
-        auto p = make_counted<class0>();
+        auto p = detail::make_counted<class0>();
         BOOST_ACTOR_CHECK_EQUAL(class0_instances, 1);
         BOOST_ACTOR_CHECK(p->unique());
     }
@@ -77,11 +79,11 @@ int main() {
     }
     BOOST_ACTOR_CHECK_EQUAL(class0_instances, 0);
     {
-        auto p1 = make_counted<class0>();
+        auto p1 = detail::make_counted<class0>();
         p1 = new class1;
         BOOST_ACTOR_CHECK_EQUAL(class0_instances, 1);
         BOOST_ACTOR_CHECK_EQUAL(class1_instances, 1);
-        auto p2 = make_counted<class1>();
+        auto p2 = detail::make_counted<class1>();
         p1 = p2;
         BOOST_ACTOR_CHECK_EQUAL(class0_instances, 1);
         BOOST_ACTOR_CHECK_EQUAL(class1_instances, 1);

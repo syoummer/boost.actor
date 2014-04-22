@@ -31,7 +31,7 @@
 #ifndef BOOST_ACTOR_GROUP_HPP
 #define BOOST_ACTOR_GROUP_HPP
 
-#include "boost/actor/intrusive_ptr.hpp"
+#include "boost/intrusive_ptr.hpp"
 #include "boost/actor/abstract_group.hpp"
 
 #include "boost/actor/util/comparable.hpp"

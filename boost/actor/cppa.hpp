@@ -78,6 +78,7 @@
 
 #include "boost/actor/detail/memory.hpp"
 #include "boost/actor/detail/raw_access.hpp"
+#include "boost/actor/detail/make_counted.hpp"
 #include "boost/actor/detail/actor_registry.hpp"
 
 /**
@@ -639,7 +640,7 @@ typed_remote_actor(const std::string& host, std::uint16_t port) {
  */
 template<class Impl, spawn_options Os = no_spawn_options, typename... Ts>
 actor spawn_io(Ts&&... args) {
-    auto ptr = make_counted<Impl>(std::forward<Ts>(args)...);
+    auto ptr = detail::make_counted<Impl>(std::forward<Ts>(args)...);
     return {io::init_and_launch(std::move(ptr))};
 }
 

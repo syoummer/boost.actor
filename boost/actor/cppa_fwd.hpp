@@ -34,6 +34,9 @@
 #include <cstdint>
 
 namespace boost {
+
+template<class> class intrusive_ptr;
+
 namespace actor {
 
 // classes
@@ -66,7 +69,6 @@ enum class atom_value : std::uint64_t;
 
 // class templates
 template<typename> class optional;
-template<typename> class intrusive_ptr;
 template<typename> class weak_intrusive_ptr;
 
 // intrusive pointer typedefs
