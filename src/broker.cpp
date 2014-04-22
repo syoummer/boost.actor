@@ -419,13 +419,13 @@ broker::broker(scribe_pointer ptr) {
     using namespace std;
     init_broker();
     auto id = ptr->id();
-    m_io.insert(make_pair(id, move(ptr)));
+    m_io.insert(make_pair(id, std::move(ptr)));
 }
 
 broker::broker(acceptor_uptr ptr) {
     using namespace std;
     init_broker();
-    add_doorman(move(ptr));
+    add_doorman(std::move(ptr));
 }
 
 void broker::cleanup(std::uint32_t reason) {
@@ -476,7 +476,9 @@ broker_ptr init_and_launch(broker_ptr ptr) {
 broker_ptr broker::from_impl(std::function<behavior (broker*)> fun,
                              input_stream_ptr in,
                              output_stream_ptr out) {
-    return detail::make_counted<default_broker>(move(fun), move(in), move(out));
+    return detail::make_counted<default_broker>(std::move(fun),
+                                                std::move(in),
+                                                std::move(out));
 }
 
 
@@ -484,17 +486,17 @@ broker_ptr broker::from_impl(std::function<void (broker*)> fun,
                              input_stream_ptr in,
                              output_stream_ptr out) {
     auto f = [=](broker* ptr) -> behavior { fun(ptr); return behavior{}; };
-    return detail::make_counted<default_broker>(f, move(in), move(out));
+    return detail::make_counted<default_broker>(f, std::move(in), std::move(out));
 }
 
 broker_ptr broker::from(std::function<behavior (broker*)> fun, acceptor_uptr in) {
-    return detail::make_counted<default_broker>(move(fun), move(in));
+    return detail::make_counted<default_broker>(std::move(fun), std::move(in));
 }
 
 
 broker_ptr broker::from(std::function<void (broker*)> fun, acceptor_uptr in) {
     auto f = [=](broker* ptr) -> behavior { fun(ptr); return behavior{}; };
-    return detail::make_counted<default_broker>(f, move(in));
+    return detail::make_counted<default_broker>(f, std::move(in));
 }
 
 void broker::erase_io(int id) {
@@ -515,7 +517,7 @@ connection_handle broker::add_scribe(input_stream_ptr in, output_stream_ptr out)
 accept_handle broker::add_doorman(acceptor_uptr ptr) {
     using namespace std;
     auto id = accept_handle::from_int(ptr->file_handle());
-    m_accept.insert(make_pair(id, create_unique<doorman>(this, move(ptr))));
+    m_accept.insert(make_pair(id, create_unique<doorman>(this, std::move(ptr))));
     return id;
 }
 
@@ -529,7 +531,7 @@ actor broker::fork_impl(std::function<void (broker*)> fun,
     }
     scribe* sptr = i->second.get(); // non-owning pointer
     auto f = [=](broker* ptr) -> behavior { fun(ptr); return behavior{}; };
-    auto result = detail::make_counted<default_broker>(f, move(i->second));
+    auto result = detail::make_counted<default_broker>(f, std::move(i->second));
     init_and_launch(result);
     sptr->set_broker(result); // set new broker
     m_io.erase(i);

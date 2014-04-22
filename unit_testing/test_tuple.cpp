@@ -12,13 +12,13 @@
 #include "test.hpp"
 
 #include "boost/none.hpp"
+#include "boost/optional.hpp"
 
 #include "boost/actor/on.hpp"
 #include "boost/actor/cppa.hpp"
 #include "boost/actor/cow_tuple.hpp"
 #include "boost/actor/any_tuple.hpp"
 #include "boost/actor/to_string.hpp"
-#include "boost/actor/tuple_cast.hpp"
 #include "boost/intrusive_ptr.hpp"
 #include "boost/actor/tpartial_function.hpp"
 #include "boost/actor/uniform_type_info.hpp"
@@ -35,6 +35,8 @@ using std::cout;
 using std::endl;
 
 using boost::none;
+using boost::none_t;
+using boost::optional;
 
 using namespace boost::actor;
 using namespace boost::actor::detail;
@@ -43,15 +45,21 @@ using namespace boost::actor::placeholders;
 
 #define BOOST_ACTOR_CHECK_INVOKED(FunName, Args)                               \
     invoked.clear();                                                           \
-    if ( !( FunName Args ) || invoked != #FunName ) {                          \
-        BOOST_ACTOR_FAILURE("invocation of " #FunName " failed");              \
-    } else { BOOST_ACTOR_CHECKPOINT(); } static_cast<void>(42)
+    {                                                                          \
+        auto res = FunName Args ;                                              \
+        if (boost::get<none_t>(&res) || invoked != #FunName ) {                \
+            BOOST_ACTOR_FAILURE("invocation of " #FunName " failed");          \
+        } else { BOOST_ACTOR_CHECKPOINT(); }                                   \
+    } static_cast<void>(42)
 
 #define BOOST_ACTOR_CHECK_NOT_INVOKED(FunName, Args)                           \
     invoked.clear();                                                           \
-    if ( FunName Args || invoked == #FunName ) {                               \
-        BOOST_ACTOR_FAILURE(#FunName " erroneously invoked");                  \
-    } else { BOOST_ACTOR_CHECKPOINT(); } static_cast<void>(42)
+    {                                                                          \
+        auto res = FunName Args ;                                              \
+        if (boost::get<none_t>(&res) || invoked == #FunName ) {                \
+            BOOST_ACTOR_FAILURE(#FunName " erroneously invoked");              \
+        } else { BOOST_ACTOR_CHECKPOINT(); }                                   \
+    } static_cast<void>(42)
 
 namespace {
 

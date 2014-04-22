@@ -68,7 +68,6 @@ enum primitive_type : unsigned char;
 enum class atom_value : std::uint64_t;
 
 // class templates
-template<typename> class optional;
 template<typename> class weak_intrusive_ptr;
 
 // intrusive pointer typedefs

@@ -54,7 +54,8 @@ int main() {
     mirror m(self.get());
     m(atom("foo"), static_cast<std::uint32_t>(42));
     m(atom(":Attach"), atom(":Baz"), "cstring");
-    m(atom("b"), atom("a"), atom("c"), 23.f);
+    //m(atom("b"), atom("a"), atom("c"), 23.f, 1.f, 1.f);
+    m(1.f);
     m(atom("a"), atom("b"), atom("c"), 23.f);
     int i = 0;
     self->receive_for(i, 3) (

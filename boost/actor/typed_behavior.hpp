@@ -84,7 +84,11 @@ struct valid_input_predicate {
                                  "contains at least one pattern that is "
                                  "not defined in the actor's type");
         typedef typename util::tl_at<SList, pos>::type s_element;
-        typedef typename s_element::output_types s_out;
+        typedef typename util::tl_map<
+                    typename s_element::output_types,
+                    lift_void
+                >::type
+                s_out;
         static constexpr bool value =
                std::is_same<output_types, s_out>::value
             || std::is_same<output_types, skip_list>::value;

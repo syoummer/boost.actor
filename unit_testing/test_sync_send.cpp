@@ -5,6 +5,7 @@
 #include "boost/actor/cppa.hpp"
 
 using boost::none;
+using boost::optional;
 
 using namespace std;
 using namespace boost::actor;
@@ -175,8 +176,8 @@ struct server : event_based_actor {
 };
 
 void compile_time_optional_variant_check(event_based_actor* self) {
-    typedef optional_variant<std::tuple<int, float>,
-                             std::tuple<float, int, int>>
+    typedef boost::variant<std::tuple<int, float>,
+                           std::tuple<float, int, int>>
             msg_type;
     self->sync_send(self, atom("msg")).then([](msg_type) {});
 }

@@ -11,28 +11,30 @@
 #include <string>
 #include <iostream>
 
-#include "boost/actor/opt.hpp"
+#include "boost/program_options.hpp"
+
 #include "boost/actor/cppa.hpp"
 
 using namespace std;
 using namespace boost::actor;
+using namespace boost::program_options;
 
 int main(int argc, char** argv) {
     uint16_t port = 0;
-    options_description desc;
-    bool args_valid = match_stream<string>(argv + 1, argv + argc) (
-        on_opt1('p', "port", &desc, "set port") >> rd_arg(port),
-        on_opt0('h', "help", &desc, "print help") >> print_desc_and_exit(&desc)
-    );
+    options_description desc("Allowed options");
+    desc.add_options()
+        ("port,p", value<uint16_t>(&port), "set port")
+        ("help,h", "print help")
+    ;
+    variables_map vm;
+    store(parse_command_line(argc, argv, desc), vm);
+    if (vm.count("help")) {
+        cout << desc << endl;
+        return 1;
+    }
     if (port <= 1024) {
         cerr << "*** no port > 1024 given" << endl;
-        args_valid = false;
-    }
-    if (!args_valid) {
-        // print_desc(&desc) returns a function printing the stored help text
-        auto desc_printer = print_desc(&desc);
-        desc_printer();
-        return 1;
+        return 2;
     }
     try {
         // try to bind the group server to the given port,

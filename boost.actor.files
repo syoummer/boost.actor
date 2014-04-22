@@ -51,7 +51,6 @@ boost/actor/detail/memory.hpp
 boost/actor/detail/object_array.hpp
 boost/actor/detail/object_impl.hpp
 boost/actor/detail/opt_impls.hpp
-boost/actor/detail/optional_variant_data.hpp
 boost/actor/detail/pair_member.hpp
 boost/actor/detail/projection.hpp
 boost/actor/detail/proper_actor.hpp
@@ -66,7 +65,6 @@ boost/actor/detail/swap_bytes.hpp
 boost/actor/detail/sync_request_bouncer.hpp
 boost/actor/detail/tdata.hpp
 boost/actor/detail/to_uniform_name.hpp
-boost/actor/detail/tuple_cast_impl.hpp
 boost/actor/detail/tuple_iterator.hpp
 boost/actor/detail/tuple_vals.hpp
 boost/actor/detail/tuple_view.hpp
@@ -121,9 +119,6 @@ boost/actor/message_priority.hpp
 boost/actor/node_id.hpp
 boost/actor/object.hpp
 boost/actor/on.hpp
-boost/actor/opt.hpp
-boost/actor/optional.hpp
-boost/actor/optional_variant.hpp
 boost/actor/partial_function.hpp
 boost/actor/policy.hpp
 boost/actor/policy/context_switching_resume.hpp
@@ -163,7 +158,6 @@ boost/actor/system_messages.hpp
 boost/actor/timeout_definition.hpp
 boost/actor/to_string.hpp
 boost/actor/tpartial_function.hpp
-boost/actor/tuple_cast.hpp
 boost/actor/type_lookup_table.hpp
 boost/actor/typed_actor.hpp
 boost/actor/typed_actor_ptr.hpp
@@ -285,7 +279,6 @@ src/middleman_event_handler_poll.cpp
 src/node_id.cpp
 src/object.cpp
 src/object_array.cpp
-src/opt.cpp
 src/output_stream.cpp
 src/partial_function.cpp
 src/peer.cpp
@@ -322,9 +315,7 @@ unit_testing/test_fixed_vector.cpp
 unit_testing/test_intrusive_containers.cpp
 unit_testing/test_intrusive_ptr.cpp
 unit_testing/test_local_group.cpp
-unit_testing/test_match.cpp
 unit_testing/test_metaprogramming.cpp
-unit_testing/test_optional_variant.cpp
 unit_testing/test_primitive_variant.cpp
 unit_testing/test_remote_actor.cpp
 unit_testing/test_ripemd_160.cpp

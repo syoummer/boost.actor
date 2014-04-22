@@ -15,12 +15,14 @@
 #include <sstream>
 #include <iostream>
 
-#include "boost/actor/opt.hpp"
+#include "boost/program_options.hpp"
+
 #include "boost/actor/cppa.hpp"
 
 using namespace std;
 using namespace boost::actor;
 using namespace boost::actor::placeholders;
+using namespace boost::program_options;
 
 struct line { string str; };
 
@@ -73,17 +75,20 @@ void client(event_based_actor* self, const string& name) {
 }
 
 int main(int argc, char** argv) {
-
     string name;
     string group_id;
-    options_description desc;
-    bool args_valid = match_stream<string>(argv + 1, argv + argc) (
-        on_opt1('n', "name", &desc, "set name") >> rd_arg(name),
-        on_opt1('g', "group", &desc, "join group <arg1>") >> rd_arg(group_id),
-        on_opt0('h', "help", &desc, "print help") >> print_desc_and_exit(&desc)
-    );
-
-    if (!args_valid) print_desc_and_exit(&desc)();
+    options_description desc("Allowed options");
+    desc.add_options()
+        ("name,n", value<string>(&name), "set name")
+        ("group,g", value<string>(&group_id), "join group")
+        ("help,h", "print help")
+    ;
+    variables_map vm;
+    store(parse_command_line(argc, argv, desc), vm);
+    if (vm.count("help")) {
+        cout << desc << endl;
+        return 1;
+    }
 
     while (name.empty()) {
         cout << "please enter your name: " << flush;
@@ -108,7 +113,7 @@ int main(int argc, char** argv) {
                                     group_id.substr(p + 1));
                 anon_send(client_actor, atom("join"), g);
             }
-            catch (exception& e) {
+            catch (std::exception& e) {
                 ostringstream err;
                 cerr << "*** exception: group::get(\"" << group_id.substr(0, p)
                      << "\", \"" << group_id.substr(p + 1) << "\") failed; "
@@ -120,12 +125,13 @@ int main(int argc, char** argv) {
     cout << "*** starting client, type '/help' for a list of commands" << endl;
     istream_iterator<line> lines(cin);
     istream_iterator<line> eof;
+    /*
     match_each (lines, eof, split_line) (
         on("/join", arg_match) >> [&](const string& mod, const string& id) {
             try {
                 anon_send(client_actor, atom("join"), group::get(mod, id));
             }
-            catch (exception& e) {
+            catch (std::exception& e) {
                 cerr << "*** exception: " << to_verbose_string(e) << endl;
             }
         },
@@ -145,6 +151,7 @@ int main(int argc, char** argv) {
             }
         }
     );
+    */
     // force actor to quit
     anon_send_exit(client_actor, exit_reason::user_shutdown);
     await_all_actors_done();

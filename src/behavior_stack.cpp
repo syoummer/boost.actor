@@ -87,7 +87,7 @@ void behavior_stack::pop_async_back() {
 
 void behavior_stack::clear() {
     if (m_elements.empty() == false) {
-        move(m_elements.begin(), m_elements.end(), move_iter(this));
+        std::move(m_elements.begin(), m_elements.end(), move_iter(this));
         m_elements.clear();
     }
 }

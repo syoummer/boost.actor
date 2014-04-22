@@ -31,14 +31,17 @@
 #ifndef BEHAVIOR_IMPL_HPP
 #define BEHAVIOR_IMPL_HPP
 
+#include <type_traits>
+
 #include "boost/none.hpp"
+#include "boost/variant.hpp"
+#include "boost/optional.hpp"
 #include "boost/intrusive_ptr.hpp"
 
 #include "boost/actor/atom.hpp"
-#include "boost/actor/optional.hpp"
 #include "boost/actor/any_tuple.hpp"
 #include "boost/actor/ref_counted.hpp"
-#include "boost/actor/optional_variant.hpp"
+#include "boost/actor/skip_message.hpp"
 #include "boost/actor/timeout_definition.hpp"
 
 #include "boost/actor/util/duration.hpp"
@@ -63,9 +66,14 @@ template<class T> struct is_message_id_wrapper {
     static constexpr bool value = sizeof(test<T>(0)) == 1;
 };
 
-struct optional_any_tuple_visitor {
-    inline bhvr_invoke_result operator()() const { return any_tuple{}; }
+struct optional_any_tuple_visitor : static_visitor<bhvr_invoke_result> {
+    //inline bhvr_invoke_result operator()() const { return any_tuple{}; }
+    inline bhvr_invoke_result operator()(none_t&) const { return none; }
     inline bhvr_invoke_result operator()(const none_t&) const { return none; }
+    inline bhvr_invoke_result operator()(skip_message_t&) const { return none; }
+    inline bhvr_invoke_result operator()(const skip_message_t&) const { return none; }
+    inline bhvr_invoke_result operator()(unit_t&) const { return any_tuple{}; }
+    inline bhvr_invoke_result operator()(const unit_t&) const { return any_tuple{}; }
     template<typename T>
     inline bhvr_invoke_result operator()(T& value, typename std::enable_if<not is_message_id_wrapper<T>::value>::type* = 0) const {
         return make_any_tuple(std::move(value));
@@ -153,9 +161,9 @@ class behavior_impl : public ref_counted {
 };
 
 struct dummy_match_expr {
-    inline optional_variant<void> invoke(const any_tuple&) const { return none; }
+    inline variant<none_t> invoke(const any_tuple&) const { return none; }
     inline bool can_invoke(const any_tuple&) const { return false; }
-    inline optional_variant<void> operator()(const any_tuple&) const { return none; }
+    inline variant<none_t> operator()(const any_tuple&) const { return none; }
 };
 
 template<class MatchExpr, typename F>
@@ -174,11 +182,13 @@ class default_behavior_impl : public behavior_impl {
     : super(tout), m_expr(std::forward<Expr>(expr)), m_fun(f) { }
 
     bhvr_invoke_result invoke(any_tuple& tup) {
-        return eval_res(m_expr(tup));
+        auto res = m_expr(tup);
+        return apply_visitor(optional_any_tuple_visitor{}, res);
     }
 
     bhvr_invoke_result invoke(const any_tuple& tup) {
-        return eval_res(m_expr(tup));
+        auto res = m_expr(tup);
+        return apply_visitor(optional_any_tuple_visitor{}, res);
     }
 
     bool defined_at(const any_tuple& tup) {
@@ -192,24 +202,6 @@ class default_behavior_impl : public behavior_impl {
     void handle_timeout() { m_fun(); }
 
  private:
-
-    template<typename... Ts>
-    typename std::enable_if<has_skip_message<Ts...>::value, bhvr_invoke_result>::type
-    eval_res(optional_variant<Ts...>&& res) {
-        if (res) {
-            if (res.template is<skip_message_t>()) {
-                return none;
-            }
-            return apply_visitor(optional_any_tuple_visitor{}, res);
-        }
-        return none;
-    }
-
-    template<typename... Ts>
-    typename std::enable_if<!has_skip_message<Ts...>::value, bhvr_invoke_result>::type
-    eval_res(optional_variant<Ts...>&& res) {
-        return apply_visitor(optional_any_tuple_visitor{}, res);
-    }
 
     MatchExpr m_expr;
     F m_fun;

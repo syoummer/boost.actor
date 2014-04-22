@@ -35,9 +35,10 @@
 #include <functional>
 #include <type_traits>
 
+#include "boost/optional.hpp"
+
 #include "boost/actor/get.hpp"
 #include "boost/actor/unit.hpp"
-#include "boost/actor/optional.hpp"
 
 #include "boost/actor/util/wrapped.hpp"
 #include "boost/actor/util/type_list.hpp"

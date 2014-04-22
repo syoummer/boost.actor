@@ -50,7 +50,6 @@
 #include "boost/actor/to_string.hpp"
 #include "boost/actor/any_tuple.hpp"
 #include "boost/actor/cow_tuple.hpp"
-#include "boost/actor/tuple_cast.hpp"
 #include "boost/actor/singletons.hpp"
 #include "boost/actor/typed_actor.hpp"
 #include "boost/actor/exit_reason.hpp"

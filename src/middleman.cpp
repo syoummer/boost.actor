@@ -178,7 +178,7 @@ class middleman_impl : public middleman {
     ~middleman_impl();
 
     void run_later(function<void()> fun) override {
-        m_queue.enqueue(new middleman_event(move(fun)));
+        m_queue.enqueue(new middleman_event(std::move(fun)));
         atomic_thread_fence(memory_order_seq_cst);
         notify_queue_event(m_pipe_in);
     }

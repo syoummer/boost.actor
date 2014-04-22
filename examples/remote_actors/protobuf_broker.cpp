@@ -49,6 +49,8 @@ BOOST_ACTOR_PUSH_WARNINGS
 #include "pingpong.pb.h"
 BOOST_ACTOR_POP_WARNINGS
 
+using boost::optional;
+
 using namespace std;
 using namespace boost::actor;
 using namespace boost::actor::io;

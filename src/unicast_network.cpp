@@ -34,6 +34,7 @@
 #include <list>
 #include <memory>
 #include <cstring>    // memset
+#include <cstdint>
 #include <iostream>
 #include <stdexcept>
 #include <condition_variable>
@@ -64,9 +65,9 @@
 
 namespace {
 
-constexpr std::uint32_t max_iface_size = 100;
+constexpr uint32_t max_iface_size = 100;
 
-constexpr std::uint32_t max_iface_clause_size = 500;
+constexpr uint32_t max_iface_clause_size = 500;
 
 typedef std::set<std::string> string_set;
 
@@ -107,8 +108,8 @@ void publish_impl(abstract_actor_ptr ptr, std::unique_ptr<acceptor> aptr) {
     auto mm = get_middleman();
     auto addr = whom.address();
     auto sigs = whom->interface();
-    mm->register_acceptor(addr, new peer_acceptor(mm, move(aptr),
-                                                  addr, move(sigs)));
+    mm->register_acceptor(addr, new peer_acceptor(mm, std::move(aptr),
+                                                  addr, std::move(sigs)));
 }
 
 abstract_actor_ptr remote_actor_impl(stream_ptr_pair io, string_set expected) {

@@ -48,8 +48,6 @@
 #include "boost/actor/detail/actor_registry.hpp"
 #include "boost/actor/detail/singleton_manager.hpp"
 
-using std::move;
-
 namespace boost {
 namespace actor {
 
@@ -196,14 +194,14 @@ void printer_loop(blocking_actor* self) {
             if (!str.empty() && s) {
                 auto i = out.find(s);
                 if (i == out.end()) {
-                    i = out.insert(make_pair(s, move(str))).first;
+                    i = out.insert(make_pair(s, std::move(str))).first;
                     // monitor actor to flush its output on exit
                     self->monitor(s);
                     flush_if_needed(i->second);
                 }
                 else {
                     auto& ref = i->second;
-                    ref += move(str);
+                    ref += std::move(str);
                     flush_if_needed(ref);
                 }
             }

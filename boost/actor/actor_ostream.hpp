@@ -60,7 +60,7 @@ class actor_ostream {
     actor_ostream& flush();
 
     inline actor_ostream& operator<<(std::string arg) {
-        return write(move(arg));
+        return write(std::move(arg));
     }
 
     inline actor_ostream& operator<<(const any_tuple& arg) {

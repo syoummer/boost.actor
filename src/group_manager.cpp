@@ -54,15 +54,13 @@
 #include "boost/actor/util/shared_lock_guard.hpp"
 #include "boost/actor/util/upgrade_lock_guard.hpp"
 
-using namespace std;
-
 namespace boost {
 namespace actor {
 namespace detail {
 
 namespace {
 
-typedef lock_guard<util::shared_spinlock> exclusive_guard;
+typedef std::lock_guard<util::shared_spinlock> exclusive_guard;
 typedef util::shared_lock_guard<util::shared_spinlock> shared_guard;
 typedef util::upgrade_lock_guard<util::shared_spinlock> upgrade_guard;
 
@@ -90,7 +88,7 @@ class local_group : public abstract_group {
         m_broker->enqueue(hdr, msg, eu);
     }
 
-    pair<bool, size_t> add_subscriber(const channel& who) {
+    std::pair<bool, size_t> add_subscriber(const channel& who) {
         BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_TARG(who, to_string));
         exclusive_guard guard(m_mtx);
         if (who && m_subscribers.insert(who).second) {
@@ -99,7 +97,7 @@ class local_group : public abstract_group {
         return {false, m_subscribers.size()};
     }
 
-    pair<bool, size_t> erase_subscriber(const channel& who) {
+    std::pair<bool, size_t> erase_subscriber(const channel& who) {
         BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_TARG(who, to_string));
         exclusive_guard guard(m_mtx);
         auto success = m_subscribers.erase(who) > 0;
@@ -125,12 +123,12 @@ class local_group : public abstract_group {
         return m_broker;
     }
 
-    local_group(bool spawn_local_broker, local_group_module* mod, string id);
+    local_group(bool spawn_local_broker, local_group_module* mod, std::string id);
 
  protected:
 
     util::shared_spinlock m_mtx;
-    set<channel> m_subscribers;
+    std::set<channel> m_subscribers;
     actor m_broker;
 
 };
@@ -204,7 +202,7 @@ class local_broker : public event_based_actor {
     }
 
     local_group_ptr m_group;
-    set<actor> m_acquaintances;
+    std::set<actor> m_acquaintances;
 
 };
 
@@ -297,7 +295,7 @@ class local_group_module : public abstract_group::module {
     : super("local"), m_process(get_middleman()->node())
     , m_actor_utype(uniform_typeid<actor>()){ }
 
-    group get(const string& identifier) override {
+    group get(const std::string& identifier) override {
         shared_guard guard(m_instances_mtx);
         auto i = m_instances.find(identifier);
         if (i != m_instances.end()) {
@@ -316,7 +314,7 @@ class local_group_module : public abstract_group::module {
 
     group deserialize(deserializer* source) override {
         // deserialize {identifier, process_id, node_id}
-        auto identifier = source->read<string>();
+        auto identifier = source->read<std::string>();
         // deserialize broker
         actor broker;
         m_actor_utype->deserialize(&broker, source);
@@ -334,7 +332,7 @@ class local_group_module : public abstract_group::module {
                 local_group_ptr tmp{new local_group_proxy{broker, this,
                                                           identifier}};
                 upgrade_guard uguard(guard);
-                auto p = m_proxies.insert(make_pair(broker, tmp));
+                auto p = m_proxies.insert(std::make_pair(broker, tmp));
                 // someone might preempt us
                 return {p.first->second};
             }
@@ -357,9 +355,9 @@ class local_group_module : public abstract_group::module {
     node_id_ptr m_process;
     const uniform_type_info* m_actor_utype;
     util::shared_spinlock m_instances_mtx;
-    map<string, local_group_ptr> m_instances;
+    std::map<std::string, local_group_ptr> m_instances;
     util::shared_spinlock m_proxies_mtx;
-    map<actor, local_group_ptr> m_proxies;
+    std::map<actor, local_group_ptr> m_proxies;
 
 };
 
@@ -369,9 +367,10 @@ class remote_group : public abstract_group {
 
  public:
 
-    remote_group(abstract_group::module_ptr parent, string id,
+    remote_group(abstract_group::module_ptr parent,
+                 std::string id,
                  local_group_ptr decorated)
-            : super(parent, move(id)), m_decorated(decorated) { }
+            : super(parent, std::move(id)), m_decorated(decorated) { }
 
     abstract_group::subscription subscribe(const channel& who) {
         BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_TSARG(who));
@@ -406,11 +405,11 @@ typedef intrusive_ptr<remote_group> remote_group_ptr;
 
 class shared_map : public ref_counted {
 
-    typedef unique_lock<mutex> lock_type;
+    typedef std::unique_lock<std::mutex> lock_type;
 
  public:
 
-    remote_group_ptr get(const string& key) {
+    remote_group_ptr get(const std::string& key) {
         remote_group_ptr result;
         { // lifetime scope of guard
             lock_type guard(m_mtx);
@@ -430,7 +429,7 @@ class shared_map : public ref_counted {
         return result;
     }
 
-    group peek(const string& key) {
+    group peek(const std::string& key) {
         lock_type guard(m_mtx);
         auto i = m_instances.find(key);
         if (i != m_instances.end()) {
@@ -439,7 +438,7 @@ class shared_map : public ref_counted {
         return invalid_group;
     }
 
-    void put(const string& key, const remote_group_ptr& ptr) {
+    void put(const std::string& key, const remote_group_ptr& ptr) {
         lock_type guard(m_mtx);
         m_instances[key] = ptr;
         m_cond.notify_all();
@@ -449,9 +448,9 @@ class shared_map : public ref_counted {
 
  private:
 
-    mutex m_mtx;
-    condition_variable m_cond;
-    map<string, remote_group_ptr> m_instances;
+    std::mutex m_mtx;
+    std::condition_variable m_cond;
+    std::map<std::string, remote_group_ptr> m_instances;
 
 };
 
@@ -467,7 +466,13 @@ class remote_group_module : public abstract_group::module {
         auto sm = make_counted<shared_map>();
         abstract_group::module_ptr this_group{this};
         m_map = sm;
-        typedef map<string, pair<actor, vector<pair<string, remote_group_ptr>>>>
+        typedef std::map<
+                    std::string,
+                    std::pair<
+                        actor,
+                        std::vector<std::pair<std::string, remote_group_ptr>>
+                    >
+                >
                 peer_map;
         auto peers = std::make_shared<peer_map>();
         m_map->m_worker = spawn<hidden>([=](event_based_actor* self) -> behavior {
@@ -475,13 +480,13 @@ class remote_group_module : public abstract_group::module {
                             "remote_group_module$worker",
                             "");
             return {
-                on(atom("FETCH"), arg_match) >> [=](const string& key) {
+                on(atom("FETCH"), arg_match) >> [=](const std::string& key) {
                     BOOST_ACTOR_LOGF_TRACE("");
                     // format is group@host:port
                     auto pos1 = key.find('@');
                     auto pos2 = key.find(':');
-                    auto last = string::npos;
-                    string authority;
+                    auto last = std::string::npos;
+                    std::string authority;
                     if (pos1 != last && pos2 != last && pos1 < pos2) {
                         auto name = key.substr(0, pos1);
                         authority = key.substr(pos1 + 1);
@@ -499,12 +504,12 @@ class remote_group_module : public abstract_group::module {
                                 self->monitor(nameserver);
                                 (*peers)[authority].first = nameserver;
                             }
-                            catch (exception&) {
+                            catch (std::exception&) {
                                 sm->put(key, nullptr);
                                 return;
                             }
                         }
-                        self->timed_sync_send(nameserver, chrono::seconds(10), atom("GET_GROUP"), name).then (
+                        self->timed_sync_send(nameserver, std::chrono::seconds(10), atom("GET_GROUP"), name).then (
                             on(atom("GROUP"), arg_match) >> [=](const group& g) {
                                 auto gg = dynamic_cast<local_group*>(detail::raw_access::get(g));
                                 if (gg) {
@@ -513,12 +518,13 @@ class remote_group_module : public abstract_group::module {
                                     (*peers)[authority].second.push_back(make_pair(key, rg));
                                 }
                                 else {
-                                    cerr << "*** WARNING: received a non-local "
-                                            "group form nameserver for key "
-                                         << key << " in file "
-                                         << __FILE__
-                                         << ", line " << __LINE__
-                                         << endl;
+                                    std::cerr << "*** WARNING: received a "
+                                                 "non-local group form "
+                                                 "nameserver for key "
+                                              << key << " in file "
+                                              << __FILE__
+                                              << ", line " << __LINE__
+                                              << std::endl;
                                     sm->put(key, nullptr);
                                 }
                             },
@@ -558,7 +564,7 @@ class remote_group_module : public abstract_group::module {
     }
 
     group deserialize(deserializer* source) {
-        return get(source->read<string>());
+        return get(source->read<std::string>());
     }
 
     void serialize(abstract_group* ptr, serializer* sink) {
@@ -573,8 +579,8 @@ class remote_group_module : public abstract_group::module {
 
 local_group::local_group(bool spawn_local_broker,
                          local_group_module* mod,
-                         string id)
-: abstract_group(mod, move(id)) {
+                         std::string id)
+: abstract_group(mod, std::move(id)) {
     if (spawn_local_broker) m_broker = spawn<local_broker, hidden>(this);
 }
 
@@ -588,7 +594,7 @@ void remote_group::serialize(serializer* sink) {
     static_cast<remote_group_module*>(m_module)->serialize(this, sink);
 }
 
-atomic<size_t> m_ad_hoc_id;
+std::atomic<size_t> m_ad_hoc_id;
 
 } // namespace <anonymous>
 
@@ -596,49 +602,50 @@ group_manager::~group_manager() { }
 
 group_manager::group_manager() {
     abstract_group::unique_module_ptr ptr(new local_group_module);
-    m_mmap.insert(make_pair(string("local"), move(ptr)));
+    m_mmap.insert(std::make_pair(std::string("local"), std::move(ptr)));
     ptr.reset(new remote_group_module);
-    m_mmap.insert(make_pair(string("remote"), move(ptr)));
+    m_mmap.insert(std::make_pair(std::string("remote"), std::move(ptr)));
 }
 
 group group_manager::anonymous() {
-    string id = "__#";
+    std::string id = "__#";
     id += std::to_string(++m_ad_hoc_id);
     return get_module("local")->get(id);
 }
 
-group group_manager::get(const string& module_name,
-                         const string& group_identifier) {
+group group_manager::get(const std::string& module_name,
+                         const std::string& group_identifier) {
     auto mod = get_module(module_name);
     if (mod) {
         return mod->get(group_identifier);
     }
-    string error_msg = "no module named \"";
+    std::string error_msg = "no module named \"";
     error_msg += module_name;
     error_msg += "\" found";
-    throw logic_error(error_msg);
+    throw std::logic_error(error_msg);
 }
 
-void group_manager::add_module(unique_ptr<abstract_group::module> mptr) {
+void group_manager::add_module(std::unique_ptr<abstract_group::module> mptr) {
     if (!mptr) return;
-    const string& mname = mptr->name();
+    auto& mname = mptr->name();
     { // lifetime scope of guard
-        lock_guard<mutex> guard(m_mmap_mtx);
-        if (m_mmap.insert(make_pair(mname, move(mptr))).second) {
+        std::lock_guard<std::mutex> guard(m_mmap_mtx);
+        if (m_mmap.insert(std::make_pair(mname, std::move(mptr))).second) {
             return; // success; don't throw
         }
     }
-    string error_msg = "module name \"";
+    std::string error_msg = "module name \"";
     error_msg += mname;
     error_msg += "\" already defined";
-    throw logic_error(error_msg);
+    throw std::logic_error(error_msg);
 }
 
-abstract_group::module* group_manager::get_module(const string& module_name) {
-    lock_guard<mutex> guard(m_mmap_mtx);
+abstract_group::module* group_manager::get_module(const std::string& module_name) {
+    std::lock_guard<std::mutex> guard(m_mmap_mtx);
     auto i = m_mmap.find(module_name);
     return  (i != m_mmap.end()) ? i->second.get() : nullptr;
 }
 
-} } // namespace actor
-} // namespace boost::detail
+} // namespace detail
+} // namespace actor
+} // namespace boost

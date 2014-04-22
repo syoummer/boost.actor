@@ -19,14 +19,17 @@
 #include <functional>
 
 #include "boost/none.hpp"
+#include "boost/program_options.hpp"
 
-#include "boost/actor/opt.hpp"
 #include "boost/actor/cppa.hpp"
 
 using boost::none;
+using boost::optional;
+
 using namespace std;
 using namespace boost::actor;
 using namespace boost::actor::placeholders;
+using namespace boost::program_options;
 
 // our "service"
 void calculator(event_based_actor* self) {
@@ -71,7 +74,7 @@ void client_bhvr(event_based_actor* self, const string& host, uint16_t port, con
             client_bhvr(self, host, port, new_serv);
             return;
         }
-        catch (exception&) {
+        catch (std::exception&) {
             aout(self) << "connection failed, try again in 3s" << endl;
             self->delayed_send(self, chrono::seconds(3), atom("reconnect"));
         }
@@ -177,41 +180,44 @@ void client_repl(const string& host, uint16_t port) {
 int main(int argc, char** argv) {
     string mode;
     string host;
+    string group_id;
     uint16_t port = 0;
-    options_description desc;
-    auto set_mode = [&](const string& arg) -> function<bool()> {
-        return [arg, &mode]() -> bool {
-            if (!mode.empty()) {
-                cerr << "mode already set to " << mode << endl;
-                return false;
-            }
-            mode = move(arg);
-            return true;
-        };
-    };
-    string copts = "client options";
-    string sopts = "server options";
-    bool args_valid = match_stream<string> (argv + 1, argv + argc) (
-        on_opt1('p', "port",   &desc, "set port") >> rd_arg(port),
-        on_opt1('H', "host",   &desc, "set host (default: localhost)", copts) >> rd_arg(host),
-        on_opt0('s', "server", &desc, "run in server mode", sopts) >> set_mode("server"),
-        on_opt0('c', "client", &desc, "run in client mode", copts) >> set_mode("client"),
-        on_opt0('h', "help",   &desc, "print help") >> print_desc_and_exit(&desc)
-    );
-    if (!args_valid || port == 0 || mode.empty()) {
-        if (port == 0) cerr << "*** no port specified" << endl;
-        if (mode.empty()) cerr << "*** no mode specified" << endl;
-        cerr << endl;
-        auto description_printer = print_desc(&desc, cerr);
-        description_printer();
-        return -1;
+    options_description desc("Allowed options");
+    desc.add_options()
+        ("port,p", value<uint16_t>(&port), "set name")
+        ("host,H", value<string>(&host)->default_value("localhost"), "set host")
+        ("server,s", value<string>(&group_id), "run in server mode")
+        ("client,c", value<string>(&group_id), "run in client mode")
+        ("help,h", "print help")
+    ;
+    variables_map vm;
+    store(parse_command_line(argc, argv, desc), vm);
+    if (vm.count("help")) {
+        cout << desc << endl;
+        return 1;
+    }
+    if (vm.count("server")) {
+        mode = "server";
+    }
+    if (vm.count("client")) {
+        if (!mode.empty()) {
+            cerr << "*** cannot run in both client and server mode" << endl;
+            cout << desc << endl;
+            return 2;
+        }
+        mode = "client";
+    }
+    if (!vm.count("port")) {
+        cerr << "*** no port specified" << endl;
+        cout << desc << endl;
+        return 2;
     }
     if (mode == "server") {
         try {
             // try to publish math actor at given port
             publish(spawn(calculator), port);
         }
-        catch (exception& e) {
+        catch (std::exception& e) {
             cerr << "*** unable to publish math actor at port " << port << "\n"
                  << to_verbose_string(e) // prints exception type and e.what()
                  << endl;

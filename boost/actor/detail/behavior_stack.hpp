@@ -36,7 +36,8 @@
 #include <utility>
 #include <algorithm>
 
-#include "boost/actor/optional.hpp"
+#include "boost/optional.hpp"
+
 #include "boost/actor/config.hpp"
 #include "boost/actor/behavior.hpp"
 #include "boost/actor/message_id.hpp"

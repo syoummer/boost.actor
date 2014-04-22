@@ -27,7 +27,6 @@
 #include "boost/actor/cow_tuple.hpp"
 #include "boost/actor/any_tuple.hpp"
 #include "boost/actor/announce.hpp"
-#include "boost/actor/tuple_cast.hpp"
 #include "boost/actor/any_tuple.hpp"
 #include "boost/actor/to_string.hpp"
 #include "boost/actor/serializer.hpp"
@@ -151,16 +150,16 @@ int main() {
 
     any_tuple atuple1{static_cast<any_tuple::raw_ptr>(oarr)};
     try {
-        auto opt = tuple_cast<uint32_t, string>(atuple1);
-        BOOST_ACTOR_CHECK(opt.valid());
-        if (opt) {
-            auto& tup = *opt;
-            BOOST_ACTOR_CHECK_EQUAL(tup.size(), static_cast<size_t>(2));
-            BOOST_ACTOR_CHECK_EQUAL(get<0>(tup), static_cast<uint32_t>(42));
-            BOOST_ACTOR_CHECK_EQUAL(get<1>(tup), "foo");
-        }
+        bool ok = false;
+        partial_function check {
+            [&](uint32_t val0, string val1) {
+                ok = (val0 == 42 && val1 == "foo");
+            }
+        };
+        check(atuple1);
+        BOOST_ACTOR_CHECK(ok);
     }
-    catch (exception& e) { BOOST_ACTOR_FAILURE(to_verbose_string(e)); }
+    catch (std::exception& e) { BOOST_ACTOR_FAILURE(to_verbose_string(e)); }
 
     detail::meta_cow_tuple<int,int> mct;
     try {
@@ -178,7 +177,7 @@ int main() {
         BOOST_ACTOR_CHECK_EQUAL(get<0>(tup0), get<0>(tref));
         BOOST_ACTOR_CHECK_EQUAL(get<1>(tup0), get<1>(tref));
     }
-    catch (exception& e) { BOOST_ACTOR_FAILURE(to_verbose_string(e)); }
+    catch (std::exception& e) { BOOST_ACTOR_FAILURE(to_verbose_string(e)); }
 
     try {
         // test raw_type in both binary and string serialization
@@ -197,7 +196,7 @@ int main() {
         rs2 = from_string<raw_struct>(rsstr);
         BOOST_ACTOR_CHECK_EQUAL(rs2.str, rs.str);
     }
-    catch (exception& e) { BOOST_ACTOR_FAILURE(to_verbose_string(e)); }
+    catch (std::exception& e) { BOOST_ACTOR_FAILURE(to_verbose_string(e)); }
 
     try {
         scoped_actor self;
@@ -210,7 +209,7 @@ int main() {
         uniform_typeid<any_tuple>()->deserialize(&ttup2, &bd);
         BOOST_ACTOR_CHECK(ttup  == ttup2);
     }
-    catch (exception& e) { BOOST_ACTOR_FAILURE(to_verbose_string(e)); }
+    catch (std::exception& e) { BOOST_ACTOR_FAILURE(to_verbose_string(e)); }
 
     try {
         scoped_actor self;
@@ -228,7 +227,7 @@ int main() {
         BOOST_ACTOR_CHECK(ttup  == ttup3);
         BOOST_ACTOR_CHECK(ttup2 == ttup3);
     }
-    catch (exception& e) { BOOST_ACTOR_FAILURE(to_verbose_string(e)); }
+    catch (std::exception& e) { BOOST_ACTOR_FAILURE(to_verbose_string(e)); }
 
     try {
         // serialize b1 to buf
@@ -239,16 +238,16 @@ int main() {
         binary_deserializer bd(wr_buf.data(), wr_buf.size(), &addressing);
         any_tuple atuple2;
         uniform_typeid<any_tuple>()->deserialize(&atuple2, &bd);
-        auto opt = tuple_cast<uint32_t, string>(atuple2);
-        BOOST_ACTOR_CHECK(opt.valid());
-        if (opt.valid()) {
-            auto& tup = *opt;
-            BOOST_ACTOR_CHECK_EQUAL(tup.size(), 2);
-            BOOST_ACTOR_CHECK_EQUAL(get<0>(tup), 42);
-            BOOST_ACTOR_CHECK_EQUAL(get<1>(tup), "foo");
-        }
+        bool ok = false;
+        partial_function check {
+            [&](uint32_t val0, string val1) {
+                ok = (val0 == 42 && val1 == "foo");
+            }
+        };
+        check(atuple2);
+        BOOST_ACTOR_CHECK(ok);
     }
-    catch (exception& e) { BOOST_ACTOR_FAILURE(to_verbose_string(e)); }
+    catch (std::exception& e) { BOOST_ACTOR_FAILURE(to_verbose_string(e)); }
 
     BOOST_ACTOR_CHECK((is_iterable<int>::value) == false);
     // string is primitive and thus not identified by is_iterable
@@ -265,7 +264,7 @@ int main() {
             BOOST_ACTOR_CHECK_EQUAL( "@u32 ( 42 )", str);
         }
     }
-    catch (exception& e) { BOOST_ACTOR_FAILURE(to_verbose_string(e)); }
+    catch (std::exception& e) { BOOST_ACTOR_FAILURE(to_verbose_string(e)); }
 
     // test serialization of enums
     try {
@@ -278,16 +277,16 @@ int main() {
         binary_deserializer bd(wr_buf.data(), wr_buf.size(), &addressing);
         any_tuple enum_tuple2;
         uniform_typeid<any_tuple>()->deserialize(&enum_tuple2, &bd);
-        auto opt = tuple_cast<test_enum>(enum_tuple2);
-        BOOST_ACTOR_CHECK(opt.valid());
-        if (opt.valid()) {
-            auto& tup = *opt;
-            BOOST_ACTOR_CHECK_EQUAL(tup.size(), 1);
-            BOOST_ACTOR_CHECK(get<0>(tup) == test_enum::b);
-        }
-
+        bool ok = false;
+        partial_function check {
+            [&](test_enum val) {
+                ok = (val == test_enum::b);
+            }
+        };
+        check(enum_tuple2);
+        BOOST_ACTOR_CHECK(ok);
     }
-    catch (exception& e) { BOOST_ACTOR_FAILURE(to_verbose_string(e)); }
+    catch (std::exception& e) { BOOST_ACTOR_FAILURE(to_verbose_string(e)); }
 
     return BOOST_ACTOR_TEST_RESULT();
 }

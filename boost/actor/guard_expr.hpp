@@ -38,10 +38,10 @@
 #include <type_traits>
 
 #include "boost/none.hpp"
+#include "boost/optional.hpp"
 
 #include "boost/actor/unit.hpp"
 #include "boost/actor/config.hpp"
-#include "boost/actor/optional.hpp"
 
 #include "boost/actor/util/call.hpp"
 #include "boost/actor/util/algorithm.hpp"
@@ -671,28 +671,6 @@ struct ge_invoke_helper {
         return ge_invoke(ge, std::forward<Ts>(args)...);
     }
 };
-
-template<typename TupleTypes, operator_id OP, typename First, typename Second>
-typename ge_result<
-    OP, First, Second,
-    typename detail::tdata_from_type_list<
-        typename util::tl_filter_not<TupleTypes, is_anything>::type
-    >::type
->::type
-ge_invoke_any(const guard_expr<OP, First, Second>& ge,
-              const any_tuple& tup) {
-    using namespace util;
-    typename std::conditional<
-                std::is_same<typename TupleTypes::back, anything>::value,
-                TupleTypes,
-                wrapped<typename tl_push_back<TupleTypes, anything>::type>
-            >::type
-            cast_token;
-    auto x = tuple_cast(tup, cast_token);
-    BOOST_ACTOR_REQUIRE(static_cast<bool>(x) == true);
-    ge_invoke_helper<guard_expr<OP, First, Second> > f{ge};
-    return util::apply_args(f, *x, util::get_indices(*x));
-}
 
 template<operator_id OP, typename First, typename Second>
 template<typename... Ts>

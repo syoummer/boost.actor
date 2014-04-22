@@ -33,8 +33,9 @@
 
 #include <memory>
 
+#include "boost/optional.hpp"
+
 #include "boost/actor/config.hpp"
-#include "boost/actor/optional.hpp"
 
 #include "boost/actor/io/input_stream.hpp"
 #include "boost/actor/io/output_stream.hpp"

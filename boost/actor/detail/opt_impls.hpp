@@ -34,9 +34,9 @@
 #include <sstream>
 
 #include "boost/none.hpp"
+#include "boost/optional.hpp"
 
 #include "boost/actor/on.hpp"
-#include "boost/actor/optional.hpp"
 
 // this header contains implementation details for opt.hpp
 

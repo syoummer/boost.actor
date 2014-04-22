@@ -35,6 +35,8 @@
 #include <functional>
 #include <type_traits>
 
+#include "boost/optional.hpp"
+
 #include "boost/actor/cppa_fwd.hpp"
 
 #include "boost/actor/util/type_list.hpp"

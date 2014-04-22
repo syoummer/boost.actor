@@ -49,8 +49,6 @@
 
 #include "boost/actor/intrusive/single_reader_queue.hpp"
 
-using namespace std;
-
 namespace boost {
 namespace actor {
 
@@ -59,12 +57,14 @@ namespace {
 __thread actor_id t_self_id;
 
 template<size_t RawSize>
-void replace_all(string& str, const char (&before)[RawSize], const char* after) {
+void replace_all(std::string& str, const char (&before)[RawSize], const char* after) {
     // end(before) - 1 points to the null-terminator
-    auto i = search(begin(str), end(str), begin(before), end(before) - 1);
+    auto i = std::search(std::begin(str), std::end(str),
+                         std::begin(before), std::end(before) - 1);
     while (i != end(str)) {
         str.replace(i, i + RawSize - 1, after);
-        i = search(begin(str), end(str), begin(before), end(before) - 1);
+        i = std::search(std::begin(str), std::end(str),
+                        std::begin(before), std::end(before) - 1);
     }
 }
 
@@ -73,7 +73,7 @@ constexpr struct pop_aid_log_event_t { constexpr pop_aid_log_event_t() { } }
 
 struct log_event {
     log_event* next;
-    string msg;
+    std::string msg;
 };
 
 class logging_impl : public logging {
@@ -84,7 +84,7 @@ class logging_impl : public logging {
         const char* log_level_lookup_table[] = {
             "ERROR", "WARN", "INFO", "DEBUG", "TRACE"
         };
-        m_thread = thread([this] { (*this)(); });
+        m_thread = std::thread([this] { (*this)(); });
         std::string msg = "ENTRY log level = ";
         msg += log_level_lookup_table[BOOST_ACTOR_LOG_LEVEL];
         log("TRACE", "logging", "run", __FILE__, __LINE__, msg);
@@ -100,17 +100,17 @@ class logging_impl : public logging {
     }
 
     void operator()() {
-        ostringstream fname;
+        std::ostringstream fname;
         fname << "libcppa_" << getpid() << "_" << time(0) << ".log";
-        fstream out(fname.str().c_str(), ios::out | ios::app);
-        unique_ptr<log_event> event;
+        std::fstream out(fname.str().c_str(), std::ios::out | std::ios::app);
+        std::unique_ptr<log_event> event;
         for (;;) {
             event.reset(m_queue.synchronized_pop(m_queue_mtx, m_queue_cv));
             if (event->msg.empty()) {
                 out.close();
                 return;
             }
-            else out << event->msg << flush;
+            else out << event->msg << std::flush;
         }
     }
 
@@ -120,37 +120,37 @@ class logging_impl : public logging {
              const char* c_full_file_name,
              int line_num,
              const std::string& msg) override {
-        string class_name = c_class_name;
+        std::string class_name = c_class_name;
         replace_all(class_name, "::", ".");
         replace_all(class_name, "(anonymous namespace)", "$anon$");
-        string file_name;
-        string full_file_name = c_full_file_name;
+        std::string file_name;
+        std::string full_file_name = c_full_file_name;
         auto ri = find(full_file_name.rbegin(), full_file_name.rend(), '/');
         if (ri != full_file_name.rend()) {
             auto i = ri.base();
-            if (i == full_file_name.end()) file_name = move(full_file_name);
-            else file_name = string(i, full_file_name.end());
+            if (i == full_file_name.end()) file_name = std::move(full_file_name);
+            else file_name = std::string(i, full_file_name.end());
         }
-        else file_name = move(full_file_name);
-        ostringstream line;
+        else file_name = std::move(full_file_name);
+        std::ostringstream line;
         line << time(0) << " "
              << level << " "
              << "actor" << t_self_id << " "
-             << this_thread::get_id() << " "
+             << std::this_thread::get_id() << " "
              << class_name << " "
              << function_name << " "
              << file_name << ":" << line_num << " "
              << msg
-             << endl;
+             << std::endl;
         m_queue.synchronized_enqueue(m_queue_mtx, m_queue_cv,
                                      new log_event{nullptr, line.str()});
     }
 
  private:
 
-    thread m_thread;
-    mutex m_queue_mtx;
-    condition_variable m_queue_cv;
+    std::thread m_thread;
+    std::mutex m_queue_mtx;
+    std::condition_variable m_queue_cv;
     intrusive::single_reader_queue<log_event> m_queue;
 
 };

@@ -32,10 +32,10 @@
 #define BOOST_ACTOR_MATCH_EXPR_HPP
 
 #include "boost/none.hpp"
+#include "boost/variant.hpp"
 
-#include "boost/actor/optional.hpp"
+#include "boost/actor/unit.hpp"
 #include "boost/actor/guard_expr.hpp"
-#include "boost/actor/optional_variant.hpp"
 #include "boost/actor/tpartial_function.hpp"
 
 #include "boost/actor/util/call.hpp"
@@ -484,6 +484,26 @@ struct has_bool_result {
     typedef std::integral_constant<bool, value> token_type;
 };
 
+template<typename T>
+inline bool unroll_expr_result_valid(const T&) {
+    return true;
+}
+
+template<typename T>
+inline bool unroll_expr_result_valid(const optional<T>& opt) {
+    return static_cast<bool>(opt);
+}
+
+template<typename T>
+inline T& unroll_expr_result_unbox(T& value) {
+    return value;
+}
+
+template<typename T>
+inline T& unroll_expr_result_unbox(optional<T>& opt) {
+    return *opt;
+}
+
 template<typename Result, class PPFPs, typename PtrType, class Tuple>
 Result unroll_expr(PPFPs&, std::uint64_t, minus1l, const std::type_info&,
                    bool, PtrType*, Tuple&) {
@@ -501,7 +521,7 @@ Result unroll_expr(PPFPs& fs,
     /* recursively evaluate sub expressions */ {
         Result res = unroll_expr<Result>(fs, bitmask, long_constant<N-1>{},
                                          type_token, is_dynamic, ptr, tup);
-        if (res) return res;
+        if (!get<none_t>(&res)) return res;
     }
     if ((bitmask & (0x01 << N)) == 0) return none;
     auto& f = get<N>(fs);
@@ -511,10 +531,13 @@ Result unroll_expr(PPFPs& fs,
     typename policy::tuple_type targs;
     if (policy::prepare_invoke(targs, type_token, is_dynamic, ptr, tup)) {
         auto is = util::get_indices(targs);
-        return util::apply_args_prefixed(f.first,
-                                         deduce_const(tup, targs),
-                                         is,
-                                         f.second);
+        auto res = util::apply_args_prefixed(f.first,
+                                             deduce_const(tup, targs),
+                                             is,
+                                             f.second);
+        if (unroll_expr_result_valid(res)) {
+            return std::move(unroll_expr_result_unbox(res));
+        }
     }
     return none;
 }
@@ -630,6 +653,14 @@ struct get_case_result {
 namespace boost {
 namespace actor {
 
+template<class List>
+struct match_result_from_type_list;
+
+template<typename... Ts>
+struct match_result_from_type_list<util::type_list<Ts...>> {
+    typedef variant<none_t, typename lift_void<Ts>::type...> type;
+};
+
 /**
  * @brief A match expression encapsulating cases <tt>Cs...</tt>, whereas
  *        each case is a @p detail::projection_partial_function_pair.
@@ -643,7 +674,7 @@ class match_expr {
 
     typedef util::type_list<Cs...> cases_list;
 
-    typedef typename optional_variant_from_type_list<
+    typedef typename match_result_from_type_list<
                 typename util::tl_distinct<
                     typename util::tl_map<
                         cases_list,

@@ -58,7 +58,7 @@ continue_reading_result peer_acceptor::continue_reading() {
     for (;;) {
         optional<stream_ptr_pair> opt{none};
         try { opt = m_ptr->try_accept_connection(); }
-        catch (exception& e) {
+        catch (std::exception& e) {
             BOOST_ACTOR_LOG_ERROR(to_verbose_string(e));
             static_cast<void>(e); // keep compiler happy
             return continue_reading_result::failure;
@@ -84,7 +84,7 @@ continue_reading_result peer_acceptor::continue_reading() {
                 }
                 m_parent->new_peer(pair.first, pair.second);
             }
-            catch (exception& e) {
+            catch (std::exception& e) {
                 BOOST_ACTOR_LOG_ERROR(to_verbose_string(e));
                 cerr << "*** exception while sending actor and process id; "
                      << to_verbose_string(e)

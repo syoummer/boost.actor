@@ -100,7 +100,7 @@ continue_reading_result peer::continue_reading() {
     BOOST_ACTOR_LOG_TRACE("");
     for (;;) {
         try { m_rd_buf.append_from(m_in.get()); }
-        catch (exception&) {
+        catch (std::exception&) {
             return continue_reading_result::failure;
         }
         if (!m_rd_buf.full()) {
@@ -154,7 +154,7 @@ continue_reading_result peer::continue_reading() {
                     m_meta_hdr->deserialize(&hdr, &bd);
                     m_meta_msg->deserialize(&msg, &bd);
                 }
-                catch (exception& e) {
+                catch (std::exception& e) {
                     BOOST_ACTOR_LOG_ERROR("exception during read_message: "
                                    << detail::demangle(typeid(e))
                                    << ", what(): " << e.what());
@@ -375,7 +375,7 @@ void peer::enqueue_impl(msg_hdr_cref hdr, const any_tuple& msg) {
     binary_serializer bs(&wbuf, &(parent()->get_namespace()), &m_outgoing_types);
     wbuf.write(sizeof(uint32_t), &size);
     try { bs << hdr << msg; }
-    catch (exception& e) {
+    catch (std::exception& e) {
         BOOST_ACTOR_LOG_ERROR(to_verbose_string(e));
         cerr << "*** exception in peer::enqueue; "
              << to_verbose_string(e)

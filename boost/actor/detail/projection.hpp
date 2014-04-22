@@ -32,8 +32,8 @@
 #define BOOST_ACTOR_PROJECTION_HPP
 
 #include "boost/none.hpp"
+#include "boost/optional.hpp"
 
-#include "boost/actor/optional.hpp"
 #include "boost/actor/guard_expr.hpp"
 
 #include "boost/actor/util/call.hpp"
