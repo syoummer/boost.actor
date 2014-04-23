@@ -71,7 +71,7 @@ class actor_namespace {
     /**
      * @brief A map that stores weak actor proxy pointers by actor ids.
      */
-    typedef std::map<actor_id, weak_actor_proxy_ptr> proxy_map;
+    typedef std::map<actor_id, actor_proxy_ptr> proxy_map;
 
     /**
      * @brief Returns the number of proxies for @p node.
@@ -101,6 +101,11 @@ class actor_namespace {
      * @brief Returns the map of known actors for @p node.
      */
     proxy_map& proxies(node_id& node);
+
+    /**
+     * @brief Deletes given proxy instance from this namespace.
+     */
+    void erase(const actor_proxy_ptr& proxy);
 
     /**
      * @brief Deletes all proxies for @p node.

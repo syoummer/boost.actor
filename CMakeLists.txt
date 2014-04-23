@@ -215,7 +215,6 @@ set(LIBCPPA_SRC
     src/unicast_network.cpp
     src/uniform_type_info.cpp
     src/uniform_type_info_map.cpp
-    src/weak_ptr_anchor.cpp
     src/yield_interface.cpp)
 
 if (BOOST_ROOT)

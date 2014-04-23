@@ -39,7 +39,6 @@
 #include "boost/actor/actor_proxy.hpp"
 #include "boost/actor/partial_function.hpp"
 #include "boost/actor/type_lookup_table.hpp"
-#include "boost/actor/weak_intrusive_ptr.hpp"
 
 #include "boost/actor/util/buffer.hpp"
 

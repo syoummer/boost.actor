@@ -35,8 +35,6 @@
 #include "boost/actor/abstract_actor.hpp"
 #include "boost/actor/abstract_actor.hpp"
 #include "boost/actor/message_header.hpp"
-#include "boost/actor/enable_weak_ptr.hpp"
-#include "boost/actor/weak_intrusive_ptr.hpp"
 
 namespace boost {
 namespace actor {
@@ -47,9 +45,9 @@ class actor_proxy_cache;
  * @brief Represents a remote actor.
  * @extends abstract_actor
  */
-class actor_proxy : public extend<abstract_actor>::with<enable_weak_ptr> {
+class actor_proxy : public abstract_actor {
 
-    typedef combined_type super;
+    typedef abstract_actor super;
 
  public:
 
@@ -88,12 +86,6 @@ class actor_proxy : public extend<abstract_actor>::with<enable_weak_ptr> {
  * @relates actor_proxy
  */
 typedef intrusive_ptr<actor_proxy> actor_proxy_ptr;
-
-/**
- * @brief A weak smart pointer to an {@link actor_proxy} instance.
- * @relates actor_proxy
- */
-typedef weak_intrusive_ptr<actor_proxy> weak_actor_proxy_ptr;
 
 } // namespace actor
 } // namespace boost

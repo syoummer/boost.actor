@@ -98,12 +98,7 @@ actor_proxy_ptr actor_namespace::get(const node_id& node, actor_id aid) {
     auto& submap = m_proxies[node];
     auto i = submap.find(aid);
     if (i != submap.end()) {
-        auto result = i->second.promote();
-        BOOST_ACTOR_LOG_INFO_IF(!result, "proxy instance expired; "
-                         << BOOST_ACTOR_TARG(node, to_string)
-                         << ", "<< BOOST_ACTOR_ARG(aid));
-        if (!result) submap.erase(i);
-        return result;
+        return i->second;
     }
     return nullptr;
 }
@@ -135,6 +130,14 @@ void actor_namespace::put(const node_id& node,
 
 auto actor_namespace::proxies(node_id& node) -> proxy_map& {
     return m_proxies[node];
+}
+
+void actor_namespace::erase(const actor_proxy_ptr& proxy) {
+    BOOST_ACTOR_LOG_TRACE("proxy = " << proxy.get());
+    auto i = m_proxies.find(proxy->node());
+    if (i != m_proxies.end()) {
+        i->second.erase(proxy->id());
+    }
 }
 
 void actor_namespace::erase(node_id& inf) {

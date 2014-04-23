@@ -66,16 +66,10 @@ struct anything;
 enum primitive_type : unsigned char;
 enum class atom_value : std::uint64_t;
 
-// class templates
-template<typename> class weak_intrusive_ptr;
-
 // intrusive pointer typedefs
 typedef intrusive_ptr<abstract_group>      abstract_group_ptr;
 typedef intrusive_ptr<actor_proxy>         actor_proxy_ptr;
 typedef intrusive_ptr<node_id>             node_id_ptr;
-
-// weak intrusive pointer typedefs
-typedef weak_intrusive_ptr<actor_proxy>    weak_actor_proxy_ptr;
 
 // convenience typedefs
 typedef const message_header& msg_hdr_cref;

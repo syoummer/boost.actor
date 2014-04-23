@@ -48,7 +48,6 @@ namespace actor {
 
 class actor_proxy;
 typedef intrusive_ptr<actor_proxy> actor_proxy_ptr;
-typedef weak_intrusive_ptr<actor_proxy> weak_actor_proxy_ptr;
 
 } // namespace actor
 } // namespace boost

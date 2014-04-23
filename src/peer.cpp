@@ -84,11 +84,9 @@ void peer::io_failed(event_bitmask mask) {
         // kill all proxies
         auto& children = parent()->get_namespace().proxies(*m_node);
         for (auto& kvp : children) {
-            auto ptr = kvp.second.promote();
-            if (ptr) {
-                send_as(ptr, ptr, atom("KILL_PROXY"),
-                        exit_reason::remote_link_unreachable);
-            }
+            auto ptr = kvp.second;
+            send_as(ptr, ptr, atom("KILL_PROXY"),
+                    exit_reason::remote_link_unreachable);
         }
         parent()->get_namespace().erase(*m_node);
     }

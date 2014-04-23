@@ -71,7 +71,6 @@ boost/actor/detail/unboxed.hpp
 boost/actor/detail/uniform_type_info_map.hpp
 boost/actor/detail/value_guard.hpp
 boost/actor/detail/yield_interface.hpp
-boost/actor/enable_weak_ptr.hpp
 boost/actor/event_based_actor.hpp
 boost/actor/exception.hpp
 boost/actor/execution_unit.hpp
@@ -186,8 +185,6 @@ boost/actor/util/type_pair.hpp
 boost/actor/util/type_traits.hpp
 boost/actor/util/upgrade_lock_guard.hpp
 boost/actor/util/wrapped.hpp
-boost/actor/weak_intrusive_ptr.hpp
-boost/actor/weak_ptr_anchor.hpp
 boost/actor/wildcard_position.hpp
 examples/aout.cpp
 examples/curl/curl_fuse.cpp
@@ -290,7 +287,6 @@ src/type_lookup_table.cpp
 src/unicast_network.cpp
 src/uniform_type_info.cpp
 src/uniform_type_info_map.cpp
-src/weak_ptr_anchor.cpp
 src/yield_interface.cpp
 unit_testing/ping_pong.cpp
 unit_testing/ping_pong.hpp
