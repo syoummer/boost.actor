@@ -34,7 +34,6 @@
 #include <utility>
 #include <type_traits>
 
-#include "boost/actor/util/dptr.hpp"
 #include "boost/actor/event_based_actor.hpp"
 
 namespace boost {
@@ -63,7 +62,7 @@ class sb_actor : public Base {
      *        the initial actor behavior to <tt>Derived::init_state</tt>.
      */
     behavior make_behavior() override {
-        return util::dptr<Derived>(this)->init_state;
+        return static_cast<Derived*>(this)->init_state;
     }
 
  protected:

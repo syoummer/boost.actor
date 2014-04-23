@@ -33,9 +33,10 @@
 
 #include "boost/actor/get.hpp"
 
-#include "boost/actor/util/algorithm.hpp"
 #include "boost/actor/util/type_list.hpp"
 #include "boost/actor/util/type_traits.hpp"
+
+#include "boost/actor/detail/safe_equal.hpp"
 
 namespace boost {
 namespace actor {
@@ -50,7 +51,7 @@ do_get(const Tuple<Ts...>& t) {
 template<size_t N, typename LhsTuple, typename RhsTuple>
 struct cmp_helper {
     inline static bool cmp(const LhsTuple& lhs, const RhsTuple& rhs) {
-        return    util::safe_equal(do_get<N>(lhs), do_get<N>(rhs))
+        return    detail::safe_equal(do_get<N>(lhs), do_get<N>(rhs))
                && cmp_helper<N-1, LhsTuple, RhsTuple>::cmp(lhs, rhs);
     }
 };

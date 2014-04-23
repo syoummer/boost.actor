@@ -43,9 +43,8 @@
 #include "boost/actor/binary_serializer.hpp"
 #include "boost/actor/binary_deserializer.hpp"
 
-#include "boost/actor/util/algorithm.hpp"
-
 #include "boost/actor/detail/demangle.hpp"
+#include "boost/actor/detail/safe_equal.hpp"
 #include "boost/actor/detail/raw_access.hpp"
 #include "boost/actor/detail/actor_registry.hpp"
 #include "boost/actor/detail/singleton_manager.hpp"

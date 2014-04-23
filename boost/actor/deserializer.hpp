@@ -34,8 +34,9 @@
 #include <string>
 #include <cstddef>
 
-#include "boost/actor/primitive_type.hpp"
 #include "boost/actor/primitive_variant.hpp"
+
+#include "boost/actor/detail/type_to_ptype.hpp"
 
 namespace boost {
 namespace actor {
@@ -104,7 +105,7 @@ class deserializer {
     template<typename T>
     inline T read() {
         auto val = read_value(detail::type_to_ptype<T>::ptype);
-        return std::move(get_ref<T>(val));
+        return std::move(get<T>(val));
     }
 
     /**

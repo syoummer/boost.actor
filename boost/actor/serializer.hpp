@@ -34,6 +34,8 @@
 #include <string>
 #include <cstddef> // size_t
 
+#include "boost/actor/primitive_variant.hpp"
+
 #include "boost/actor/uniform_type_info.hpp"
 #include "boost/actor/detail/to_uniform_name.hpp"
 
@@ -41,7 +43,6 @@ namespace boost {
 namespace actor {
 
 class actor_namespace;
-class primitive_variant;
 class type_lookup_table;
 
 /**

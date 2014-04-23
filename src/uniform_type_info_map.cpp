@@ -36,6 +36,9 @@
 #include <algorithm>
 #include <type_traits>
 
+#include "boost/algorithm/string/split.hpp"
+#include "boost/algorithm/string/classification.hpp"
+
 #include "boost/actor/group.hpp"
 #include "boost/actor/logging.hpp"
 #include "boost/actor/announce.hpp"
@@ -45,13 +48,13 @@
 #include "boost/actor/actor_namespace.hpp"
 
 #include "boost/actor/util/duration.hpp"
-#include "boost/actor/util/algorithm.hpp"
 #include "boost/actor/util/scope_guard.hpp"
 #include "boost/actor/util/limited_vector.hpp"
 #include "boost/actor/util/shared_spinlock.hpp"
 #include "boost/actor/util/shared_lock_guard.hpp"
 
 #include "boost/actor/detail/raw_access.hpp"
+#include "boost/actor/detail/safe_equal.hpp"
 #include "boost/actor/detail/object_array.hpp"
 #include "boost/actor/detail/uniform_type_info_map.hpp"
 #include "boost/actor/detail/default_uniform_type_info.hpp"
@@ -491,7 +494,7 @@ class uti_base : public uniform_type_info {
     }
 
     bool equals(const void* lhs, const void* rhs) const override {
-        //return util::safe_equal(deref(lhs), deref(rhs));
+        //return detail::safe_equal(deref(lhs), deref(rhs));
         //return deref(lhs) == deref(rhs);
         return eq(deref(lhs), deref(rhs));
     }
@@ -519,7 +522,7 @@ class uti_base : public uniform_type_info {
     template<typename U>
     typename std::enable_if<std::is_floating_point<U>::value, bool>::type
     eq(const U& lhs, const U& rhs) const {
-        return util::safe_equal(lhs, rhs);
+        return detail::safe_equal(lhs, rhs);
     }
 
     template<typename U>
@@ -691,7 +694,8 @@ class default_meta_tuple : public uniform_type_info {
 
     default_meta_tuple(const std::string& name) {
         m_name = name;
-        auto elements = util::split(name, '+', false);
+        std::vector<std::string> elements;
+        split(elements, name, is_any_of("+"));
         auto uti_map = get_uniform_type_info_map();
         BOOST_ACTOR_REQUIRE(elements.size() > 0 && elements.front() == "@<>");
         // ignore first element, because it's always "@<>"

@@ -43,10 +43,11 @@
 
 #include "boost/actor/io/middleman.hpp"
 
-#include "boost/actor/util/algorithm.hpp"
 #include "boost/actor/util/ripemd_160.hpp"
 #include "boost/actor/util/get_root_uuid.hpp"
 #include "boost/actor/util/get_mac_addresses.hpp"
+
+#include "boost/actor/detail/safe_equal.hpp"
 
 namespace {
 

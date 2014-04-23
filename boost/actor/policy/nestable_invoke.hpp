@@ -38,8 +38,6 @@
 #include "boost/actor/exit_reason.hpp"
 #include "boost/actor/mailbox_element.hpp"
 
-#include "boost/actor/util/dptr.hpp"
-
 #include "boost/actor/detail/sync_request_bouncer.hpp"
 
 #include "boost/actor/intrusive/single_reader_queue.hpp"

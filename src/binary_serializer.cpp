@@ -50,7 +50,7 @@ namespace {
 
 using util::grow_if_needed;
 
-class binary_writer {
+class binary_writer : public static_visitor<> {
 
  public:
 
@@ -69,34 +69,34 @@ class binary_writer {
 
     template<typename T>
     void operator()(const T& value,
-                    typename std::enable_if<std::is_integral<T>::value>::type* = 0) {
+                    typename std::enable_if<std::is_integral<T>::value>::type* = 0) const {
         write_int(m_sink, value);
     }
 
     template<typename T>
     void operator()(const T& value,
-                    typename std::enable_if<std::is_floating_point<T>::value>::type* = 0) {
+                    typename std::enable_if<std::is_floating_point<T>::value>::type* = 0) const {
         auto tmp = detail::pack754(value);
         write_int(m_sink, tmp);
     }
 
     // the IEEE-754 conversion does not work for long double
     // => fall back to string serialization (event though it sucks)
-    void operator()(const long double& v) {
+    void operator()(const long double& v) const {
         std::ostringstream oss;
         oss << std::setprecision(std::numeric_limits<long double>::digits) << v;
         write_string(m_sink, oss.str());
     }
 
-    void operator()(const atom_value& val) {
+    void operator()(const atom_value& val) const {
         (*this)(static_cast<uint64_t>(val));
     }
 
-    void operator()(const std::string& str) {
+    void operator()(const std::string& str) const {
         write_string(m_sink, str);
     }
 
-    void operator()(const std::u16string& str) {
+    void operator()(const std::u16string& str) const {
         write_int(m_sink, static_cast<std::uint32_t>(str.size()));
         for (char16_t c : str) {
             // force writer to use exactly 16 bit
@@ -104,7 +104,7 @@ class binary_writer {
         }
     }
 
-    void operator()(const std::u32string& str) {
+    void operator()(const std::u32string& str) const {
         write_int(m_sink, static_cast<std::uint32_t>(str.size()));
         for (char32_t c : str) {
             // force writer to use exactly 32 bit
@@ -144,7 +144,7 @@ void binary_serializer::begin_sequence(size_t list_size) {
 void binary_serializer::end_sequence() { }
 
 void binary_serializer::write_value(const primitive_variant& value) {
-    value.apply(binary_writer(m_sink));
+    apply_visitor(binary_writer(m_sink), value);
 }
 
 void binary_serializer::write_raw(size_t num_bytes, const void* data) {

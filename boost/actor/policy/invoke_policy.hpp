@@ -49,7 +49,6 @@
 #include "boost/actor/partial_function.hpp"
 #include "boost/actor/response_promise.hpp"
 
-#include "boost/actor/util/dptr.hpp"
 #include "boost/actor/detail/memory.hpp"
 #include "boost/actor/detail/matches.hpp"
 

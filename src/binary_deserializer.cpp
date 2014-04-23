@@ -45,8 +45,6 @@
 #include "boost/actor/detail/ieee_754.hpp"
 #include "boost/actor/detail/uniform_type_info_map.hpp"
 
-using namespace std;
-
 namespace boost {
 namespace actor {
 
@@ -65,11 +63,11 @@ pointer advanced(pointer ptr, size_t num_bytes) {
 inline void range_check(pointer begin, pointer end, size_t read_size) {
     if (advanced(begin, read_size) > end) {
         BOOST_ACTOR_LOGF(BOOST_ACTOR_ERROR, "range_check failed");
-        throw out_of_range("binary_deserializer::read_range()");
+        throw std::out_of_range("binary_deserializer::read_range()");
     }
 }
 
-pointer read_range(pointer begin, pointer end, string& storage);
+pointer read_range(pointer begin, pointer end, std::string& storage);
 
 template<typename T>
 pointer read_range(pointer begin, pointer end, T& storage,
@@ -98,7 +96,7 @@ pointer read_range(pointer begin, pointer end, long double& storage) {
     return result;
 }
 
-pointer read_range(pointer begin, pointer end, string& storage) {
+pointer read_range(pointer begin, pointer end, std::string& storage) {
     uint32_t str_size;
     begin = read_range(begin, end, str_size);
     range_check(begin, end, str_size);
@@ -129,19 +127,19 @@ pointer read_range(pointer begin, pointer end, atom_value& storage) {
     return result;
 }
 
-pointer read_range(pointer begin, pointer end, u16string& storage) {
+pointer read_range(pointer begin, pointer end, std::u16string& storage) {
     // char16_t is guaranteed to has *at least* 16 bytes,
     // but not to have *exactly* 16 bytes; thus use uint16_t
     return read_unicode_string<uint16_t>(begin, end, storage);
 }
 
-pointer read_range(pointer begin, pointer end, u32string& storage) {
+pointer read_range(pointer begin, pointer end, std::u32string& storage) {
     // char32_t is guaranteed to has *at least* 32 bytes,
     // but not to have *exactly* 32 bytes; thus use uint32_t
     return read_unicode_string<uint32_t>(begin, end, storage);
 }
 
-struct pt_reader {
+struct pt_reader : static_visitor<> {
 
     pointer begin;
     pointer end;
@@ -171,7 +169,7 @@ const uniform_type_info* binary_deserializer::begin_object() {
     std::uint8_t flag;
     m_pos = read_range(m_pos, m_end, flag);
     if (flag == 1) {
-        string tname;
+        std::string tname;
         m_pos = read_range(m_pos, m_end, tname);
         auto uti = get_uniform_type_info_map()->by_uniform_name(tname);
         if (!uti) {
@@ -212,9 +210,10 @@ size_t binary_deserializer::begin_sequence() {
 void binary_deserializer::end_sequence() { }
 
 primitive_variant binary_deserializer::read_value(primitive_type ptype) {
-    primitive_variant val(ptype);
+    primitive_variant val;
+    primitive_variant_init(val, ptype);
     pt_reader ptr(m_pos, m_end);
-    val.apply(ptr);
+    apply_visitor(ptr, val);
     m_pos = ptr.begin;
     return val;
 }
@@ -223,7 +222,7 @@ void binary_deserializer::read_tuple(size_t size,
                                      const primitive_type* ptypes,
                                      primitive_variant* storage) {
     for (auto end = ptypes + size; ptypes != end; ++ptypes) {
-        *storage = move(read_value(*ptypes));
+        *storage = std::move(read_value(*ptypes));
         ++storage;
     }
 }

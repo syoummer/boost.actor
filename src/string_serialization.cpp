@@ -35,6 +35,9 @@
 #include <iostream>
 #include <algorithm>
 
+#include "boost/algorithm/string/split.hpp"
+#include "boost/algorithm/string/classification.hpp"
+
 #include "boost/actor/atom.hpp"
 #include "boost/actor/to_string.hpp"
 #include "boost/actor/serializer.hpp"
@@ -45,8 +48,6 @@
 #include "boost/actor/actor_namespace.hpp"
 #include "boost/actor/primitive_variant.hpp"
 #include "boost/actor/uniform_type_info.hpp"
-
-#include "boost/actor/util/algorithm.hpp"
 
 #include "boost/actor/detail/uniform_type_info_map.hpp"
 
@@ -75,12 +76,13 @@ class string_serializer : public serializer {
     ostream& out;
     actor_namespace m_namespace;
 
-    struct pt_writer {
+    struct pt_writer : static_visitor<> {
 
         ostream& out;
         bool suppress_quotes;
 
-        pt_writer(ostream& mout, bool suppress = false) : out(mout), suppress_quotes(suppress) { }
+        pt_writer(ostream& mout, bool suppress = false)
+            : out(mout), suppress_quotes(suppress) { }
 
         template<typename T>
         void operator()(const T& value) {
@@ -142,12 +144,13 @@ class string_serializer : public serializer {
 
     void begin_object(const uniform_type_info* uti) {
         clear();
-        std::string tname = uti->name();
+        string tname = uti->name();
         m_open_objects.push(tname);
         // do not print type names for strings and atoms
         if (!isbuiltin(tname)) out << tname;
         else if (tname.compare(0, 3, "@<>") == 0) {
-            auto subtypes = util::split(tname, '+', false);
+            std::vector<std::string> subtypes;
+            split(subtypes, tname, is_any_of("+"), token_compress_on);
 
         }
         m_obj_just_opened = true;
@@ -182,7 +185,8 @@ class string_serializer : public serializer {
         if (m_open_objects.empty()) {
             throw std::runtime_error("write_value(): m_open_objects.empty()");
         }
-        value.apply(pt_writer(out));
+        pt_writer ptw(out);
+        apply_visitor(ptw, value);
         m_after_value = true;
     }
 
@@ -290,7 +294,7 @@ class string_deserializer : public deserializer {
 
  public:
 
-    string_deserializer(string str) : super(&m_namespace), m_str(move(str)) {
+    string_deserializer(string str) : super(&m_namespace), m_str(std::move(str)) {
         m_pos = m_str.begin();
     }
 
@@ -353,9 +357,9 @@ class string_deserializer : public deserializer {
         consume('}');
     }
 
-    struct from_string {
+    struct from_string_reader : static_visitor<> {
         const string& str;
-        from_string(const string& s) : str(s) { }
+        from_string_reader(const string& s) : str(s) { }
         template<typename T>
         void operator()(T& what) {
             istringstream s(str);
@@ -461,11 +465,13 @@ class string_deserializer : public deserializer {
                 tmp.append(sbegin, send);
             }
             if (!tmp.empty()) {
-                substr = move(tmp);
+                substr = std::move(tmp);
             }
         }
-        primitive_variant result(ptype);
-        result.apply(from_string(substr));
+        primitive_variant result;//(ptype);
+        primitive_variant_init(result, ptype);
+        from_string_reader fsr(substr);
+        apply_visitor(fsr, result);
         return result;
     }
 
@@ -537,7 +543,7 @@ string to_verbose_string(const std::exception& e) {
     return oss.str();
 }
 
-std::ostream& operator<<(std::ostream& out, skip_message_t) {
+ostream& operator<<(ostream& out, skip_message_t) {
      return out << "skip_message";
 }
 

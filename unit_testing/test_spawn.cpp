@@ -664,7 +664,7 @@ void test_spawn() {
             }
         );
         vector<int> expected{9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
-        BOOST_ACTOR_CHECK_EQUAL(util::join(values, ","), util::join(expected, ","));
+        BOOST_ACTOR_CHECK(values == expected);
     }
     // terminate st
     self->send_exit(st, exit_reason::user_shutdown);

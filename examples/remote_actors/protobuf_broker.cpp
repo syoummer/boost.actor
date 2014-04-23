@@ -182,7 +182,8 @@ optional<uint16_t> as_u16(const std::string& str) {
 }
 
 int main(int argc, char** argv) {
-    match(std::vector<string>{argv + 1, argv + argc}) (
+    std::vector<string> args{argv + 1, argv + argc};
+    partial_function pfun{
         on("-s", as_u16) >> [&](uint16_t port) {
             cout << "run in server mode" << endl;
             auto pong_actor = spawn(pong);
@@ -201,7 +202,8 @@ int main(int argc, char** argv) {
             cerr << "use with eihter '-s PORT' as server or '-c HOST PORT' as client"
                  << endl;
         }
-    );
+    };
+    pfun(any_tuple::view(args));
     await_all_actors_done();
     shutdown();
 }

@@ -34,12 +34,14 @@
 #include <memory>
 #include <typeinfo>
 
+#include "boost/algorithm/string/join.hpp"
+
 #include "boost/actor/config.hpp"
 #include "boost/actor/uniform_type_info.hpp"
 
-#include "boost/actor/util/algorithm.hpp"
 #include "boost/actor/util/abstract_uniform_type_info.hpp"
 
+#include "boost/actor/detail/safe_equal.hpp"
 #include "boost/actor/detail/default_uniform_type_info.hpp"
 
 namespace boost {
@@ -230,9 +232,13 @@ class meta_cow_tuple : public uniform_type_info {
     typedef cow_tuple<T, Ts...> tuple_type;
 
     meta_cow_tuple() {
-        m_name = "@<>+";
-        m_name += detail::to_uniform_name<T>();
-        util::splice(m_name, "+", detail::to_uniform_name<Ts>()...);
+        //m_name = "@<>+";
+        //m_name += detail::to_uniform_name<T>();
+        std::vector<std::string> names{"@<>",
+                                       detail::to_uniform_name<T>(),
+                                       detail::to_uniform_name<Ts>()...};
+        m_name = join(names, "+");
+        //util::splice(m_name, "+", detail::to_uniform_name<Ts>()...);
     }
 
     const char* name() const override {

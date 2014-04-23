@@ -21,8 +21,9 @@ struct streamer {
 namespace boost {
 namespace actor {
 inline std::ostream& operator<<(std::ostream& o, const primitive_variant& pv) {
-    streamer s{o};
-    pv.apply(s);
+    apply_visitor(streamer{o}, pv);
+    //streamer{o};
+    //pv.apply(s);
     return o;
 }
 } // namespace actor

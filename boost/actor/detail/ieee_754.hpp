@@ -36,6 +36,7 @@
 #define IEEE_754_HPP
 
 #include <cmath>
+#include <cstdint>
 
 namespace boost {
 namespace actor {
@@ -46,31 +47,31 @@ struct ieee_754_trait;
 
 template<>
 struct ieee_754_trait<float> {
-    static constexpr std::uint32_t bits = 32;       // number of bits
-    static constexpr std::uint32_t expbits = 8;     // bits used for exponent
+    static constexpr uint32_t bits = 32;            // number of bits
+    static constexpr uint32_t expbits = 8;          // bits used for exponent
     static constexpr float zero = 0.0f;             // the value 0
     static constexpr float p5 = 0.5f;               // the value 0.5
-    using packed_type = std::uint32_t;              // unsigned integer type
-    using signed_packed_type = std::int32_t;        // signed integer type
+    using packed_type = uint32_t;                   // unsigned integer type
+    using signed_packed_type = int32_t;             // signed integer type
     using float_type = float;                       // floating point type
 };
 
 template<>
-struct ieee_754_trait<std::uint32_t> : ieee_754_trait<float> { };
+struct ieee_754_trait<uint32_t> : ieee_754_trait<float> { };
 
 template<>
 struct ieee_754_trait<double> {
-    static constexpr std::uint64_t bits = 64;
-    static constexpr std::uint64_t expbits = 11;
+    static constexpr uint64_t bits = 64;
+    static constexpr uint64_t expbits = 11;
     static constexpr double  zero = 0.0;
     static constexpr double p5 = 0.5;
-    using packed_type = std::uint64_t;
-    using signed_packed_type = std::int64_t;
+    using packed_type = uint64_t;
+    using signed_packed_type = int64_t;
     using float_type = double;
 };
 
 template<>
-struct ieee_754_trait<std::uint64_t> : ieee_754_trait<double> { };
+struct ieee_754_trait<uint64_t> : ieee_754_trait<double> { };
 
 template<typename T>
 typename ieee_754_trait<T>::packed_type pack754(T f) {

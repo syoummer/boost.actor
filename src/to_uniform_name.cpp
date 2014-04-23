@@ -45,10 +45,10 @@
 #include "boost/actor/any_tuple.hpp"
 #include "boost/actor/message_header.hpp"
 
-#include "boost/actor/util/algorithm.hpp"
 #include "boost/actor/util/scope_guard.hpp"
 
 #include "boost/actor/detail/demangle.hpp"
+#include "boost/actor/detail/safe_equal.hpp"
 #include "boost/actor/detail/to_uniform_name.hpp"
 #include "boost/actor/detail/singleton_manager.hpp"
 #include "boost/actor/detail/uniform_type_info_map.hpp"

@@ -28,146 +28,29 @@
 \******************************************************************************/
 
 
-#include <typeinfo>
-
 #include "boost/actor/primitive_variant.hpp"
-
-#include "boost/actor/util/algorithm.hpp"
-
-#include "boost/actor/detail/type_to_ptype.hpp"
 
 namespace boost {
 namespace actor {
 
-namespace {
-
-template<class T>
-void ptv_del(T&,
-             typename std::enable_if<std::is_arithmetic<T>::value>::type* = 0) {
-    // arithmetic types don't need destruction
-}
-
-template<class T>
-void ptv_del(T& what,
-             typename std::enable_if<!std::is_arithmetic<T>::value>::type* = 0) {
-    what.~T();
-}
-
-struct destroyer {
-    template<typename T>
-    inline void operator()(T& what) const {
-        ptv_del(what);
+void primitive_variant_init(primitive_variant& what, primitive_type ptype) {
+    switch (ptype) {
+        case pt_int8:           what = int8_t{0};           break;
+        case pt_int16:          what = int16_t{0};          break;
+        case pt_int32:          what = int32_t{0};          break;
+        case pt_int64:          what = int64_t{0};          break;
+        case pt_uint8:          what = uint8_t{0};          break;
+        case pt_uint16:         what = uint16_t{0};         break;
+        case pt_uint32:         what = uint32_t{0};         break;
+        case pt_uint64:         what = uint64_t{0};         break;
+        case pt_float:          what = 0.f;                 break;
+        case pt_double:         what = 0.;                  break;
+        case pt_long_double:    what = static_cast<long double>(0.);    break;
+        case pt_u8string:       what = std::string{};       break;
+        case pt_u16string:      what = std::u16string{};    break;
+        case pt_u32string:      what = std::u32string{};    break;
+        case pt_atom:           what = atom("");            break;
     }
-};
-
-struct type_reader {
-    const std::type_info* tinfo;
-    type_reader() : tinfo(nullptr) { }
-    template<typename T>
-    void operator()(const T&) {
-        tinfo = &typeid(T);
-    }
-};
-
-struct comparator {
-    bool result;
-    const primitive_variant& lhs;
-    const primitive_variant& rhs;
-
-    comparator(const primitive_variant& pv1, const primitive_variant& pv2)
-        : result(false), lhs(pv1), rhs(pv2) {
-    }
-
-    template<primitive_type PT>
-    void operator()(util::pt_token<PT>) {
-        if (rhs.ptype() == PT) {
-            result = util::safe_equal(get<PT>(lhs), get<PT>(rhs));
-            //result = (get<PT>(lhs) == get<PT>(rhs));
-        }
-    }
-};
-
-struct initializer {
-    primitive_variant& lhs;
-
-    inline initializer(primitive_variant& pv) : lhs(pv) { }
-
-    template<primitive_type PT>
-    inline void operator()(util::pt_token<PT>) {
-        typedef typename detail::ptype_to_type<PT>::type T;
-        lhs = T();
-    }
-};
-
-struct setter {
-    primitive_variant& lhs;
-
-    setter(primitive_variant& pv) : lhs(pv) { }
-
-    template<typename T>
-    inline void operator()(const T& rhs) {
-        lhs = rhs;
-    }
-};
-
-struct mover {
-    primitive_variant& lhs;
-
-    mover(primitive_variant& pv) : lhs(pv) { }
-
-    template<typename T>
-    inline void operator()(T& rhs) {
-        lhs = std::move(rhs);
-    }
-};
-
-} // namespace <anonymous>
-
-primitive_variant::primitive_variant() : m_ptype(pt_null) { }
-
-primitive_variant::primitive_variant(primitive_type ptype) : m_ptype(pt_null) {
-    util::pt_dispatch(ptype, initializer(*this));
-}
-
-primitive_variant::primitive_variant(const primitive_variant& other)
-    : m_ptype(pt_null) {
-    other.apply(setter(*this));
-}
-
-primitive_variant::primitive_variant(primitive_variant&& other)
-    : m_ptype(pt_null) {
-    other.apply(mover(*this));
-}
-
-primitive_variant& primitive_variant::operator=(const primitive_variant& other) {
-    other.apply(setter(*this));
-    return *this;
-}
-
-primitive_variant& primitive_variant::operator=(primitive_variant&& other) {
-    other.apply(mover(*this));
-    return *this;
-}
-
-bool equal(const primitive_variant& lhs, const primitive_variant& rhs) {
-    comparator cmp(lhs, rhs);
-    util::pt_dispatch(lhs.m_ptype, cmp);
-    return cmp.result;
-}
-
-const std::type_info& primitive_variant::type() const {
-    type_reader tr;
-    apply(tr);
-    return (tr.tinfo == nullptr) ? typeid(void) : *tr.tinfo;
-}
-
-primitive_variant::~primitive_variant() {
-    destroy();
-}
-
-void primitive_variant::destroy() {
-    apply(destroyer());
-    m_ptype = pt_null;
 }
 
 } // namespace actor

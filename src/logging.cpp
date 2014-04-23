@@ -61,7 +61,7 @@ void replace_all(std::string& str, const char (&before)[RawSize], const char* af
     // end(before) - 1 points to the null-terminator
     auto i = std::search(std::begin(str), std::end(str),
                          std::begin(before), std::end(before) - 1);
-    while (i != end(str)) {
+    while (i != std::end(str)) {
         str.replace(i, i + RawSize - 1, after);
         i = std::search(std::begin(str), std::end(str),
                         std::begin(before), std::end(before) - 1);

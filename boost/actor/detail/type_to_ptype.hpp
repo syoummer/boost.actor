@@ -36,7 +36,7 @@
 #include <cstdint>
 #include <type_traits>
 
-#include "boost/actor/primitive_type.hpp"
+#include "boost/actor/primitive_variant.hpp"
 
 #include "boost/actor/util/type_traits.hpp"
 

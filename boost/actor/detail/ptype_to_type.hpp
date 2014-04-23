@@ -33,8 +33,6 @@
 
 #include <cstdint>
 
-#include "boost/actor/primitive_type.hpp"
-
 #include "boost/actor/util/wrapped.hpp"
 
 namespace boost {

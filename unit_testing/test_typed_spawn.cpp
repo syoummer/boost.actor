@@ -28,9 +28,13 @@
 \******************************************************************************/
 
 
+#include "boost/algorithm/string/join.hpp"
+
 #include "boost/actor/cppa.hpp"
 
 #include "test.hpp"
+
+using boost::join;
 
 using namespace std;
 using namespace boost::actor;
@@ -209,7 +213,7 @@ void test_event_testee() {
                       "boost::actor::replies_to<@str>::with<void>",
                       "boost::actor::replies_to<float>::with<void>",
                       "boost::actor::replies_to<@i32>::with<@i32>"};
-    BOOST_ACTOR_CHECK_EQUAL(util::join(sub_et->interface()), util::join(iface));
+    BOOST_ACTOR_CHECK_EQUAL(join(sub_et->interface(), ","), join(iface, ","));
     self->send(sub_et, get_state_msg{});
     // we expect three 42s
     int i = 0;

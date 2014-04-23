@@ -148,7 +148,6 @@ set(LIBCPPA_SRC
     src/actor_proxy.cpp
     src/actor_registry.cpp
     src/actor_ostream.cpp
-    src/algorithm.cpp
     src/any_tuple.cpp
     src/atom.cpp
     src/attachable.cpp

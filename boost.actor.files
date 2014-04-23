@@ -50,7 +50,6 @@ boost/actor/detail/memory.hpp
 boost/actor/detail/object_array.hpp
 boost/actor/detail/object_impl.hpp
 boost/actor/detail/opt_impls.hpp
-boost/actor/detail/pair_member.hpp
 boost/actor/detail/projection.hpp
 boost/actor/detail/proper_actor.hpp
 boost/actor/detail/pseudo_tuple.hpp
@@ -133,7 +132,6 @@ boost/actor/policy/priority_policy.hpp
 boost/actor/policy/resume_policy.hpp
 boost/actor/policy/scheduling_policy.hpp
 boost/actor/policy/sequential_invoke.hpp
-boost/actor/primitive_type.hpp
 boost/actor/primitive_variant.hpp
 boost/actor/ref_counted.hpp
 boost/actor/replies_to.hpp
@@ -164,13 +162,12 @@ boost/actor/typed_event_based_actor.hpp
 boost/actor/uniform_type_info.hpp
 boost/actor/unit.hpp
 boost/actor/util/abstract_uniform_type_info.hpp
-boost/actor/util/algorithm.hpp
+boost/actor/detail/safe_equal.hpp
 boost/actor/util/arg_match_t.hpp
 boost/actor/util/buffer.hpp
 boost/actor/util/call.hpp
 boost/actor/util/comparable.hpp
 boost/actor/util/compare_tuples.hpp
-boost/actor/util/dptr.hpp
 boost/actor/util/duration.hpp
 boost/actor/util/get_mac_addresses.hpp
 boost/actor/util/get_root_uuid.hpp
@@ -179,8 +176,6 @@ boost/actor/util/int_list.hpp
 boost/actor/util/left_or_right.hpp
 boost/actor/util/limited_vector.hpp
 boost/actor/util/producer_consumer_list.hpp
-boost/actor/util/pt_dispatch.hpp
-boost/actor/util/pt_token.hpp
 boost/actor/util/purge_refs.hpp
 boost/actor/util/rebindable_reference.hpp
 boost/actor/util/ripemd_160.hpp
@@ -224,7 +219,6 @@ src/actor_namespace.cpp
 src/actor_ostream.cpp
 src/actor_proxy.cpp
 src/actor_registry.cpp
-src/algorithm.cpp
 src/any_tuple.cpp
 src/atom.cpp
 src/attachable.cpp

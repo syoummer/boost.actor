@@ -44,11 +44,11 @@
 #include "boost/actor/config.hpp"
 
 #include "boost/actor/util/call.hpp"
-#include "boost/actor/util/algorithm.hpp"
 #include "boost/actor/util/type_traits.hpp"
 #include "boost/actor/util/rebindable_reference.hpp"
 
 #include "boost/actor/detail/tdata.hpp"
+#include "boost/actor/detail/safe_equal.hpp"
 
 namespace boost {
 namespace actor {
@@ -446,14 +446,14 @@ BOOST_ACTOR_EVAL_OP_IMPL(logical_or_op, ||)
 template<> struct ge_eval_op<equal_op> {
     template<typename T1, typename T2>
     static inline bool _(const T1& lhs, const T2& rhs) {
-        return util::safe_equal(lhs, rhs);
+        return detail::safe_equal(lhs, rhs);
     }
 };
 
 template<> struct ge_eval_op<not_equal_op> {
     template<typename T1, typename T2>
     static inline bool _(const T1& lhs, const T2& rhs) {
-        return !util::safe_equal(lhs, rhs);
+        return !detail::safe_equal(lhs, rhs);
     }
 };
 

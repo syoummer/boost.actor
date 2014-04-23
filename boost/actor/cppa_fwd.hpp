@@ -58,7 +58,6 @@ class message_header;
 class partial_function;
 class uniform_type_info;
 class event_based_actor;
-class primitive_variant;
 
 // structs
 struct anything;

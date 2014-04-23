@@ -36,6 +36,8 @@
 #include <iostream>
 #include <stdexcept>
 
+#include "boost/algorithm/string.hpp"
+
 #include "boost/actor/on.hpp"
 #include "boost/actor/actor.hpp"
 #include "boost/actor/config.hpp"
@@ -48,7 +50,6 @@
 #include "boost/actor/binary_deserializer.hpp"
 
 #include "boost/actor/util/buffer.hpp"
-#include "boost/actor/util/algorithm.hpp"
 #include "boost/actor/util/ripemd_160.hpp"
 #include "boost/actor/util/get_root_uuid.hpp"
 #include "boost/actor/util/get_mac_addresses.hpp"
@@ -64,6 +65,7 @@
 #include "boost/actor/io/middleman_event_handler.hpp"
 
 #include "boost/actor/detail/fd_util.hpp"
+#include "boost/actor/detail/safe_equal.hpp"
 #include "boost/actor/detail/make_counted.hpp"
 #include "boost/actor/detail/actor_registry.hpp"
 
@@ -73,8 +75,6 @@
 #   include <io.h>
 #   include <fcntl.h>
 #endif
-
-using namespace std;
 
 namespace boost {
 namespace actor {
@@ -176,9 +176,9 @@ class middleman_impl : public middleman {
 
     ~middleman_impl();
 
-    void run_later(function<void()> fun) override {
+    void run_later(std::function<void()> fun) override {
         m_queue.enqueue(new middleman_event(std::move(fun)));
-        atomic_thread_fence(memory_order_seq_cst);
+        std::atomic_thread_fence(std::memory_order_seq_cst);
         notify_queue_event(m_pipe_in);
     }
 
@@ -319,7 +319,7 @@ class middleman_impl : public middleman {
         m_pipe_in = pipefds.second;
         detail::fd_util::nonblocking(m_pipe_out, true);
         // start threads
-        m_thread = thread([this] { middleman_loop(this); });
+        m_thread = std::thread([this] { middleman_loop(this); });
     }
 
     void destroy() override {
@@ -340,7 +340,7 @@ class middleman_impl : public middleman {
 
     static node_id_ptr compute_node_id() {
         auto macs = util::get_mac_addresses();
-        auto hd_serial_and_mac_addr = util::join(macs.begin(), macs.end())
+        auto hd_serial_and_mac_addr = join(macs, "")
                                     + util::get_root_uuid();
         node_id::host_id_type nid;
         util::ripemd_160(nid, hd_serial_and_mac_addr);
@@ -355,7 +355,7 @@ class middleman_impl : public middleman {
 
     middleman_event_handler& handler();
 
-    thread m_thread;
+    std::thread m_thread;
     native_socket_type m_pipe_out;
     native_socket_type m_pipe_in;
     middleman_queue m_queue;
@@ -396,7 +396,7 @@ class middleman_overseer : public continuable {
         auto events = num_queue_events(read_handle());
         BOOST_ACTOR_LOG_DEBUG("read " << events << " messages from queue");
         for (size_t i = 0; i < events; ++i) {
-            unique_ptr<middleman_event> msg(m_queue.try_pop());
+            std::unique_ptr<middleman_event> msg(m_queue.try_pop());
             if (!msg) {
                 BOOST_ACTOR_LOG_ERROR("nullptr dequeued");
                 BOOST_ACTOR_CRITICAL("nullptr dequeued");

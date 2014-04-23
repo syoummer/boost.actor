@@ -35,11 +35,11 @@
 
 #include "boost/actor/unit.hpp"
 
-#include "boost/actor/util/algorithm.hpp"
 #include "boost/actor/util/type_list.hpp"
 #include "boost/actor/util/type_traits.hpp"
 
 #include "boost/actor/detail/tdata.hpp"
+#include "boost/actor/detail/safe_equal.hpp"
 
 namespace boost {
 namespace actor {
@@ -64,7 +64,7 @@ template<typename T>
 struct vg_cmp {
     template<typename U>
     inline static bool _(const T& lhs, const U& rhs) {
-        return util::safe_equal(lhs, rhs);
+        return detail::safe_equal(lhs, rhs);
     }
 };
 
