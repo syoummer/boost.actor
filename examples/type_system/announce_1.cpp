@@ -88,7 +88,7 @@ int main(int, char**) {
     vd.b.resize(1);
     vd.b.back().push_back(42);
 
-    util::buffer buf;
+    io::buffer buf;
     binary_serializer bs(&buf);
     bs << vd;
 

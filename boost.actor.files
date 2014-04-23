@@ -161,7 +161,7 @@ boost/actor/unit.hpp
 boost/actor/util/abstract_uniform_type_info.hpp
 boost/actor/detail/safe_equal.hpp
 boost/actor/util/arg_match_t.hpp
-boost/actor/util/buffer.hpp
+boost/actor/io/buffer.hpp
 boost/actor/util/call.hpp
 boost/actor/util/comparable.hpp
 boost/actor/util/compare_tuples.hpp

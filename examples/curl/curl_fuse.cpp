@@ -162,7 +162,7 @@ class client_job : public base_actor {
              static_cast<uint64_t>(0),
              static_cast<uint64_t>(4095));
         return (
-            on(atom("reply"), arg_match) >> [=](const util::buffer& buf) {
+            on(atom("reply"), arg_match) >> [=](const io::buffer& buf) {
                 print() << "successfully received "
                         << buf.size()
                         << " bytes"
@@ -234,7 +234,7 @@ class curl_worker : public base_actor {
         return (
             on(atom("read"), arg_match)
             >> [=](const std::string& fname, uint64_t offset, uint64_t range)
-            -> cow_tuple<atom_value, util::buffer> {
+            -> cow_tuple<atom_value, io::buffer> {
                 print() << "read" << color::reset_endl;
                 for (;;) {
                     m_buf.clear();
@@ -303,7 +303,7 @@ class curl_worker : public base_actor {
     }
 
     CURL*        m_curl;
-    util::buffer m_buf;
+    io::buffer m_buf;
 
 };
 

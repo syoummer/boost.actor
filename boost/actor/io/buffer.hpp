@@ -35,11 +35,9 @@
 
 namespace boost { namespace actor { class deserializer; } }
 
-namespace boost { namespace actor { namespace io { class input_stream; } } }
-
 namespace boost {
 namespace actor {
-namespace util {
+namespace io {
 
 class input_stream;
 
@@ -315,7 +313,7 @@ inline size_t buffer::adjust(size_t alloc_size) const {
                             : (alloc_size - remainder) + m_chunk_size;
 }
 
-} // namespace util
+} // namespace io
 } // namespace actor
 } // namespace boost
 

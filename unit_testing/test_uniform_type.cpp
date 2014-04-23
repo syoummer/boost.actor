@@ -96,7 +96,7 @@ int main() {
         "@channel",                  // channel
         "@proc",                     // intrusive_ptr<node_id>
         "@duration",                 // util::duration
-        "@buffer",                   // util::buffer
+        "@buffer",                   // io::buffer
         "@down",                     // down_msg
         "@exit",                     // exit_msg
         "@timeout",                  // timeout_msg

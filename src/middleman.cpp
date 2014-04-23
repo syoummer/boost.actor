@@ -49,12 +49,12 @@
 #include "boost/actor/uniform_type_info.hpp"
 #include "boost/actor/binary_deserializer.hpp"
 
-#include "boost/actor/util/buffer.hpp"
 #include "boost/actor/util/ripemd_160.hpp"
 #include "boost/actor/util/get_root_uuid.hpp"
 #include "boost/actor/util/get_mac_addresses.hpp"
 
 #include "boost/actor/io/peer.hpp"
+#include "boost/actor/io/buffer.hpp"
 #include "boost/actor/io/acceptor.hpp"
 #include "boost/actor/io/middleman.hpp"
 #include "boost/actor/io/input_stream.hpp"

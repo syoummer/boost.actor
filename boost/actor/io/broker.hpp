@@ -37,8 +37,7 @@
 #include "boost/actor/local_actor.hpp"
 #include "boost/actor/behavior_stack_based.hpp"
 
-#include "boost/actor/util/buffer.hpp"
-
+#include "boost/actor/io/buffer.hpp"
 #include "boost/actor/io/acceptor.hpp"
 #include "boost/actor/io/input_stream.hpp"
 #include "boost/actor/io/output_stream.hpp"
@@ -101,9 +100,9 @@ class broker : public extend<local_actor>::
 
     void write(const connection_handle& hdl, size_t num_bytes, const void* buf);
 
-    void write(const connection_handle& hdl, const util::buffer& buf);
+    void write(const connection_handle& hdl, const buffer& buf);
 
-    void write(const connection_handle& hdl, util::buffer&& buf);
+    void write(const connection_handle& hdl, buffer&& buf);
 
     template<typename F, typename... Ts>
     static broker_ptr from(F fun,

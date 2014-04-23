@@ -41,6 +41,8 @@
 #include "boost/actor/binary_serializer.hpp"
 #include "boost/actor/type_lookup_table.hpp"
 
+#include "boost/actor/io/buffer.hpp"
+
 #include "boost/actor/detail/ieee_754.hpp"
 
 namespace boost {
@@ -48,23 +50,21 @@ namespace actor {
 
 namespace {
 
-using util::grow_if_needed;
-
 class binary_writer : public static_visitor<> {
 
  public:
 
-    binary_writer(util::buffer* sink) : m_sink(sink) { }
+    binary_writer(io::buffer* sink) : m_sink(sink) { }
 
     template<typename T>
-    static inline void write_int(util::buffer* sink, const T& value) {
-        sink->write(sizeof(T), &value, grow_if_needed);
+    static inline void write_int(io::buffer* sink, const T& value) {
+        sink->write(sizeof(T), &value, io::grow_if_needed);
     }
 
-    static inline void write_string(util::buffer* sink,
+    static inline void write_string(io::buffer* sink,
                                     const std::string& str) {
         write_int(sink, static_cast<std::uint32_t>(str.size()));
-        sink->write(str.size(), str.c_str(), grow_if_needed);
+        sink->write(str.size(), str.c_str(), io::grow_if_needed);
     }
 
     template<typename T>
@@ -114,13 +114,13 @@ class binary_writer : public static_visitor<> {
 
  private:
 
-    util::buffer* m_sink;
+    io::buffer* m_sink;
 
 };
 
 } // namespace <anonymous>
 
-binary_serializer::binary_serializer(util::buffer* buf,
+binary_serializer::binary_serializer(io::buffer* buf,
                                      actor_namespace* ns,
                                      type_lookup_table* tbl)
 : super(ns, tbl), m_sink(buf) { }
@@ -148,7 +148,7 @@ void binary_serializer::write_value(const primitive_variant& value) {
 }
 
 void binary_serializer::write_raw(size_t num_bytes, const void* data) {
-    m_sink->write(num_bytes, data, grow_if_needed);
+    m_sink->write(num_bytes, data, io::grow_if_needed);
 }
 
 void binary_serializer::write_tuple(size_t size,

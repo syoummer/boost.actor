@@ -79,6 +79,7 @@ namespace detail {
     { "boost::actor::group",                            "@group"              },
     { "boost::actor::group_down_msg",                   "@group_down"         },
     { "boost::actor::io::accept_handle",                "@ac_hdl"             },
+    { "boost::actor::io::buffer",                       "@buffer"             },
     { "boost::actor::io::connection_handle",            "@cn_hdl"             },
     { "boost::actor::message_header",                   "@header"             },
     { "boost::actor::new_connection_msg",               "@new_conn"           },
@@ -87,7 +88,6 @@ namespace detail {
     { "boost::actor::sync_timeout_msg",                 "@sync_timeout"       },
     { "boost::actor::timeout_msg",                      "@timeout"            },
     { "boost::actor::unit_t",                           "@0"                  },
-    { "boost::actor::util::buffer",                     "@buffer"             },
     { "boost::actor::util::duration",                   "@duration"           },
     { "boost::intrusive_ptr<boost::actor::node_id>",    "@proc"               },
     { "double",                                         "double"              },
@@ -655,7 +655,7 @@ class buffer_type_info_impl : public uniform_type_info {
  protected:
 
     bool equal_to(const std::type_info& ti) const override {
-        return ti == typeid(util::buffer);
+        return ti == typeid(io::buffer);
     }
 
     bool equals(const void* vlhs, const void* vrhs) const override {
@@ -667,17 +667,17 @@ class buffer_type_info_impl : public uniform_type_info {
     }
 
     uniform_value create(const uniform_value& other) const override {
-        return create_impl<util::buffer>(other);
+        return create_impl<io::buffer>(other);
     }
 
  private:
 
-    static inline util::buffer& deref(void* ptr) {
-        return *reinterpret_cast<util::buffer*>(ptr);
+    static inline io::buffer& deref(void* ptr) {
+        return *reinterpret_cast<io::buffer*>(ptr);
     }
 
-    static inline const util::buffer& deref(const void* ptr) {
-        return *reinterpret_cast<const util::buffer*>(ptr);
+    static inline const io::buffer& deref(const void* ptr) {
+        return *reinterpret_cast<const io::buffer*>(ptr);
     }
 
     static inline const char* static_name() {

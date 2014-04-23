@@ -44,7 +44,7 @@ class actor_namespace;
 class uniform_type_info;
 class type_lookup_table;
 
-namespace util { class buffer; }
+namespace io { class buffer; }
 
 /**
  * @ingroup TypeSystem
@@ -112,7 +112,7 @@ class deserializer {
         return m_incoming_types;
     }
 
-    void read_raw(size_t num_bytes, util::buffer& storage);
+    void read_raw(size_t num_bytes, io::buffer& storage);
 
  private:
 

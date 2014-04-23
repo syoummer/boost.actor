@@ -438,11 +438,11 @@ void broker::write(const connection_handle& hdl, size_t num_bytes, const void* b
     if (i != m_io.end()) i->second->write(num_bytes, buf);
 }
 
-void broker::write(const connection_handle& hdl, const util::buffer& buf) {
+void broker::write(const connection_handle& hdl, const io::buffer& buf) {
     write(hdl, buf.size(), buf.data());
 }
 
-void broker::write(const connection_handle& hdl, util::buffer&& buf) {
+void broker::write(const connection_handle& hdl, io::buffer&& buf) {
     write(hdl, buf.size(), buf.data());
     buf.clear();
 }

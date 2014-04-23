@@ -33,7 +33,7 @@
 #include "boost/actor/deserializer.hpp"
 #include "boost/actor/uniform_type_info.hpp"
 
-#include "boost/actor/util/buffer.hpp"
+#include "boost/actor/io/buffer.hpp"
 
 #include "boost/actor/detail/to_uniform_name.hpp"
 
@@ -45,7 +45,7 @@ deserializer::deserializer(actor_namespace* ns, type_lookup_table* ot)
 
 deserializer::~deserializer() { }
 
-void deserializer::read_raw(size_t num_bytes, util::buffer& storage) {
+void deserializer::read_raw(size_t num_bytes, io::buffer& storage) {
     storage.acquire(num_bytes);
     read_raw(num_bytes, storage.data());
     storage.inc_size(num_bytes);

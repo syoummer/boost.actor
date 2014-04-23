@@ -33,8 +33,7 @@
 
 #include <utility>
 
-#include "boost/actor/util/buffer.hpp"
-
+#include "boost/actor/io/buffer.hpp"
 #include "boost/actor/io/middleman.hpp"
 #include "boost/actor/io/continuable.hpp"
 #include "boost/actor/io/output_stream.hpp"
@@ -90,11 +89,11 @@ class buffered_writing : public Base {
         register_for_writing();
     }
 
-    void write(const util::buffer& buf) {
+    void write(const buffer& buf) {
         write(buf.size(), buf.data());
     }
 
-    void write(util::buffer&& buf) {
+    void write(buffer&& buf) {
         if (m_buf.empty()) m_buf = std::move(buf);
         else {
             m_buf.write(buf.size(), buf.data());
@@ -111,7 +110,7 @@ class buffered_writing : public Base {
         }
     }
 
-    inline util::buffer& write_buffer() {
+    inline buffer& write_buffer() {
         return m_buf;
     }
 
@@ -128,7 +127,7 @@ class buffered_writing : public Base {
     middleman* m_parent;
     output_stream_ptr m_out;
     bool m_has_unwritten_data;
-    util::buffer m_buf;
+    buffer m_buf;
 
 };
 

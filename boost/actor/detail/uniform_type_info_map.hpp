@@ -44,12 +44,12 @@
 #include "boost/actor/node_id.hpp"
 #include "boost/actor/system_messages.hpp"
 
-#include "boost/actor/util/buffer.hpp"
 #include "boost/actor/util/duration.hpp"
 #include "boost/actor/util/type_list.hpp"
 
 #include "boost/actor/detail/singleton_mixin.hpp"
 
+#include "boost/actor/io/buffer.hpp"
 #include "boost/actor/io/accept_handle.hpp"
 #include "boost/actor/io/connection_handle.hpp"
 
@@ -74,6 +74,7 @@ using mapped_type_list = util::type_list<
     group,
     group_down_msg,
     io::accept_handle,
+    io::buffer,
     io::connection_handle,
     message_header,
     new_connection_msg,
@@ -82,7 +83,6 @@ using mapped_type_list = util::type_list<
     sync_timeout_msg,
     timeout_msg,
     unit_t,
-    util::buffer,
     util::duration,
     node_id_ptr,
     double,

@@ -158,7 +158,7 @@ int main() {
     detail::meta_cow_tuple<int,int> mct;
     try {
         auto tup0 = make_cow_tuple(1, 2);
-        util::buffer wr_buf;
+        io::buffer wr_buf;
         binary_serializer bs(&wr_buf, &addressing);
         mct.serialize(&tup0, &bs);
         binary_deserializer bd(wr_buf.data(), wr_buf.size(), &addressing);
@@ -177,7 +177,7 @@ int main() {
         // test raw_type in both binary and string serialization
         raw_struct rs;
         rs.str = "Lorem ipsum dolor sit amet.";
-        util::buffer wr_buf;
+        io::buffer wr_buf;
         binary_serializer bs(&wr_buf, &addressing);
         bs << rs;
         binary_deserializer bd(wr_buf.data(), wr_buf.size(), &addressing);
@@ -195,7 +195,7 @@ int main() {
     try {
         scoped_actor self;
         auto ttup = make_any_tuple(1, 2, actor{self.get()});
-        util::buffer wr_buf;
+        io::buffer wr_buf;
         binary_serializer bs(&wr_buf, &addressing);
         bs << ttup;
         binary_deserializer bd(wr_buf.data(), wr_buf.size(), &addressing);
@@ -208,7 +208,7 @@ int main() {
     try {
         scoped_actor self;
         auto ttup = make_any_tuple(1, 2, actor{self.get()});
-        util::buffer wr_buf;
+        io::buffer wr_buf;
         binary_serializer bs(&wr_buf, &addressing);
         bs << ttup;
         bs << ttup;
@@ -225,7 +225,7 @@ int main() {
 
     try {
         // serialize b1 to buf
-        util::buffer wr_buf;
+        io::buffer wr_buf;
         binary_serializer bs(&wr_buf, &addressing);
         bs << atuple1;
         // deserialize b2 from buf
@@ -264,7 +264,7 @@ int main() {
     try {
         auto enum_tuple = make_any_tuple(test_enum::b);
         // serialize b1 to buf
-        util::buffer wr_buf;
+        io::buffer wr_buf;
         binary_serializer bs(&wr_buf, &addressing);
         bs << enum_tuple;
         // deserialize b2 from buf

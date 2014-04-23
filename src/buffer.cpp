@@ -34,11 +34,13 @@
 #include <utility>
 
 #include "boost/actor/cppa.hpp"
-#include "boost/actor/util/buffer.hpp"
+
+#include "boost/actor/io/buffer.hpp"
 #include "boost/actor/io/input_stream.hpp"
 
 namespace boost {
-namespace actor { namespace util {
+namespace actor {
+namespace io {
 
 namespace {
 
@@ -172,5 +174,6 @@ void buffer::append_from(io::input_stream* istream) {
     }
 }
 
-} } // namespace actor
-} // namespace boost::util
+} // namespace io
+} // namespace actor
+} // namespace boost

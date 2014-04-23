@@ -34,11 +34,11 @@
 #include <utility>
 
 #include "boost/actor/serializer.hpp"
-#include "boost/actor/util/buffer.hpp"
 
 namespace boost {
 namespace actor {
 
+namespace io { class buffer; }
 namespace detail { class binary_writer; }
 
 /**
@@ -55,7 +55,7 @@ class binary_serializer : public serializer {
      * @brief Creates a binary serializer writing to @p write_buffer.
      * @warning @p write_buffer must be guaranteed to outlive @p this
      */
-    binary_serializer(util::buffer* write_buffer,
+    binary_serializer(io::buffer* write_buffer,
                       actor_namespace* ns = nullptr,
                       type_lookup_table* lookup_table = nullptr);
 
@@ -75,7 +75,7 @@ class binary_serializer : public serializer {
 
  private:
 
-    util::buffer* m_sink;
+    io::buffer* m_sink;
 
 };
 

@@ -36,8 +36,7 @@
 #include "boost/actor/group.hpp"
 #include "boost/actor/actor_addr.hpp"
 
-#include "boost/actor/util/buffer.hpp"
-
+#include "boost/actor/io/buffer.hpp"
 #include "boost/actor/io/accept_handle.hpp"
 #include "boost/actor/io/connection_handle.hpp"
 
@@ -143,7 +142,7 @@ struct new_data_msg {
     /**
      * @brief Buffer containing the received data.
      */
-    util::buffer buf;
+    io::buffer buf;
 };
 
 /**

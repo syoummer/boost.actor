@@ -40,8 +40,7 @@
 #include "boost/actor/partial_function.hpp"
 #include "boost/actor/type_lookup_table.hpp"
 
-#include "boost/actor/util/buffer.hpp"
-
+#include "boost/actor/io/buffer.hpp"
 #include "boost/actor/io/input_stream.hpp"
 #include "boost/actor/io/output_stream.hpp"
 #include "boost/actor/io/buffered_writing.hpp"
@@ -102,8 +101,8 @@ class peer : public extend<continuable>::with<buffered_writing> {
     const uniform_type_info* m_meta_hdr;
     const uniform_type_info* m_meta_msg;
 
-    util::buffer m_rd_buf;
-    util::buffer m_wr_buf;
+    buffer m_rd_buf;
+    buffer m_wr_buf;
 
     default_message_queue_ptr m_queue;
 
