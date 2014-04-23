@@ -197,7 +197,6 @@ set(LIBCPPA_SRC
     src/object_array.cpp
     src/output_stream.cpp
     src/partial_function.cpp
-    src/primitive_variant.cpp
     src/ref_counted.cpp
     src/resumable.cpp
     src/remote_actor_proxy.cpp

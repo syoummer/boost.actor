@@ -44,7 +44,6 @@
 
 #include "boost/actor/detail/raw_access.hpp"
 #include "boost/actor/detail/types_array.hpp"
-#include "boost/actor/detail/type_to_ptype.hpp"
 
 namespace boost {
 namespace actor {

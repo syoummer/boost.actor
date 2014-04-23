@@ -328,7 +328,7 @@ class string_deserializer : public deserializer {
         return get_uniform_type_info_map()->by_uniform_name(type_name);
     }
 
-    void end_object() {
+    void end_object() override {
         if (m_open_objects.empty()) {
             throw std::runtime_error("no object to end");
         }
@@ -345,14 +345,14 @@ class string_deserializer : public deserializer {
         }
     }
 
-    size_t begin_sequence() {
+    size_t begin_sequence() override {
         integrity_check();
         consume('{');
         auto num_vals = count(m_pos, find(m_pos, m_str.end(), '}'), ',') + 1;
         return static_cast<size_t>(num_vals);
     }
 
-    void end_sequence() {
+    void end_sequence() override {
         integrity_check();
         consume('}');
     }
@@ -383,11 +383,17 @@ class string_deserializer : public deserializer {
         void operator()(atom_value& what) {
             what = static_cast<atom_value>(detail::atom_val(str.c_str(), 0xF));
         }
-        void operator()(u16string&) { }
-        void operator()(u32string&) { }
+        void operator()(u16string&) {
+            throw std::logic_error("u16string currently not supported "
+                                   "by string_deserializer");
+        }
+        void operator()(u32string&) {
+            throw std::logic_error("u32string currently not supported "
+                                   "by string_deserializer");
+        }
     };
 
-    primitive_variant read_value(primitive_type ptype) {
+    void read_value(primitive_variant& storage) override {
         integrity_check();
         skip_space_and_comma();
         string::iterator substr_end;
@@ -400,8 +406,8 @@ class string_deserializer : public deserializer {
              default : return false;
             }
         };
-        if (ptype == pt_u8string || ptype == pt_atom) {
-            char needle = (ptype == pt_u8string) ? '"' : '\'';
+        if (get<string>(&storage) || get<atom_value>(&storage)) {
+            char needle = (get<string>(&storage)) ? '"' : '\'';
             if (*m_pos == needle) {
                 // skip leading "
                 ++m_pos;
@@ -427,8 +433,8 @@ class string_deserializer : public deserializer {
         }
         string substr(m_pos, substr_end);
         m_pos += static_cast<difference_type>(substr.size());
-        if (ptype == pt_u8string || ptype == pt_atom) {
-            char needle = (ptype == pt_u8string) ? '"' : '\'';
+        if (get<string>(&storage) || get<atom_value>(&storage)) {
+            char needle = (get<string>(&storage)) ? '"' : '\'';
             // skip trailing "
             if (*m_pos != needle) {
                 string error_msg;
@@ -468,27 +474,11 @@ class string_deserializer : public deserializer {
                 substr = std::move(tmp);
             }
         }
-        primitive_variant result;//(ptype);
-        primitive_variant_init(result, ptype);
         from_string_reader fsr(substr);
-        apply_visitor(fsr, result);
-        return result;
+        apply_visitor(fsr, storage);
     }
 
-    void read_tuple(size_t size,
-                    const primitive_type* begin,
-                    primitive_variant* storage) {
-        integrity_check();
-        consume('{');
-        const primitive_type* end = begin + size;
-        for ( ; begin != end; ++begin) {
-            *storage = std::move(read_value(*begin));
-            ++storage;
-        }
-        consume('}');
-    }
-
-    void read_raw(size_t buf_size, void* vbuf) {
+    void read_raw(size_t buf_size, void* vbuf) override {
         auto buf = reinterpret_cast<unsigned char*>(vbuf);
         integrity_check();
         skip_space_and_comma();

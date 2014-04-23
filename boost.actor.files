@@ -53,7 +53,6 @@ boost/actor/detail/opt_impls.hpp
 boost/actor/detail/projection.hpp
 boost/actor/detail/proper_actor.hpp
 boost/actor/detail/pseudo_tuple.hpp
-boost/actor/detail/ptype_to_type.hpp
 boost/actor/detail/raw_access.hpp
 boost/actor/detail/response_handle_util.hpp
 boost/actor/detail/serialize_tuple.hpp
@@ -66,7 +65,6 @@ boost/actor/detail/to_uniform_name.hpp
 boost/actor/detail/tuple_iterator.hpp
 boost/actor/detail/tuple_vals.hpp
 boost/actor/detail/tuple_view.hpp
-boost/actor/detail/type_to_ptype.hpp
 boost/actor/detail/typed_actor_util.hpp
 boost/actor/detail/types_array.hpp
 boost/actor/detail/unboxed.hpp
@@ -273,7 +271,6 @@ src/output_stream.cpp
 src/partial_function.cpp
 src/peer.cpp
 src/peer_acceptor.cpp
-src/primitive_variant.cpp
 src/protocol.cpp
 src/ref_counted.cpp
 src/remote_actor_proxy.cpp
@@ -306,7 +303,6 @@ unit_testing/test_intrusive_containers.cpp
 unit_testing/test_intrusive_ptr.cpp
 unit_testing/test_local_group.cpp
 unit_testing/test_metaprogramming.cpp
-unit_testing/test_primitive_variant.cpp
 unit_testing/test_remote_actor.cpp
 unit_testing/test_ripemd_160.cpp
 unit_testing/test_serialization.cpp

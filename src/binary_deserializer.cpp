@@ -146,6 +146,8 @@ struct pt_reader : static_visitor<> {
 
     pt_reader(pointer bbegin, pointer bend) : begin(bbegin), end(bend) { }
 
+    inline void operator()(none_t&) { }
+
     template<typename T>
     inline void operator()(T& value) {
         begin = read_range(begin, end, value);
@@ -209,22 +211,10 @@ size_t binary_deserializer::begin_sequence() {
 
 void binary_deserializer::end_sequence() { }
 
-primitive_variant binary_deserializer::read_value(primitive_type ptype) {
-    primitive_variant val;
-    primitive_variant_init(val, ptype);
+void binary_deserializer::read_value(primitive_variant& storage) {
     pt_reader ptr(m_pos, m_end);
-    apply_visitor(ptr, val);
+    apply_visitor(ptr, storage);
     m_pos = ptr.begin;
-    return val;
-}
-
-void binary_deserializer::read_tuple(size_t size,
-                                     const primitive_type* ptypes,
-                                     primitive_variant* storage) {
-    for (auto end = ptypes + size; ptypes != end; ++ptypes) {
-        *storage = std::move(read_value(*ptypes));
-        ++storage;
-    }
 }
 
 void binary_deserializer::read_raw(size_t num_bytes, void* storage) {

@@ -58,8 +58,7 @@ class binary_deserializer : public deserializer {
     void end_object() override;
     size_t begin_sequence() override;
     void end_sequence() override;
-    primitive_variant read_value(primitive_type ptype) override;
-    void read_tuple(size_t, const primitive_type*, primitive_variant*) override;
+    void read_value(primitive_variant& storage) override;
     void read_raw(size_t num_bytes, void* storage) override;
 
  private:

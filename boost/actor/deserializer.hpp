@@ -36,13 +36,12 @@
 
 #include "boost/actor/primitive_variant.hpp"
 
-#include "boost/actor/detail/type_to_ptype.hpp"
-
 namespace boost {
 namespace actor {
 
 class object;
 class actor_namespace;
+class uniform_type_info;
 class type_lookup_table;
 
 namespace util { class buffer; }
@@ -62,12 +61,6 @@ class deserializer {
                  type_lookup_table* incoming_types = nullptr);
 
     virtual ~deserializer();
-
-    /**
-     * @brief Seeks the beginning of the next object and return
-     *        its uniform type name.
-     */
-    //virtual std::string seek_object() = 0;
 
     /**
      * @brief Begins deserialization of a new object.
@@ -91,33 +84,20 @@ class deserializer {
     virtual void end_sequence() = 0;
 
     /**
-     * @brief Reads a primitive value from the data source of type @p ptype.
-     * @param ptype Expected primitive data type.
-     * @returns A primitive value of type @p ptype.
+     * @brief Reads a primitive value from the data source.
      */
-    virtual primitive_variant read_value(primitive_type ptype) = 0;
+    virtual void read_value(primitive_variant& storage) = 0;
 
     /**
-     * @brief Reads a value of type @p T from the data source of type @p ptype.
-     * @note @p T must be of a primitive type.
-     * @returns The read value of type @p T.
+     * @brief Reads a value of type @p T from the data source.
+     * @note @p T must be a primitive type.
      */
     template<typename T>
     inline T read() {
-        auto val = read_value(detail::type_to_ptype<T>::ptype);
+        primitive_variant val{T()};
+        read_value(val);
         return std::move(get<T>(val));
     }
-
-    /**
-     * @brief Reads a tuple of primitive values from the data
-     *        source of the types @p ptypes.
-     * @param num The size of the tuple.
-     * @param ptypes Array of expected primitive data types.
-     * @param storage Array of size @p num, storing the result of this function.
-     */
-    virtual void read_tuple(size_t num,
-                            const primitive_type* ptypes,
-                            primitive_variant* storage   ) = 0;
 
     /**
      * @brief Reads a raw memory block.

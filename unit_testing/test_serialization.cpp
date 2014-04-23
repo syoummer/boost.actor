@@ -46,15 +46,10 @@
 #include "boost/actor/detail/ieee_754.hpp"
 #include "boost/actor/detail/safe_equal.hpp"
 #include "boost/actor/detail/object_array.hpp"
-#include "boost/actor/detail/type_to_ptype.hpp"
-#include "boost/actor/detail/ptype_to_type.hpp"
 
 using namespace std;
 using namespace boost::actor;
 using namespace boost::actor::util;
-
-using boost::actor::detail::type_to_ptype;
-using boost::actor::detail::ptype_to_type;
 
 namespace {
 
