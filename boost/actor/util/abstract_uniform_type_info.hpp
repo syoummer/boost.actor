@@ -69,12 +69,8 @@ class abstract_uniform_type_info : public uniform_type_info {
         return eq(deref(lhs), deref(rhs));
     }
 
-    void* new_instance(const void* ptr) const override {
-        return (ptr) ? new T(deref(ptr)) : new T();
-    }
-
-    void delete_instance(void* instance) const override {
-        delete reinterpret_cast<T*>(instance);
+    uniform_value create(const uniform_value& other) const override {
+        return create_impl<T>(other);
     }
 
  protected:

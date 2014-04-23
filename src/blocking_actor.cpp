@@ -29,6 +29,7 @@
 
 
 #include "boost/actor/logging.hpp"
+#include "boost/actor/exception.hpp"
 #include "boost/actor/scheduler.hpp"
 #include "boost/actor/singletons.hpp"
 #include "boost/actor/blocking_actor.hpp"

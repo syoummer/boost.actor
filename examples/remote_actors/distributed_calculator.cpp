@@ -11,6 +11,7 @@
  * - ./build/bin/distributed_math_actor -c -p 4242                            *
 \******************************************************************************/
 
+#include <regex>
 #include <vector>
 #include <string>
 #include <sstream>
@@ -115,7 +116,15 @@ void client_repl(const string& host, uint16_t port) {
          << endl << endl;
     string line;
     auto client = spawn(client_bhvr, host, port, invalid_actor);
-    const char connect[] = "connect ";
+    std::regex connect_rx{"connect (.+) ([0-9]+)"};
+    std::smatch base_match;
+    auto toint = [](const string& str) -> optional<int> {
+        try { return {std::stoi(str)}; }
+        catch (std::exception&) {
+            cout << "\"" << str << "\" is not an integer" << endl;
+            return none;
+        }
+    };
     while (getline(cin, line)) {
         line = trim(std::move(line)); // ignore leading and trailing whitespaces
         if (line == "quit") {
@@ -123,39 +132,23 @@ void client_repl(const string& host, uint16_t port) {
             anon_send_exit(client, exit_reason::user_shutdown);
             return;
         }
-        // the STL way of line.starts_with("connect")
-        else if (equal(begin(connect), end(connect) - 1, begin(line))) {
-            match_split(line, ' ') (
-                on("connect", arg_match) >> [&](string& nhost, string& sport) {
-                    try {
-                        auto lport = std::stoul(sport);
-                        if (lport < std::numeric_limits<uint16_t>::max()) {
-                            anon_send(client, atom("rebind"), move(nhost),
-                                      static_cast<uint16_t>(lport));
-                        }
-                        else {
-                            cout << lport << " is not a valid port" << endl;
-                        }
-                    }
-                    catch (std::exception&) {
-                        cout << "\"" << sport << "\" is not an unsigned integer"
-                             << endl;
-                    }
-                },
-                others() >> [] {
-                    cout << "*** usage: connect <host> <port>" << endl;
+        if (std::regex_match(line, base_match, connect_rx) && base_match.size() == 3) {
+            auto nhost = base_match[1].str();
+            try {
+                auto lport = std::stoul(base_match[2].str());
+                if (lport < std::numeric_limits<uint16_t>::max()) {
+                    anon_send(client, atom("rebind"), move(nhost),
+                              static_cast<uint16_t>(lport));
                 }
-            );
+                else {
+                    cout << lport << " is not a valid port" << endl;
+                }
+            }
+            catch (std::exception&) {
+                cout << "invalid port declaration" << endl;
+            }
         }
         else {
-            auto toint = [](const string& str) -> optional<int> {
-                try { return {std::stoi(str)}; }
-                catch (std::exception&) {
-                    cout << "\"" << str << "\" is not an integer" << endl;
-                    return none;
-                }
-            };
-
             bool success = false;
             auto first = begin(line);
             auto last = end(line);

@@ -55,14 +55,16 @@ int main() {
     BOOST_ACTOR_CHECK(announce1 == announce4);
     BOOST_ACTOR_CHECK_EQUAL(announce1->name(), "$::foo");
     {
+        /*
         //bar.create_object();
-        object obj1 = uniform_typeid<foo>()->create();
-        object obj2(obj1);
+        auto obj1 = uniform_typeid<foo>()->create();
+        auto obj2(obj1);
         BOOST_ACTOR_CHECK(obj1 == obj2);
         get_ref<foo>(obj1).value = 42;
         BOOST_ACTOR_CHECK(obj1 != obj2);
         BOOST_ACTOR_CHECK_EQUAL(get<foo>(obj1).value, 42);
         BOOST_ACTOR_CHECK_EQUAL(get<foo>(obj2).value, 0);
+        */
     }
     {
         auto uti = uniform_typeid<atom_value>();

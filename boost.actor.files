@@ -3,7 +3,6 @@ boost/actor/abstract_channel.hpp
 boost/actor/abstract_group.hpp
 boost/actor/actor.hpp
 boost/actor/actor_addr.hpp
-boost/actor/actor_companion.hpp
 boost/actor/actor_namespace.hpp
 boost/actor/actor_ostream.hpp
 boost/actor/actor_proxy.hpp
@@ -108,7 +107,6 @@ boost/actor/local_actor.hpp
 boost/actor/logging.hpp
 boost/actor/mailbox_based.hpp
 boost/actor/mailbox_element.hpp
-boost/actor/match.hpp
 boost/actor/match_expr.hpp
 boost/actor/may_have_timeout.hpp
 boost/actor/memory_cached.hpp
@@ -117,7 +115,6 @@ boost/actor/message_header.hpp
 boost/actor/message_id.hpp
 boost/actor/message_priority.hpp
 boost/actor/node_id.hpp
-boost/actor/object.hpp
 boost/actor/on.hpp
 boost/actor/partial_function.hpp
 boost/actor/policy.hpp
@@ -277,7 +274,6 @@ src/middleman_event_handler.cpp
 src/middleman_event_handler_epoll.cpp
 src/middleman_event_handler_poll.cpp
 src/node_id.cpp
-src/object.cpp
 src/object_array.cpp
 src/output_stream.cpp
 src/partial_function.cpp

@@ -38,7 +38,6 @@
 
 #include "boost/actor/on.hpp"
 #include "boost/actor/actor.hpp"
-#include "boost/actor/match.hpp"
 #include "boost/actor/config.hpp"
 #include "boost/actor/logging.hpp"
 #include "boost/actor/node_id.hpp"

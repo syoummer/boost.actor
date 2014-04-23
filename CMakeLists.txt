@@ -144,7 +144,6 @@ set(LIBCPPA_SRC
     src/acceptor.cpp
     src/actor.cpp
     src/actor_addr.cpp
-    src/actor_companion.cpp
     src/actor_namespace.cpp
     src/actor_proxy.cpp
     src/actor_registry.cpp
@@ -190,14 +189,12 @@ set(LIBCPPA_SRC
     src/local_actor.cpp
     src/logging.cpp
     src/mailbox_element.cpp
-    src/match.cpp
     src/memory.cpp
     src/memory_managed.cpp
     src/message_header.cpp
     src/middleman.cpp
     src/middleman_event_handler.cpp
     src/node_id.cpp
-    src/object.cpp
     src/object_array.cpp
     src/output_stream.cpp
     src/partial_function.cpp

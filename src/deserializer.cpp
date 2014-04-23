@@ -30,7 +30,6 @@
 
 #include <string>
 
-#include "boost/actor/object.hpp"
 #include "boost/actor/deserializer.hpp"
 #include "boost/actor/uniform_type_info.hpp"
 

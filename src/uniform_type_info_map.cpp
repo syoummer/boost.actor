@@ -310,13 +310,11 @@ void serialize_impl(const any_tuple& tup, serializer* sink) {
 
 void deserialize_impl(any_tuple& atref, deserializer* source) {
     auto uti = source->begin_object();
-    auto ptr = uti->new_instance();
-    auto ptr_guard = util::make_scope_guard([&] {
-        uti->delete_instance(ptr);
-    });
-    uti->deserialize(ptr, source);
+    auto uval = uti->create();
+    //auto ptr = uti->new_instance();
+    uti->deserialize(uval->val, source);
     source->end_object();
-    atref = uti->as_any_tuple(ptr);
+    atref = uti->as_any_tuple(uval->val);
 }
 
 void serialize_impl(msg_hdr_cref hdr, serializer* sink) {
@@ -498,12 +496,8 @@ class uti_base : public uniform_type_info {
         return eq(deref(lhs), deref(rhs));
     }
 
-    void* new_instance(const void* ptr) const override {
-        return (ptr) ? new T(deref(ptr)) : new T;
-    }
-
-    void delete_instance(void* instance) const override {
-        delete reinterpret_cast<T*>(instance);
+    uniform_value create(const uniform_value& other) const override {
+        return create_impl<T>(other);
     }
 
     any_tuple as_any_tuple(void* instance) const override {
@@ -612,12 +606,8 @@ class int_tinfo : public abstract_int_tinfo {
         return deref(lhs) == deref(rhs);
     }
 
-    void* new_instance(const void* ptr) const override {
-        return (ptr) ? new T(deref(ptr)) : new T;
-    }
-
-    void delete_instance(void* instance) const override {
-        delete reinterpret_cast<T*>(instance);
+    uniform_value create(const uniform_value& other) const override {
+        return create_impl<T>(other);
     }
 
  private:
@@ -673,12 +663,8 @@ class buffer_type_info_impl : public uniform_type_info {
                    && memcmp(lhs.data(), rhs.data(), lhs.size()) == 0);
     }
 
-    void* new_instance(const void* ptr) const override {
-        return (ptr) ? new util::buffer(deref(ptr)) : new util::buffer;
-    }
-
-    void delete_instance(void* instance) const override {
-        delete reinterpret_cast<util::buffer*>(instance);
+    uniform_value create(const uniform_value& other) const override {
+        return create_impl<util::buffer>(other);
     }
 
  private:
@@ -701,6 +687,8 @@ class default_meta_tuple : public uniform_type_info {
 
  public:
 
+    typedef intrusive_ptr<object_array> shared_object_array;
+
     default_meta_tuple(const std::string& name) {
         m_name = name;
         auto elements = util::split(name, '+', false);
@@ -715,23 +703,19 @@ class default_meta_tuple : public uniform_type_info {
         }
     }
 
-    void* new_instance(const void* instance = nullptr) const override {
-        object_array* result = nullptr;
-        if (instance) result = new object_array{*cast(instance)};
-        else {
-            result = new object_array;
-            for (auto uti : m_elements) result->push_back(uti->create());
+    uniform_value create(const uniform_value& other) const override {
+        auto res = create_impl<shared_object_array>(other);
+        if (!other) {
+            // res is not a copy => fill with values
+            shared_object_array soa{new object_array};
+            for (auto& e : m_elements) soa->push_back(e->create());
+            *cast(res->val) = std::move(soa);
         }
-        result->ref();
-        return result;
-    }
-
-    void delete_instance(void* ptr) const override {
-        cast(ptr)->deref();
+        return res;
     }
 
     any_tuple as_any_tuple(void* ptr) const override {
-        return any_tuple{static_cast<any_tuple::raw_ptr>(cast(ptr))};
+        return any_tuple{static_cast<any_tuple::raw_ptr>(cast(ptr)->get())};
     }
 
     const char* name() const override {
@@ -739,14 +723,14 @@ class default_meta_tuple : public uniform_type_info {
     }
 
     void serialize(const void* ptr, serializer* sink) const override {
-        auto& oarr = *cast(ptr);
+        auto& oarr = *(cast(ptr)->get());
         for (size_t i = 0; i < m_elements.size(); ++i) {
             m_elements[i]->serialize(oarr.at(i), sink);
         }
     }
 
     void deserialize(void* ptr, deserializer* source) const override {
-        auto& oarr = *cast(ptr);
+        auto& oarr = *(cast(ptr)->get());
         for (size_t i = 0; i < m_elements.size(); ++i) {
             m_elements[i]->deserialize(oarr.mutable_at(i), source);
         }
@@ -757,8 +741,8 @@ class default_meta_tuple : public uniform_type_info {
     }
 
     bool equals(const void* instance1, const void* instance2) const override {
-        auto& lhs = *cast(instance1);
-        auto& rhs = *cast(instance2);
+        auto& lhs = *(cast(instance1)->get());
+        auto& rhs = *(cast(instance2)->get());
         full_eq_type cmp;
         return std::equal(lhs.begin(), lhs.end(), rhs.begin(), cmp);
     }
@@ -768,12 +752,12 @@ class default_meta_tuple : public uniform_type_info {
     std::string m_name;
     std::vector<const uniform_type_info*> m_elements;
 
-    inline object_array* cast(void* ptr) const {
-        return reinterpret_cast<object_array*>(ptr);
+    inline shared_object_array* cast(void* ptr) const {
+        return reinterpret_cast<shared_object_array*>(ptr);
     }
 
-    inline const object_array* cast(const void* ptr) const {
-        return reinterpret_cast<const object_array*>(ptr);
+    inline const shared_object_array* cast(const void* ptr) const {
+        return reinterpret_cast<const shared_object_array*>(ptr);
     }
 
 };
@@ -1058,5 +1042,6 @@ uniform_type_info_map* uniform_type_info_map::create_singleton() {
 
 uniform_type_info_map::~uniform_type_info_map() { }
 
-} } // namespace actor
-} // namespace boost::detail
+} // namespace detail
+} // namespace actor
+} // namespace boost

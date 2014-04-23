@@ -42,7 +42,6 @@
 
 #include "boost/actor/atom.hpp"
 #include "boost/actor/actor.hpp"
-#include "boost/actor/object.hpp"
 #include "boost/actor/logging.hpp"
 #include "boost/actor/any_tuple.hpp"
 #include "boost/actor/announce.hpp"
@@ -65,16 +64,14 @@ namespace { inline detail::uniform_type_info_map& uti_map() {
     return *detail::singleton_manager::get_uniform_type_info_map();
 } } // namespace <anonymous>
 
+uniform_value_t::~uniform_value_t() { }
+
 const uniform_type_info* announce(const std::type_info&,
                                   std::unique_ptr<uniform_type_info> utype) {
     return uti_map().insert(std::move(utype));
 }
 
 uniform_type_info::~uniform_type_info() { }
-
-object uniform_type_info::create() const {
-    return {new_instance(), this};
-}
 
 const uniform_type_info* uniform_type_info::from(const std::type_info& tinf) {
     auto result = uti_map().by_rtti(tinf);
@@ -96,10 +93,10 @@ const uniform_type_info* uniform_type_info::from(const std::string& name) {
     return result;
 }
 
-object uniform_type_info::deserialize(deserializer* from) const {
-    auto ptr = new_instance();
-    deserialize(ptr, from);
-    return {ptr, this};
+uniform_value uniform_type_info::deserialize(deserializer* from) const {
+    auto uval = create();
+    deserialize(uval->val, from);
+    return std::move(uval);
 }
 
 std::vector<const uniform_type_info*> uniform_type_info::instances() {

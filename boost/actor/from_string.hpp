@@ -35,7 +35,6 @@
 #include <typeinfo>
 #include <exception>
 
-#include "boost/actor/object.hpp"
 #include "boost/actor/uniform_type_info.hpp"
 
 namespace boost {
@@ -48,7 +47,7 @@ namespace actor {
  * @returns An {@link cppa::object object} instance that contains
  *          the deserialized value.
  */
-object from_string(const std::string& what);
+uniform_value from_string(const std::string& what);
 
 /**
  * @brief Convenience function that deserializes a value from @p what and
@@ -56,9 +55,10 @@ object from_string(const std::string& what);
  * @throws std::logic_error if the result is not of type @p T.
  * @returns The deserialized value as instance of @p T.
  */
+/*
 template<typename T>
 T from_string(const std::string& what) {
-    object o = from_string(what);
+    any o = from_string(what);
     const std::type_info& tinfo = typeid(T);
     if (tinfo == *(o.type())) {
         return std::move(get_ref<T>(o));
@@ -71,6 +71,7 @@ T from_string(const std::string& what) {
         throw std::logic_error(error_msg);
     }
 }
+*/
 
 } // namespace actor
 } // namespace boost

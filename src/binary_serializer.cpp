@@ -43,8 +43,6 @@
 
 #include "boost/actor/detail/ieee_754.hpp"
 
-using std::enable_if;
-
 namespace boost {
 namespace actor {
 
@@ -71,13 +69,13 @@ class binary_writer {
 
     template<typename T>
     void operator()(const T& value,
-                    typename enable_if<std::is_integral<T>::value>::type* = 0) {
+                    typename std::enable_if<std::is_integral<T>::value>::type* = 0) {
         write_int(m_sink, value);
     }
 
     template<typename T>
     void operator()(const T& value,
-                    typename enable_if<std::is_floating_point<T>::value>::type* = 0) {
+                    typename std::enable_if<std::is_floating_point<T>::value>::type* = 0) {
         auto tmp = detail::pack754(value);
         write_int(m_sink, tmp);
     }

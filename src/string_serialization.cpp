@@ -36,7 +36,6 @@
 #include <algorithm>
 
 #include "boost/actor/atom.hpp"
-#include "boost/actor/object.hpp"
 #include "boost/actor/to_string.hpp"
 #include "boost/actor/serializer.hpp"
 #include "boost/actor/singletons.hpp"
@@ -51,7 +50,11 @@
 
 #include "boost/actor/detail/uniform_type_info_map.hpp"
 
-using namespace std;
+using std::string;
+using std::ostream;
+using std::u16string;
+using std::u32string;
+using std::istringstream;
 
 namespace boost {
 namespace actor {
@@ -115,8 +118,8 @@ class string_serializer : public serializer {
 
     bool m_after_value;
     bool m_obj_just_opened;
-    stack<size_t> m_object_pos;
-    stack<string> m_open_objects;
+    std::stack<size_t> m_object_pos;
+    std::stack<string> m_open_objects;
 
     inline void clear() {
         if (m_after_value) {
@@ -177,7 +180,7 @@ class string_serializer : public serializer {
     void write_value(const primitive_variant& value) {
         clear();
         if (m_open_objects.empty()) {
-            throw runtime_error("write_value(): m_open_objects.empty()");
+            throw std::runtime_error("write_value(): m_open_objects.empty()");
         }
         value.apply(pt_writer(out));
         m_after_value = true;
@@ -197,12 +200,12 @@ class string_serializer : public serializer {
         clear();
         auto first = reinterpret_cast<const unsigned char*>(buf);
         auto last = first + num_bytes;
-        out << hex;
-        out << setfill('0');
+        out << std::hex;
+        out << std::setfill('0');
         for (; first != last; ++first) {
-            out << setw(2) << static_cast<size_t>(*first);
+            out << std::setw(2) << static_cast<size_t>(*first);
         }
-        out << dec;
+        out << std::dec;
         m_after_value = true;
     }
 
@@ -217,8 +220,8 @@ class string_deserializer : public deserializer {
     string m_str;
     string::iterator m_pos;
     //size_t m_obj_count;
-    stack<bool> m_obj_had_left_parenthesis;
-    stack<string> m_open_objects;
+    std::stack<bool> m_obj_had_left_parenthesis;
+    std::stack<string> m_open_objects;
     actor_namespace m_namespace;
 
     void skip_space_and_comma() {
@@ -226,7 +229,7 @@ class string_deserializer : public deserializer {
     }
 
     void throw_malformed [[noreturn]] (const string& error_msg) {
-        throw logic_error("malformed string: " + error_msg);
+        throw std::logic_error("malformed string: " + error_msg);
     }
 
     void consume(char c) {
@@ -323,7 +326,7 @@ class string_deserializer : public deserializer {
 
     void end_object() {
         if (m_open_objects.empty()) {
-            throw runtime_error("no object to end");
+            throw std::runtime_error("no object to end");
         }
         if (m_obj_had_left_parenthesis.top() == true) {
             consume(')');
@@ -416,7 +419,7 @@ class string_deserializer : public deserializer {
             substr_end = find_if(m_pos, m_str.end(), find_if_cond);
         }
         if (substr_end == m_str.end()) {
-            throw logic_error("malformed string (unterminated value)");
+            throw std::logic_error("malformed string (unterminated value)");
         }
         string substr(m_pos, substr_end);
         m_pos += static_cast<difference_type>(substr.size());
@@ -430,7 +433,7 @@ class string_deserializer : public deserializer {
                 error_msg += "' found '";
                 error_msg += *m_pos;
                 error_msg += "'";
-                throw logic_error(error_msg);
+                throw std::logic_error(error_msg);
             }
             ++m_pos;
             // replace '\"' by '"'
@@ -473,7 +476,7 @@ class string_deserializer : public deserializer {
         consume('{');
         const primitive_type* end = begin + size;
         for ( ; begin != end; ++begin) {
-            *storage = move(read_value(*begin));
+            *storage = std::move(read_value(*begin));
             ++storage;
         }
         consume('}');
@@ -503,18 +506,22 @@ class string_deserializer : public deserializer {
 
 } // namespace <anonymous>
 
-object from_string(const string& what) {
+uniform_value from_string(const string& what) {
+    /*
     string_deserializer strd(what);
     auto utype = strd.begin_object();
     auto result = utype->deserialize(&strd);
     strd.end_object();
     return result;
+    */
+    //TODO FIXME
+    return {};
 }
 
 namespace detail {
 
 string to_string_impl(const void *what, const uniform_type_info *utype) {
-    ostringstream osstr;
+    std::ostringstream osstr;
     string_serializer strs(osstr);
     strs.begin_object(utype);
     utype->serialize(what, &strs);
@@ -524,7 +531,7 @@ string to_string_impl(const void *what, const uniform_type_info *utype) {
 
 } // namespace detail
 
-string to_verbose_string(const exception& e) {
+string to_verbose_string(const std::exception& e) {
     std::ostringstream oss;
     oss << detail::demangle(typeid(e)) << ": " << e.what();
     return oss.str();

@@ -144,6 +144,7 @@ int main() {
 
     cout << "process id: " << to_string(get_middleman()->node()) << endl;
 
+  /*
     auto oarr = new detail::object_array;
     oarr->push_back(object::from(static_cast<uint32_t>(42)));
     oarr->push_back(object::from("foo"  ));
@@ -287,6 +288,6 @@ int main() {
         BOOST_ACTOR_CHECK(ok);
     }
     catch (std::exception& e) { BOOST_ACTOR_FAILURE(to_verbose_string(e)); }
-
+  */
     return BOOST_ACTOR_TEST_RESULT();
 }

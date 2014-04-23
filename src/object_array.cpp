@@ -36,16 +36,22 @@ namespace detail {
 
 object_array::object_array() : super(true) { }
 
-void object_array::push_back(const object& what) {
-    m_elements.push_back(what);
+object_array::object_array(const object_array& other) : super(true) {
+    m_elements.reserve(other.m_elements.size());
+    for (auto& e : other.m_elements) m_elements.push_back(e->copy());
 }
 
-void object_array::push_back(object&& what) {
+object_array::~object_array() { }
+
+void object_array::push_back(uniform_value what) {
+    BOOST_ACTOR_REQUIRE(   what != nullptr
+                        && what->val != nullptr
+                        && what->ti != nullptr);
     m_elements.push_back(std::move(what));
 }
 
 void* object_array::mutable_at(size_t pos) {
-    return m_elements[pos].mutable_value();
+    return m_elements[pos]->val;
 }
 
 size_t object_array::size() const {
@@ -57,11 +63,13 @@ object_array* object_array::copy() const {
 }
 
 const void* object_array::at(size_t pos) const {
-    return m_elements[pos].value();
+    BOOST_ACTOR_REQUIRE(pos < size());
+    return m_elements[pos]->val;
 }
 
 const uniform_type_info* object_array::type_at(size_t pos) const {
-    return m_elements[pos].type();
+    BOOST_ACTOR_REQUIRE(pos < size());
+    return m_elements[pos]->ti;
 }
 
 const std::string* object_array::tuple_type_names() const {

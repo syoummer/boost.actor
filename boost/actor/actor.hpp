@@ -49,7 +49,6 @@ class actor_addr;
 class actor_proxy;
 class local_actor;
 class blocking_actor;
-class actor_companion;
 class event_based_actor;
 
 struct invalid_actor_addr_t;
@@ -80,7 +79,6 @@ struct is_convertible_to_actor {
     static constexpr bool value =  std::is_base_of<io::broker, T>::value
                                 || std::is_base_of<actor_proxy, T>::value
                                 || std::is_base_of<blocking_actor, T>::value
-                                || std::is_base_of<actor_companion, T>::value
                                 || std::is_base_of<event_based_actor, T>::value;
 };
 

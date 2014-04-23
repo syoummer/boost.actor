@@ -34,7 +34,6 @@
 #include "boost/actor/on.hpp"
 #include "boost/actor/cppa.hpp"
 #include "boost/actor/actor.hpp"
-#include "boost/actor/match.hpp"
 #include "boost/actor/logging.hpp"
 #include "boost/actor/to_string.hpp"
 #include "boost/actor/singletons.hpp"
@@ -161,7 +160,7 @@ continue_reading_result peer::continue_reading() {
                     return continue_reading_result::failure;
                 }
                 BOOST_ACTOR_LOG_DEBUG("deserialized: " << to_string(hdr) << " " << to_string(msg));
-                match(msg) (
+                partial_function pf {
                     // monitor messages are sent automatically whenever
                     // actor_proxy_cache creates a new proxy
                     // note: aid is the *original* actor id
@@ -185,7 +184,8 @@ continue_reading_result peer::continue_reading() {
                     others() >> [&] {
                         deliver(hdr, move(msg));
                     }
-                );
+                };
+                pf(msg);
                 m_rd_buf.clear();
                 m_rd_buf.final_size(sizeof(uint32_t));
                 m_state = wait_for_msg_size;

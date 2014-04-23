@@ -34,6 +34,8 @@
 #include "boost/intrusive_ptr.hpp"
 
 #include "boost/actor/ref_counted.hpp"
+#include "boost/actor/memory_cached.hpp"
+
 #include "boost/actor/detail/memory.hpp"
 
 namespace boost {

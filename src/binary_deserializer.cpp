@@ -73,7 +73,7 @@ pointer read_range(pointer begin, pointer end, string& storage);
 
 template<typename T>
 pointer read_range(pointer begin, pointer end, T& storage,
-                   typename enable_if<is_integral<T>::value>::type* = 0) {
+                   typename std::enable_if<std::is_integral<T>::value>::type* = 0) {
     range_check(begin, end, sizeof(T));
     memcpy(&storage, begin, sizeof(T));
     return advanced(begin, sizeof(T));
@@ -81,7 +81,7 @@ pointer read_range(pointer begin, pointer end, T& storage,
 
 template<typename T>
 pointer read_range(pointer begin, pointer end, T& storage,
-                   typename enable_if<is_floating_point<T>::value>::type* = 0) {
+                   typename std::enable_if<std::is_floating_point<T>::value>::type* = 0) {
     typename detail::ieee_754_trait<T>::packed_type tmp;
     auto result = read_range(begin, end, tmp);
     storage = detail::unpack754(tmp);

@@ -36,7 +36,6 @@
 #include "boost/actor/atom.hpp" // included for to_string(atom_value)
 #include "boost/actor/actor.hpp"
 #include "boost/actor/group.hpp"
-#include "boost/actor/object.hpp"
 #include "boost/actor/channel.hpp"
 #include "boost/actor/node_id.hpp"
 #include "boost/actor/anything.hpp"
@@ -92,9 +91,11 @@ std::string to_string(const node_id& what);
 // implemented in node_id.cpp
 std::string to_string(const node_id_ptr& what);
 
-inline std::string to_string(const object& what) {
+/*
+inline std::string to_string(const any& what) {
     return detail::to_string_impl(what.value(), what.type());
 }
+*/
 
 /**
  * @brief Converts @p e to a string including the demangled type of e

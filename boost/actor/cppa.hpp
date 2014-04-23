@@ -40,7 +40,6 @@
 
 #include "boost/actor/on.hpp"
 #include "boost/actor/atom.hpp"
-#include "boost/actor/match.hpp"
 #include "boost/actor/spawn.hpp"
 #include "boost/actor/channel.hpp"
 #include "boost/actor/behavior.hpp"
