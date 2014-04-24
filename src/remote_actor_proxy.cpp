@@ -146,11 +146,10 @@ void remote_actor_proxy::enqueue(msg_hdr_cref hdr, any_tuple msg,
     BOOST_ACTOR_REQUIRE(m_parent != nullptr);
     BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_TARG(hdr, to_string)
                    << ", " << BOOST_ACTOR_TARG(msg, to_string));
-    auto& arr = detail::static_types_array<atom_value, uint32_t>::arr;
-    if (   msg.size() == 2
-        && msg.type_at(0) == arr[0]
-        && msg.get_as<atom_value>(0) == atom("KILL_PROXY")
-        && msg.type_at(1) == arr[1]) {
+    if (       msg.size() == 2
+            && msg.type_at(0)->equal_to(typeid(atom_value))
+            && msg.get_as<atom_value>(0) == atom("KILL_PROXY")
+            && msg.type_at(1)->equal_to(typeid(uint32_t))) {
         BOOST_ACTOR_LOG_DEBUG("received KILL_PROXY message");
         intrusive_ptr<remote_actor_proxy> _this{this};
         auto reason = msg.get_as<uint32_t>(1);

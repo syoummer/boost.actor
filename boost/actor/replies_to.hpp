@@ -45,14 +45,6 @@ struct replies_to {
     };
 };
 
-template<class InputList, class OutputList>
-struct replies_to_from_type_list;
-
-template<typename... Is, typename... Os>
-struct replies_to_from_type_list<util::type_list<Is...>, util::type_list<Os...>> {
-    typedef typename replies_to<Is...>::template with<Os...> type;
-};
-
 } // namespace actor
 } // namespace boost
 

@@ -60,14 +60,6 @@ struct pseudo_tuple {
     }
 };
 
-template<class List>
-struct pseudo_tuple_from_type_list;
-
-template<typename... Ts>
-struct pseudo_tuple_from_type_list<util::type_list<Ts...> > {
-    typedef pseudo_tuple<Ts...> type;
-};
-
 } // namespace detail
 } // namespace actor
 } // namespace boost

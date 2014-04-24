@@ -31,11 +31,11 @@
 #ifndef BOOST_ACTOR_TUPLE_VALS_HPP
 #define BOOST_ACTOR_TUPLE_VALS_HPP
 
+#include <tuple>
 #include <stdexcept>
 
 #include "boost/actor/util/type_list.hpp"
 
-#include "boost/actor/detail/tdata.hpp"
 #include "boost/actor/detail/types_array.hpp"
 #include "boost/actor/detail/abstract_tuple.hpp"
 #include "boost/actor/detail/serialize_tuple.hpp"
@@ -43,6 +43,28 @@
 namespace boost {
 namespace actor {
 namespace detail {
+
+template<size_t Pos, size_t Max, bool InRange = (Pos < Max)>
+struct tup_ptr_access {
+    template<class T>
+    static inline
+    typename std::conditional<std::is_const<T>::value, const void*, void*>::type
+    get(size_t pos, T& tup) {
+        if (pos == Pos) return &std::get<Pos>(tup);
+        return tup_ptr_access<Pos+1,Max>::get(pos,tup);
+    }
+};
+
+template<size_t Pos, size_t Max>
+struct tup_ptr_access<Pos, Max, false> {
+    template<class T>
+    static inline
+    typename std::conditional<std::is_const<T>::value, const void*, void*>::type
+    get(size_t, T&) {
+         // end of recursion
+         return nullptr;
+    }
+};
 
 template<typename... Ts>
 class tuple_vals : public abstract_tuple {
@@ -54,7 +76,7 @@ class tuple_vals : public abstract_tuple {
 
  public:
 
-    typedef tdata<Ts...> data_type;
+    typedef std::tuple<Ts...> data_type;
 
     typedef types_array<Ts...> element_types;
 
@@ -89,7 +111,7 @@ class tuple_vals : public abstract_tuple {
 
     const void* at(size_t pos) const {
         BOOST_ACTOR_REQUIRE(pos < size());
-        return m_data.at(pos);
+        return tup_ptr_access<0, sizeof...(Ts)>::get(pos, m_data);
     }
 
     void* mutable_at(size_t pos) {
@@ -131,14 +153,6 @@ class tuple_vals : public abstract_tuple {
 
 template<typename... Ts>
 types_array<Ts...> tuple_vals<Ts...>::m_types;
-
-template<typename TypeList>
-struct tuple_vals_from_type_list;
-
-template<typename... Ts>
-struct tuple_vals_from_type_list< util::type_list<Ts...> > {
-    typedef tuple_vals<Ts...> type;
-};
 
 } // namespace detail
 } // namespace actor

@@ -131,7 +131,7 @@ struct rvalue_builder {
     static constexpr bool is_complete =
             !std::is_same<util::arg_match_t, back_type>::value;
 
-    typedef typename util::tl_apply<Transformers, tdata>::type fun_container;
+    typedef typename util::tl_apply<Transformers, std::tuple>::type fun_container;
 
     Guard m_guard;
     fun_container m_funs;

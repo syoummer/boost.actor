@@ -31,7 +31,6 @@ boost/actor/detail/atom_val.hpp
 boost/actor/detail/behavior_impl.hpp
 boost/actor/detail/behavior_stack.hpp
 boost/actor/detail/boxed.hpp
-boost/actor/detail/container_tuple_view.hpp
 boost/actor/detail/cs_thread.hpp
 boost/actor/detail/decorated_tuple.hpp
 boost/actor/detail/default_uniform_type_info.hpp
@@ -60,11 +59,10 @@ boost/actor/detail/singleton_manager.hpp
 boost/actor/detail/singleton_mixin.hpp
 boost/actor/detail/swap_bytes.hpp
 boost/actor/detail/sync_request_bouncer.hpp
-boost/actor/detail/tdata.hpp
+boost/actor/detail/rebind_tdata.hpp
 boost/actor/detail/to_uniform_name.hpp
 boost/actor/detail/tuple_iterator.hpp
 boost/actor/detail/tuple_vals.hpp
-boost/actor/detail/tuple_view.hpp
 boost/actor/detail/typed_actor_util.hpp
 boost/actor/detail/types_array.hpp
 boost/actor/detail/unboxed.hpp
@@ -310,3 +308,4 @@ unit_testing/test_typed_spawn.cpp
 unit_testing/test_uniform_type.cpp
 unit_testing/test_yield_interface.cpp
 boost/actor/detail/make_counted.hpp
+boost/actor/detail/tuple_zip.hpp

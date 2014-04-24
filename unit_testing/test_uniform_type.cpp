@@ -20,9 +20,8 @@
 #include "boost/actor/any_tuple.hpp"
 #include "boost/actor/serializer.hpp"
 #include "boost/actor/deserializer.hpp"
-#include "boost/actor/uniform_type_info.hpp"
-#include "boost/actor/detail/types_array.hpp"
 #include "boost/actor/message_header.hpp"
+#include "boost/actor/uniform_type_info.hpp"
 
 #include "boost/actor/util/type_traits.hpp"
 
@@ -153,6 +152,7 @@ int main() {
         }
     }
 
+    /*
     // check if static types are identical to runtime types
     auto& sarr = detail::static_types_array<
                     std::int8_t, std::int16_t, std::int32_t, std::int64_t,
@@ -220,6 +220,7 @@ int main() {
     BOOST_ACTOR_CHECK(arr3[1] == uniform_typeid<std::uint16_t>());
     BOOST_ACTOR_CHECK(arr3[1] == uniform_type_info::from("@u16"));
     BOOST_ACTOR_CHECK(uniform_type_info::from("@u16") == uniform_typeid<std::uint16_t>());
+    */
 
     return BOOST_ACTOR_TEST_RESULT();
 }

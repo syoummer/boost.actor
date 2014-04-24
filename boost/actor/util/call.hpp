@@ -56,11 +56,6 @@ inline auto apply_args_suffxied(F& f, Tuple& tup, util::int_list<Is...>, Ts&&...
     return f(get_cv_aware<Is>(tup)..., std::forward<Ts>(args)...);
 }
 
-template<typename F, typename... Ts>
-inline auto call_mv(F& f, Ts&&... args) -> decltype(f(std::move(args)...)) {
-    return f(std::move(args)...);
-}
-
 } // namespace util
 } // namespace actor
 } // namespace boost

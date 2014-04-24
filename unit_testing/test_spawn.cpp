@@ -441,20 +441,20 @@ void test_or_else() {
     );
     BOOST_ACTOR_PRINT("run_testee: handle_a.or_else(handle_b), on(\"c\") ...");
     run_testee(
-        spawn([=] {
-            return (
+        spawn([=]() -> behavior {
+            return {
                 handle_a.or_else(handle_b),
                 on("c") >> [] { return 3; }
-            );
+            };
         })
     );
     BOOST_ACTOR_PRINT("run_testee: on(\"a\") ..., handle_b.or_else(handle_c)");
     run_testee(
-        spawn([=] {
-            return (
+        spawn([=]() -> behavior {
+            return {
                 on("a") >> [] { return 1; },
                 handle_b.or_else(handle_c)
-            );
+            };
         })
     );
 }
@@ -610,14 +610,14 @@ void test_spawn() {
     self->await_all_other_actors_done();
     BOOST_ACTOR_CHECKPOINT();
 
+    BOOST_ACTOR_PRINT("test timeout");
+    self->receive(after(chrono::seconds(1)) >> [] { });
+    BOOST_ACTOR_CHECKPOINT();
+
     BOOST_ACTOR_PRINT("test delayed_send()");
     self->delayed_send(self, chrono::seconds(1), 1, 2, 3);
     self->receive(on(1, 2, 3) >> [] { });
     self->await_all_other_actors_done();
-    BOOST_ACTOR_CHECKPOINT();
-
-    BOOST_ACTOR_PRINT("test timeout");
-    self->receive(after(chrono::seconds(1)) >> [] { });
     BOOST_ACTOR_CHECKPOINT();
 
     spawn(testee1);

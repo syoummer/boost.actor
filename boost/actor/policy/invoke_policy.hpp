@@ -151,11 +151,8 @@ class invoke_policy {
     msg_type filter_msg(Actor* self, mailbox_element* node) {
         const any_tuple& msg = node->msg;
         auto mid = node->mid;
-        auto& arr = detail::static_types_array<exit_msg,
-                                               timeout_msg,
-                                               sync_timeout_msg>::arr;
         if (msg.size() == 1) {
-            if (msg.type_at(0) == arr[0]) {
+            if (msg.type_at(0)->equal_to(typeid(exit_msg))) {
                 auto& em = msg.get_as<exit_msg>(0);
                 BOOST_ACTOR_REQUIRE(!mid.valid());
                 if (self->trap_exit() == false) {
@@ -166,7 +163,7 @@ class invoke_policy {
                     return msg_type::normal_exit;
                 }
             }
-            else if (msg.type_at(0) == arr[1]) {
+            else if (msg.type_at(0)->equal_to(typeid(timeout_msg))) {
                 auto& tm = msg.get_as<timeout_msg>(0);
                 auto tid = tm.timeout_id;
                 BOOST_ACTOR_REQUIRE(!mid.valid());
@@ -174,7 +171,8 @@ class invoke_policy {
                 return self->waits_for_timeout(tid) ? msg_type::inactive_timeout
                                                     : msg_type::expired_timeout;
             }
-            else if (msg.type_at(0) == arr[2] && mid.is_response()) {
+            else if (  msg.type_at(0)->equal_to(typeid(sync_timeout_msg))
+                    && mid.is_response()) {
                 return msg_type::timeout_response;
             }
         }

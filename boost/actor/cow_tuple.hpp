@@ -175,14 +175,6 @@ class cow_tuple<Head, Tail...> {
 
 };
 
-template<typename TypeList>
-struct cow_tuple_from_type_list;
-
-template<typename... Ts>
-struct cow_tuple_from_type_list< util::type_list<Ts...> > {
-    typedef cow_tuple<Ts...> type;
-};
-
 template<typename T>
 struct is_cow_tuple { static constexpr bool value = false; };
 

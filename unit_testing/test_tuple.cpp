@@ -27,7 +27,6 @@
 
 #include "boost/actor/detail/matches.hpp"
 #include "boost/actor/detail/projection.hpp"
-#include "boost/actor/detail/types_array.hpp"
 #include "boost/actor/detail/value_guard.hpp"
 #include "boost/actor/detail/object_array.hpp"
 

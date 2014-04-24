@@ -47,7 +47,6 @@
 #include "boost/actor/io/middleman.hpp"
 
 #include "boost/actor/detail/raw_access.hpp"
-#include "boost/actor/detail/types_array.hpp"
 #include "boost/actor/detail/group_manager.hpp"
 
 #include "boost/actor/util/shared_spinlock.hpp"

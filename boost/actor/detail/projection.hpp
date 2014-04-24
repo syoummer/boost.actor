@@ -42,8 +42,6 @@
 #include "boost/actor/util/type_traits.hpp"
 #include "boost/actor/util/left_or_right.hpp"
 
-#include "boost/actor/detail/tdata.hpp"
-
 namespace boost {
 namespace actor {
 namespace detail {
@@ -55,7 +53,7 @@ inline bool is_defined_at(Fun& f, Tuple& tup, util::int_list<Is...>) {
 
 template<typename ProjectionFuns, typename... Ts>
 struct collected_args_tuple {
-    typedef typename tdata_from_type_list<
+    typedef typename util::tl_apply<
             typename util::tl_zip<
                 typename util::tl_map<
                     ProjectionFuns,
@@ -67,7 +65,8 @@ struct collected_args_tuple {
                     mutable_gref_wrapped
                 >::type,
                 util::left_or_right
-            >::type
+            >::type,
+            std::tuple
         >::type
         type;
 };
@@ -77,43 +76,12 @@ struct is_void_fun {
     static constexpr bool value = std::is_same<typename Fun::result_type, void>::value;
 };
 
-/**
- * @brief Projection implemented by a set of functors.
- */
-template<class ProjectionFuns, typename... Ts>
-class projection {
-
- public:
-
-    typedef typename tdata_from_type_list<ProjectionFuns>::type fun_container;
-
-    typedef util::type_list<typename util::rm_const_and_ref<Ts>::type...> arg_types;
-
-    projection() = default;
-
-    projection(fun_container&& args) : m_funs(std::move(args)) { }
-
-    projection(const fun_container& args) : m_funs(args) { }
-
-    projection(const projection&) = default;
-
-    /**
-     * @brief Invokes @p fun with a projection of <tt>args...</tt>.
-     */
-    template<class PartFun>
-    optional<typename PartFun::result_type> operator()(PartFun& fun, Ts... args) const {
-        typename collected_args_tuple<ProjectionFuns, Ts...>::type pargs;
-        auto indices = util::get_indices(pargs);
-        if (collect(pargs, m_funs, std::forward<Ts>(args)...)) {
-            if (is_defined_at(fun, pargs, indices)) {
-                return util::apply_args(fun, pargs, indices);
-            }
-        }
-        return none;
+struct collect_visitor {
+    typedef bool result_type;
+    inline bool operator()() const {
+        // end of recursion
+        return true;
     }
-
- private:
-
     template<typename Storage, typename T>
     static inline  bool store(Storage& storage, T&& value) {
         storage = std::forward<T>(value);
@@ -140,17 +108,51 @@ class projection {
     -> decltype(fun(std::forward<T>(arg))) {
         return fun(std::forward<T>(arg));
     }
+    template<typename T0, typename T1, typename T2, typename... Vs>
+    inline bool operator()(std::tuple<T0, T1, T2> fwd, Vs&&... args) const {
+        return    store(std::get<0>(fwd), fetch(std::get<1>(fwd), std::get<2>(fwd)))
+               && (*this)(args...);
+    }
+};
 
-    static inline bool collect(tdata<>&, const tdata<>&) {
-        return true;
+/**
+ * @brief Projection implemented by a set of functors.
+ */
+template<class ProjectionFuns, typename... Ts>
+class projection {
+
+ public:
+
+    typedef typename util::tl_apply<ProjectionFuns, std::tuple>::type fun_container;
+
+    typedef util::type_list<typename util::rm_const_and_ref<Ts>::type...> arg_types;
+
+    projection() = default;
+
+    projection(fun_container&& args) : m_funs(std::move(args)) { }
+
+    projection(const fun_container& args) : m_funs(args) { }
+
+    projection(const projection&) = default;
+
+    /**
+     * @brief Invokes @p fun with a projection of <tt>args...</tt>.
+     */
+    template<class PartFun>
+    optional<typename PartFun::result_type> operator()(PartFun& fun, Ts... args) const {
+        typename collected_args_tuple<ProjectionFuns, Ts...>::type pargs;
+        auto indices = util::get_indices(pargs);
+        auto args_tup = std::forward_as_tuple(args...);
+        collect_visitor cv;
+        if (tuple_zip(cv, indices, pargs, m_funs, args_tup)) {
+            if (is_defined_at(fun, pargs, indices)) {
+                return util::apply_args(fun, pargs, indices);
+            }
+        }
+        return none;
     }
 
-    template<class TData, class Trans, typename U, typename... Us>
-    static inline bool collect(TData& td, const Trans& tr,
-                               U&& arg, Us&&... args) {
-        return    store(td.head, fetch(tr.head, std::forward<U>(arg)))
-               && collect(td.tail(), tr.tail(), std::forward<Us>(args)...);
-    }
+ private:
 
     fun_container m_funs;
 
@@ -162,8 +164,10 @@ class projection<util::empty_type_list> {
  public:
 
     projection() = default;
-    projection(const tdata<>&) { }
-    projection(const projection&) = default;
+
+    // allow construction from just about everything
+    template<typename T>
+    explicit projection(const T&) { }
 
     template<class PartFun>
     optional<typename PartFun::result_type> operator()(PartFun& fun) const {

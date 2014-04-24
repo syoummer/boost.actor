@@ -69,8 +69,7 @@ inline const T2& deduce_const(const T1&, T2& rhs) { return rhs; }
 
 template<class FilteredPattern>
 struct invoke_util_base {
-    typedef FilteredPattern filtered_pattern;
-    typedef typename pseudo_tuple_from_type_list<filtered_pattern>::type
+    typedef typename util::tl_apply<FilteredPattern, pseudo_tuple>::type
             tuple_type;
 };
 
@@ -150,7 +149,7 @@ struct invoke_util_impl<wildcard_position::nil,
 
     typedef typename super::tuple_type tuple_type;
 
-    typedef detail::tdata<Ts...> native_data_type;
+    typedef std::tuple<Ts...> native_data_type;
 
     typedef typename detail::static_types_array<Ts...> arr_type;
 
@@ -213,7 +212,7 @@ struct invoke_util_impl<wildcard_position::nil,
                         cast_type;
                 auto arg = reinterpret_cast<cast_type>(native_arg);
                 for (size_t i = 0; i < sizeof...(Ts); ++i) {
-                    result[i] = const_cast<void*>(arg->at(i));
+                    result[i] = const_cast<void*>(tup_ptr_access<0, sizeof...(Ts)>::get(i, *arg));
                 }
                 return true;
             }
@@ -364,10 +363,19 @@ struct invoke_util
 };
 
 template<class Pattern, class Projection, class PartialFun>
-struct projection_partial_function_pair : std::pair<Projection, PartialFun> {
+struct projection_partial_function_pair {
+    typedef Projection first_type;
+    typedef PartialFun second_type;
+    Projection first;
+    PartialFun second;
+    /*
     template<typename... Ts>
     projection_partial_function_pair(Ts&&... args)
-    : std::pair<Projection, PartialFun>(std::forward<Ts>(args)...) { }
+    : data(std::forward<Ts>(args)...) { }
+    */
+    projection_partial_function_pair() = default;
+    projection_partial_function_pair(const projection_partial_function_pair&) = default;
+    projection_partial_function_pair(Projection pr, PartialFun pf) : first(std::move(pr)), second(std::move(pf)) { }
     typedef Pattern pattern_type;
 };
 
@@ -743,7 +751,7 @@ class match_expr {
     >::type
     operator()(T&& arg0, Ts&&... args) {
         // wraps and applies implicit conversions to args
-        typedef detail::tdata<
+        typedef std::tuple<
                     typename detail::mexpr_fwd<
                         has_manipulator,
                         T
@@ -783,15 +791,15 @@ class match_expr {
 
     template<class... Ds>
     match_expr<Cs..., Ds...> or_else(const match_expr<Ds...>& other) const {
-        detail::tdata<util::rebindable_reference<const Cs>...,
-                      util::rebindable_reference<const Ds>...    > all_cases;
-        rebind_tdata(all_cases, m_cases, other.cases());
+        std::tuple<util::rebindable_reference<const Cs>...,
+                   util::rebindable_reference<const Ds>...    > all_cases;
+        rebind_tdata(all_cases, tuple_cat(m_cases, other.cases()));
         return {all_cases};
     }
 
     /** @cond PRIVATE */
 
-    inline const detail::tdata<Cs...>& cases() const {
+    inline const std::tuple<Cs...>& cases() const {
         return m_cases;
     }
 
@@ -806,10 +814,10 @@ class match_expr {
 
  private:
 
-    // structure: tdata< tdata<type_list<...>, ...>,
-    //                   tdata<type_list<...>, ...>,
+    // structure: std::tuple< std::tuple<type_list<...>, ...>,
+    //                   std::tuple<type_list<...>, ...>,
     //                   ...>
-    detail::tdata<Cs...> m_cases;
+    std::tuple<Cs...> m_cases;
 
     static constexpr size_t cache_size = 10;
 
@@ -972,17 +980,18 @@ typename match_expr_from_type_list<
                 >::type
             >::type
 match_expr_collect(const T& arg, const Ts&... args) {
-    typename detail::tdata_from_type_list<
+    typename util::tl_apply<
         typename util::tl_map<
             typename util::tl_concat<
                 typename T::cases_list,
                 typename Ts::cases_list...
             >::type,
             gref_wrapped
-        >::type
+        >::type,
+        std::tuple
     >::type
     all_cases;
-    detail::rebind_tdata(all_cases, arg.cases(), args.cases()...);
+    detail::rebind_tdata(all_cases, std::tuple_cat(arg.cases(), args.cases()...));
     return {all_cases};
 }
 
@@ -1001,7 +1010,7 @@ behavior_impl_ptr concat_rec(const Data& data, Token) {
 }
 
 // end of recursion with nothing but a partial function
-inline behavior_impl_ptr concat_rec(const tdata<>&,
+inline behavior_impl_ptr concat_rec(const std::tuple<>&,
                                     util::empty_type_list,
                                     const partial_function& pfun) {
     return extract(pfun);
@@ -1027,15 +1036,16 @@ behavior_impl_ptr concat_rec(const Data& data,
             typename T::cases_list
         >::type
         next_token_type;
-    typename tdata_from_type_list<
+    typename util::tl_apply<
             typename util::tl_map<
                 next_token_type,
                 gref_wrapped
-            >::type
+            >::type,
+            std::tuple
         >::type
         next_data;
     next_token_type next_token;
-    rebind_tdata(next_data, data, arg.cases());
+    rebind_tdata(next_data, std::tuple_cat(data, arg.cases()));
     return concat_rec(next_data, next_token, args...);
 }
 
@@ -1055,14 +1065,14 @@ behavior_impl_ptr concat_rec(const Data& data,
                              const T& arg,
                              const Ts&... args) {
     auto lhs = concat_rec(data, token);
-    detail::tdata<> dummy;
+    std::tuple<> dummy;
     auto rhs = concat_rec(dummy, util::empty_type_list{}, arg, args...);
     return combine(lhs, pfun)->or_else(rhs);
 }
 
 // handle partial functions at recursion start
 template<typename T, typename... Ts>
-behavior_impl_ptr concat_rec(const tdata<>& data,
+behavior_impl_ptr concat_rec(const std::tuple<>& data,
                              util::empty_type_list token,
                              const partial_function& pfun,
                              const T& arg,
@@ -1074,7 +1084,7 @@ template<typename T0, typename T1, typename... Ts>
 behavior_impl_ptr match_expr_concat(const T0& arg0,
                                     const T1& arg1,
                                     const Ts&... args) {
-    detail::tdata<> dummy;
+    std::tuple<> dummy;
     return concat_rec(dummy, util::empty_type_list{}, arg0, arg1, args...);
 }
 

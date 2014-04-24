@@ -19,14 +19,25 @@
 
 #include "boost/actor/cppa.hpp"
 
-using namespace std;
-using namespace boost::actor;
-using namespace boost::actor::placeholders;
+#include "boost/actor/detail/make_counted.hpp"
+#include "boost/actor/detail/object_array.hpp"
+
+using std::cin;
+using std::cout;
+using std::cerr;
+using std::endl;
+using std::flush;
+using std::string;
+
 using namespace boost::program_options;
+
+using namespace boost::actor;
+using namespace boost::actor::detail;
+using namespace boost::actor::placeholders;
 
 struct line { string str; };
 
-istream& operator>>(istream& is, line& l) {
+std::istream& operator>>(std::istream& is, line& l) {
     getline(is, l.str);
     return is;
 }
@@ -34,14 +45,16 @@ istream& operator>>(istream& is, line& l) {
 namespace { string s_last_line; }
 
 any_tuple split_line(const line& l) {
-    istringstream strs(l.str);
+    std::istringstream strs{l.str};
     s_last_line = move(l.str);
     string tmp;
-    vector<string> result;
+    auto oarr = make_counted<object_array>();
     while (getline(strs, tmp, ' ')) {
-        if (!tmp.empty()) result.push_back(std::move(tmp));
+        if (!tmp.empty()) {
+            oarr->push_back(std::move(tmp));
+        }
     }
-    return any_tuple::view(std::move(result));
+    return any_tuple{oarr.get()};
 }
 
 void client(event_based_actor* self, const string& name) {
@@ -103,7 +116,7 @@ int main(int argc, char** argv) {
     // evaluate group parameters
     if (!group_id.empty()) {
         auto p = group_id.find(':');
-        if (p == std::string::npos) {
+        if (p == string::npos) {
             cerr << "*** error parsing argument " << group_id
                  << ", expected format: <module_name>:<group_id>";
         }
@@ -114,7 +127,7 @@ int main(int argc, char** argv) {
                 anon_send(client_actor, atom("join"), g);
             }
             catch (std::exception& e) {
-                ostringstream err;
+                std::ostringstream err;
                 cerr << "*** exception: group::get(\"" << group_id.substr(0, p)
                      << "\", \"" << group_id.substr(p + 1) << "\") failed; "
                      << to_verbose_string(e) << endl;
@@ -123,10 +136,7 @@ int main(int argc, char** argv) {
     }
 
     cout << "*** starting client, type '/help' for a list of commands" << endl;
-    istream_iterator<line> lines(cin);
-    istream_iterator<line> eof;
-    /*
-    match_each (lines, eof, split_line) (
+    partial_function loop {
         on("/join", arg_match) >> [&](const string& mod, const string& id) {
             try {
                 anon_send(client_actor, atom("join"), group::get(mod, id));
@@ -137,21 +147,24 @@ int main(int argc, char** argv) {
         },
         on("/quit") >> [&] {
             // close STDIN; causes this match loop to quit
-            cin.setstate(ios_base::eofbit);
+            cin.setstate(std::ios_base::eofbit);
         },
         on<string, anything>().when(_x1.starts_with("/")) >> [&] {
             cout <<  "*** available commands:\n"
                      "    /join <module> <group> join a new chat channel\n"
                      "    /quit                  quit the program\n"
-                     "    /help                  print this text\n" << flush;
+                     "    /help                  print this text\n"
+                  << flush;
         },
         others() >> [&] {
             if (!s_last_line.empty()) {
                 anon_send(client_actor, atom("broadcast"), s_last_line);
             }
         }
-    );
-    */
+    };
+    using std::istream_iterator;
+    istream_iterator<line> eof;
+    for (istream_iterator<line> i{cin}; i != eof; ++i) loop(split_line(*i));
     // force actor to quit
     anon_send_exit(client_actor, exit_reason::user_shutdown);
     await_all_actors_done();

@@ -47,8 +47,9 @@
 #include "boost/actor/util/type_traits.hpp"
 #include "boost/actor/util/rebindable_reference.hpp"
 
-#include "boost/actor/detail/tdata.hpp"
 #include "boost/actor/detail/safe_equal.hpp"
+#include "boost/actor/detail/rebind_tdata.hpp"
+#include "boost/actor/detail/implicit_conversions.hpp"
 
 namespace boost {
 namespace actor {
@@ -370,12 +371,12 @@ struct ge_unbound<ge_value<T>, Tuple> { typedef T type; };
 
 // unbound type of placeholder
 template<int X, typename... Ts>
-struct ge_unbound<guard_placeholder<X>, detail::tdata<Ts...> > {
+struct ge_unbound<guard_placeholder<X>, std::tuple<Ts...> > {
     static_assert(X < sizeof...(Ts),
                   "Cannot unbind placeholder (too few arguments)");
     typedef typename ge_unbound<
                 typename util::type_at<X, Ts...>::type,
-                detail::tdata<std::reference_wrapper<Ts>...>
+                std::tuple<std::reference_wrapper<Ts>...>
             >::type
             type;
 };
@@ -648,8 +649,8 @@ auto ge_resolve(const Tuple& tup,
 
 template<operator_id OP, typename First, typename Second, typename... Ts>
 auto ge_invoke_step2(const guard_expr<OP, First, Second>& ge,
-                     const detail::tdata<Ts...>& tup)
-     -> typename ge_result<OP, First, Second, detail::tdata<Ts...>>::type {
+                     const std::tuple<Ts...>& tup)
+     -> typename ge_result<OP, First, Second, std::tuple<Ts...>>::type {
     return ge_eval<OP>(tup, ge.m_args.first, ge.m_args.second);
 }
 
@@ -657,8 +658,8 @@ template<operator_id OP, typename First, typename Second, typename... Ts>
 auto ge_invoke(const guard_expr<OP, First, Second>& ge,
                const Ts&... args)
      -> typename ge_result<OP, First, Second,
-                           detail::tdata<std::reference_wrapper<const Ts>...>>::type {
-    detail::tdata<std::reference_wrapper<const Ts>...> tup{args...};
+                           std::tuple<std::reference_wrapper<const Ts>...>>::type {
+    std::tuple<std::reference_wrapper<const Ts>...> tup{args...};
     return ge_invoke_step2(ge, tup);
 }
 

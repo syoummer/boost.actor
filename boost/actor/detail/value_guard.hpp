@@ -37,34 +37,24 @@
 
 #include "boost/actor/util/type_list.hpp"
 #include "boost/actor/util/type_traits.hpp"
+#include "boost/actor/util/arg_match_t.hpp"
 
-#include "boost/actor/detail/tdata.hpp"
+#include "boost/actor/detail/boxed.hpp"
 #include "boost/actor/detail/safe_equal.hpp"
 
 namespace boost {
 namespace actor {
 namespace detail {
 
-// 'absorbs' callables and instances of `anything`
-template<typename T>
-const T& vg_fwd(const T& arg, typename std::enable_if<not util::is_callable<T>::value>::type* = 0) {
-    return arg;
-}
-
-inline unit_t vg_fwd(const anything&) {
-    return unit;
-}
-
-template<typename T>
-unit_t vg_fwd(const T&, typename std::enable_if<util::is_callable<T>::value>::type* = 0) {
-    return unit;
-}
-
 template<typename T>
 struct vg_cmp {
     template<typename U>
     inline static bool _(const T& lhs, const U& rhs) {
         return detail::safe_equal(lhs, rhs);
+    }
+    template<typename U>
+    inline static bool _(const T& lhs, const std::reference_wrapper<U>& rhs) {
+        return detail::safe_equal(lhs, rhs.get());
     }
 };
 
@@ -73,6 +63,63 @@ struct vg_cmp<unit_t> {
     template<typename T>
     inline static bool _(const unit_t&, const T&) {
         return true;
+    }
+};
+
+template<typename T>
+struct is_match_helper {
+    static constexpr bool value =    util::is_callable<T>::value
+                                  || detail::is_boxed<T>::value;
+};
+
+template<>
+struct is_match_helper<anything> : std::true_type { };
+
+template<>
+struct is_match_helper<util::arg_match_t> : std::true_type { };
+
+struct filtered_construct_tuple_recursion_end { };
+
+// filters callables and instances of `anything` before initializing the tuple
+template<typename Tup, typename U, typename... Us>
+typename std::enable_if<not is_match_helper<U>::value>::type
+filtered_construct_tuple(Tup& tup, const U& v, const Us&... vs) {
+    // push first element back (beyond filtered_construct_tuple_recursion_end_t)
+    filtered_construct_tuple(tup, vs..., v);
+}
+
+template<typename Tup, typename... Us>
+void filtered_construct_tuple(Tup& tup,
+                              const filtered_construct_tuple_recursion_end&,
+                              const Us&... vs) {
+    // end of recursion, init tuple now
+    tup = std::forward_as_tuple(vs...);
+}
+
+inline void filtered_construct_tuple(std::tuple<>&,
+                              const filtered_construct_tuple_recursion_end&) {
+    // well, there's not really something to do here ...
+}
+
+template<typename Tup, typename U, typename... Us>
+typename std::enable_if<is_match_helper<U>::value>::type
+filtered_construct_tuple(Tup& tup,
+                         const U&,
+                         const Us&... vs) {
+    // filter first argument
+    filtered_construct_tuple(tup, vs...);
+}
+
+struct value_guard_zipper {
+    typedef bool result_type;
+    inline bool operator()() const {
+        // end of recursion
+        return true;
+    }
+    template<typename T, typename U, typename... Vs>
+    inline bool operator()(const std::tuple<T, U>& fwd, const Vs&... args) const {
+        return    vg_cmp<T>::_(std::get<0>(fwd), std::get<1>(fwd))
+               && (*this)(args...);
     }
 };
 
@@ -85,43 +132,20 @@ class value_guard {
     value_guard(const value_guard&) = default;
 
     template<typename... Ts>
-    value_guard(const Ts&... args) : m_args(vg_fwd(args)...) { }
+    value_guard(const Ts&... args) {//: m_args(vg_fwd(args)...) { }
+        filtered_construct_tuple(m_args, args..., filtered_construct_tuple_recursion_end{});
+    }
 
     template<typename... Ts>
     inline bool operator()(const Ts&... args) const {
-        return _eval(m_args.head, m_args.tail(), args...);
+        value_guard_zipper vgz;
+        auto targs = std::forward_as_tuple(args...);
+        return detail::tuple_zip(vgz, util::get_indices(m_args), m_args, targs);
     }
 
  private:
 
-    typename tdata_from_type_list<FilteredPattern>::type m_args;
-
-    template<typename T, typename U>
-    static inline bool cmp(const T& lhs, const U& rhs) {
-        return vg_cmp<T>::_(lhs, rhs);
-    }
-
-    template<typename T, typename U>
-    static inline bool cmp(const T& lhs, const std::reference_wrapper<U>& rhs) {
-        return vg_cmp<T>::_(lhs, rhs.get());
-    }
-
-    static inline bool _eval(const unit_t&, const tdata<>&) {
-        return true;
-    }
-
-    template<typename T, typename U, typename... Us>
-    static inline bool _eval(const T& head, const tdata<>&,
-                             const U& arg, const Us&...) {
-        return cmp(head, arg);
-    }
-
-    template<typename T0, typename T1, typename... Ts,
-             typename U, typename... Us>
-    static inline bool _eval(const T0& head, const tdata<T1, Ts...>& tail,
-                             const U& arg, const Us&... args) {
-        return cmp(head, arg) && _eval(tail.head, tail.tail(), args...);
-    }
+    typename util::tl_apply<FilteredPattern, std::tuple>::type m_args;
 
 };
 

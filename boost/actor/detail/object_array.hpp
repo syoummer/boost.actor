@@ -57,6 +57,14 @@ class object_array : public abstract_tuple {
 
     void push_back(uniform_value what);
 
+    template<typename T>
+    void push_back(T what) {
+        auto uti = uniform_typeid<T>();
+        auto uval = uti->create();
+        *reinterpret_cast<T*>(uval->val) = std::move(what);
+        push_back(std::move(uval));
+    }
+
     void* mutable_at(size_t pos) override;
 
     size_t size() const override;

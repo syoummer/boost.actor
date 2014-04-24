@@ -40,9 +40,7 @@
 #include "boost/actor/util/comparable.hpp"
 #include "boost/actor/util/type_traits.hpp"
 
-#include "boost/actor/detail/tuple_view.hpp"
 #include "boost/actor/detail/abstract_tuple.hpp"
-#include "boost/actor/detail/container_tuple_view.hpp"
 #include "boost/actor/detail/implicit_conversions.hpp"
 
 namespace boost {
@@ -87,13 +85,6 @@ class any_tuple {
      */
     template<typename... Ts>
     any_tuple(cow_tuple<Ts...>&& arg) : m_vals(std::move(arg.m_vals)) { }
-
-    /**
-     * @brief Creates a tuple from a set of values.
-     */
-    template<typename T, typename... Ts>
-    explicit any_tuple(T v0, Ts&&... vs)
-    : m_vals(make_cow_tuple(std::move(v0), std::forward<Ts>(vs)...).vals()) { }
 
     /**
      * @brief Move constructor.
@@ -231,37 +222,13 @@ class any_tuple {
 
     inline const std::string* tuple_type_names() const;
 
+    explicit any_tuple(const data_ptr& vals);
+
     /** @endcond */
 
  private:
 
     data_ptr m_vals;
-
-    explicit any_tuple(const data_ptr& vals);
-
-    template<typename T, typename CanOptimize>
-    static any_tuple view(T&& value, std::true_type, CanOptimize token);
-
-    template<typename T, typename CanOptimize>
-    static any_tuple view(T&& value, std::false_type, CanOptimize token);
-
-    template<typename T, typename U>
-    static any_tuple view(std::pair<T, U> p, std::false_type);
-
-    template<typename T>
-    static auto simple_view(T& value, std::true_type) -> raw_ptr;
-
-    template<typename T, typename U>
-    static auto simple_view(std::pair<T, U>& p, std::true_type) -> raw_ptr;
-
-    template<typename T>
-    static auto simple_view(T&& value, std::false_type) -> raw_ptr;
-
-    template<typename T>
-    static auto container_view(T& value, std::true_type) -> raw_ptr;
-
-    template<typename T>
-    static auto container_view(T&& value, std::false_type) -> raw_ptr;
 
 };
 
@@ -355,86 +322,6 @@ inline any_tuple any_tuple::take(size_t n) const {
 
 inline any_tuple any_tuple::take_right(size_t n) const {
     return n >= size() ? *this : drop(size() - n);
-}
-
-template<typename T, bool IsIterable = true>
-struct any_tuple_view_trait_impl {
-    static constexpr bool is_mutable_ref =    std::is_reference<T>::value
-                                           && !std::is_const<T>::value;
-    typedef std::integral_constant<bool, is_mutable_ref> can_optimize;
-    typedef std::integral_constant<bool, true> is_container;
-};
-
-template<typename T>
-struct any_tuple_view_trait_impl<T, false> {
-    typedef typename util::rm_const_and_ref<T>::type type;
-    typedef typename detail::implicit_conversions<type>::type mapped;
-    static_assert(util::is_legal_tuple_type<mapped>::value,
-                  "T is not a valid tuple type");
-    static constexpr bool is_mutable_ref =    std::is_same<mapped, type>::value
-                                           && std::is_reference<T>::value
-                                           && not std::is_const<T>::value;
-    typedef std::integral_constant<bool, is_mutable_ref> can_optimize;
-    typedef std::integral_constant<bool, false> is_container;
-};
-
-template<typename T>
-struct any_tuple_view_trait {
-    typedef typename util::rm_const_and_ref<T>::type type;
-    typedef any_tuple_view_trait_impl<T, util::is_iterable<type>::value> impl;
-    typedef typename impl::can_optimize can_optimize;
-    typedef typename impl::is_container is_container;
-};
-
-template<typename T>
-inline any_tuple any_tuple::view(T&& value) {
-    typedef any_tuple_view_trait<T> trait;
-    typename trait::can_optimize can_optimize;
-    typename trait::is_container is_container;
-    return view(std::forward<T>(value), is_container, can_optimize);
-}
-
-template<typename T, typename CanOptimize>
-any_tuple any_tuple::view(T&& v, std::true_type, CanOptimize t) {
-    return any_tuple{container_view(std::forward<T>(v), t)};
-}
-
-template<typename T, typename CanOptimize>
-any_tuple any_tuple::view(T&& v, std::false_type, CanOptimize t) {
-    return any_tuple{simple_view(std::forward<T>(v), t)};
-}
-
-template<typename T>
-auto any_tuple::simple_view(T& v, std::true_type) -> raw_ptr {
-    return new detail::tuple_view<T>(&v);
-}
-
-template<typename T, typename U>
-auto any_tuple::simple_view(std::pair<T, U>& p, std::true_type) -> raw_ptr {
-    return new detail::tuple_view<T, U>(&p.first, &p.second);
-}
-
-template<typename T>
-auto any_tuple::simple_view(T&& v, std::false_type) -> raw_ptr {
-    typedef typename util::rm_const_and_ref<T>::type vtype;
-    typedef typename detail::implicit_conversions<vtype>::type converted;
-    return new detail::tuple_vals<converted>(std::forward<T>(v));
-}
-
-template<typename T, typename U>
-any_tuple any_tuple::view(std::pair<T, U> p, std::false_type) {
-   return new detail::tuple_vals<T, U>(std::move(p.first), std::move(p.second));
-}
-
-template<typename T>
-auto any_tuple::container_view(T& v, std::true_type) -> raw_ptr {
-    return new detail::container_tuple_view<T>(&v);
-}
-
-template<typename T>
-auto any_tuple::container_view(T&& v, std::false_type) -> raw_ptr {
-    auto vptr = new typename util::rm_const_and_ref<T>::type(std::forward<T>(v));
-    return new detail::container_tuple_view<T>(vptr, true);
 }
 
 } // namespace actor

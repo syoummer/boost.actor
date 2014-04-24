@@ -41,7 +41,6 @@
 
 #include "boost/actor/io/middleman.hpp"
 
-#include "boost/actor/detail/types_array.hpp"
 #include "boost/actor/detail/singleton_manager.hpp"
 
 using namespace std;

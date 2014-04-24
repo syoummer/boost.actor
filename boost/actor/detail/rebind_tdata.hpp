@@ -28,102 +28,49 @@
 \******************************************************************************/
 
 
-#ifndef BOOST_ACTOR_TUPLE_VIEW_HPP
-#define BOOST_ACTOR_TUPLE_VIEW_HPP
+#ifndef BOOST_ACTOR_TDATA_HPP
+#define BOOST_ACTOR_TDATA_HPP
 
-#include "boost/actor/guard_expr.hpp"
+#include <tuple>
+#include <utility>
 
+#include "boost/optional.hpp"
+
+#include "boost/actor/util/int_list.hpp"
 #include "boost/actor/util/rebindable_reference.hpp"
 
-#include "boost/actor/detail/tuple_vals.hpp"
-#include "boost/actor/detail/abstract_tuple.hpp"
+#include "boost/actor/detail/tuple_zip.hpp"
 
 namespace boost {
 namespace actor {
 namespace detail {
 
-struct tuple_view_copy_helper {
-    size_t pos;
-    abstract_tuple* target;
-    tuple_view_copy_helper(abstract_tuple* trgt) : pos(0), target(trgt) { }
-    template<typename T>
-    void operator()(const T* value) {
-        *(reinterpret_cast<T*>(target->mutable_at(pos++))) = *value;
+struct rebinder {
+    typedef void result_type;
+    inline void operator()() const {
+        // end of recursion
+    }
+    template<typename T, typename U, typename... Vs>
+    inline void operator()(std::tuple<T, U> fwd, Vs&&... args) const {
+        std::get<0>(fwd) = std::get<1>(fwd);
+        (*this)(std::forward<Vs>(args)...);
+    }
+    template<typename T, typename U, typename... Vs>
+    inline void operator()(std::tuple<util::rebindable_reference<T>&, U> fwd, Vs&&... args) const {
+        std::get<0>(fwd).rebind(std::get<1>(fwd));
+        (*this)(std::forward<Vs>(args)...);
     }
 };
 
-template<typename... Ts>
-class tuple_view : public abstract_tuple {
-
-    static_assert(sizeof...(Ts) > 0,
-                  "tuple_vals is not allowed to be empty");
-
-    typedef abstract_tuple super;
-
- public:
-
-    typedef tdata<util::rebindable_reference<Ts>...> data_type;
-
-    typedef types_array<Ts...> element_types;
-
-    tuple_view() = delete;
-    tuple_view(const tuple_view&) = delete;
-
-    /**
-     * @warning @p tuple_view does @b NOT takes ownership for given pointers
-     */
-    tuple_view(Ts*... args) : super(false), m_data(args...) { }
-
-    inline data_type& data() {
-        return m_data;
-    }
-
-    inline const data_type& data() const {
-        return m_data;
-    }
-
-    size_t size() const {
-        return sizeof...(Ts);
-    }
-
-    abstract_tuple* copy() const {
-        return new tuple_vals<Ts...>{m_data};
-    }
-
-    const void* at(size_t pos) const {
-        BOOST_ACTOR_REQUIRE(pos < size());
-        return m_data.at(pos).get_ptr();
-    }
-
-    void* mutable_at(size_t pos) {
-        BOOST_ACTOR_REQUIRE(pos < size());
-        return m_data.mutable_at(pos).get_ptr();
-    }
-
-    const uniform_type_info* type_at(size_t pos) const {
-        BOOST_ACTOR_REQUIRE(pos < size());
-        return m_types[pos];
-    }
-
-    const std::type_info* type_token() const {
-        return detail::static_type_list<Ts...>::list;
-    }
-
- private:
-
-    data_type m_data;
-
-    static types_array<Ts...> m_types;
-
-    tuple_view(const data_type& data) : m_data(data) { }
-
-};
-
-template<typename... Ts>
-types_array<Ts...> tuple_view<Ts...>::m_types;
+template<typename... Ts, typename... Us>
+void rebind_tdata(std::tuple<Ts...>& lhs, const std::tuple<Us...>& rhs) {
+    static_assert(sizeof...(Ts) == sizeof...(Us), "tuples of unequal size");
+    rebinder f;
+    tuple_zip(f, get_indices(lhs), lhs, rhs);
+}
 
 } // namespace detail
 } // namespace actor
 } // namespace boost
 
-#endif // BOOST_ACTOR_TUPLE_VIEW_HPP
+#endif // BOOST_ACTOR_TDATA_HPP

@@ -28,77 +28,33 @@
 \******************************************************************************/
 
 
-#ifndef BOOST_ACTOR_CONTAINER_TUPLE_VIEW_HPP
-#define BOOST_ACTOR_CONTAINER_TUPLE_VIEW_HPP
+#ifndef BOOST_ACTOR_DETAIL_TUPLE_ZIP_HPP
+#define BOOST_ACTOR_DETAIL_TUPLE_ZIP_HPP
 
-#include <iostream>
+#include <tuple>
 
-#include "boost/actor/detail/tuple_vals.hpp"
-#include "boost/actor/detail/abstract_tuple.hpp"
-#include "boost/actor/detail/disablable_delete.hpp"
+#include "boost/actor/util/int_list.hpp"
 
 namespace boost {
 namespace actor {
 namespace detail {
 
-template<class Container>
-class container_tuple_view : public abstract_tuple {
+template<typename F, long... Is, class Tup0, class Tup1>
+typename F::result_type tuple_zip(F& f, util::int_list<Is...>,
+                                  Tup0& tup0, Tup1& tup1) {
+    return f(std::forward_as_tuple(std::get<Is>(tup0), std::get<Is>(tup1))...);
+}
 
-    typedef abstract_tuple super;
-
-    typedef typename Container::difference_type difference_type;
-
- public:
-
-    typedef typename Container::value_type value_type;
-
-    container_tuple_view(Container* c, bool take_ownership = false)
-    : super(true), m_ptr(c) {
-        BOOST_ACTOR_REQUIRE(c != nullptr);
-        if (!take_ownership) m_ptr.get_deleter().disable();
-    }
-
-    size_t size() const override {
-        return m_ptr->size();
-    }
-
-    abstract_tuple* copy() const override {
-        return new container_tuple_view{new Container(*m_ptr), true};
-    }
-
-    const void* at(size_t pos) const override {
-        BOOST_ACTOR_REQUIRE(pos < size());
-        BOOST_ACTOR_REQUIRE(static_cast<difference_type>(pos) >= 0);
-        auto i = m_ptr->cbegin();
-        std::advance(i, static_cast<difference_type>(pos));
-        return &(*i);
-    }
-
-    void* mutable_at(size_t pos) override {
-        BOOST_ACTOR_REQUIRE(pos < size());
-        BOOST_ACTOR_REQUIRE(static_cast<difference_type>(pos) >= 0);
-        auto i = m_ptr->begin();
-        std::advance(i, static_cast<difference_type>(pos));
-        return &(*i);
-    }
-
-    const uniform_type_info* type_at(size_t) const override {
-        return static_types_array<value_type>::arr[0];
-    }
-
-    const std::string* tuple_type_names() const override {
-        static std::string result = demangle<value_type>();
-        return &result;
-    }
-
- private:
-
-    std::unique_ptr<Container, disablable_delete> m_ptr;
-
-};
+template<typename F, long... Is, class Tup0, class Tup1, class Tup2>
+typename F::result_type tuple_zip(F& f, util::int_list<Is...>,
+                                  Tup0& tup0, Tup1& tup1, Tup2& tup2) {
+    return f(std::forward_as_tuple(std::get<Is>(tup0),
+                                   std::get<Is>(tup1),
+                                   std::get<Is>(tup2))...);
+}
 
 } // namespace detail
 } // namespace actor
 } // namespace boost
 
-#endif // BOOST_ACTOR_CONTAINER_TUPLE_VIEW_HPP
+#endif // BOOST_ACTOR_DETAIL_TUPLE_ZIP_HPP
