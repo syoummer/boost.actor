@@ -48,7 +48,6 @@
 #include "boost/actor/scheduler.hpp"
 #include "boost/actor/to_string.hpp"
 #include "boost/actor/any_tuple.hpp"
-#include "boost/actor/cow_tuple.hpp"
 #include "boost/actor/singletons.hpp"
 #include "boost/actor/typed_actor.hpp"
 #include "boost/actor/exit_reason.hpp"
@@ -175,7 +174,7 @@
  * tuple @p x and @p y, whereas @p y is a copy of @p x:
  *
  * @code
- * auto x = make_cow_tuple(1, 2, 3);
+ * auto x = make_any_tuple(1, 2, 3);
  * auto y = x;
  * @endcode
  *
@@ -237,7 +236,7 @@
  * send(a1, atom("hello"), "hello a1!");
  *
  * // send a message to a1, a2 and a3
- * auto msg = make_cow_tuple(atom("compute"), 1, 2, 3);
+ * auto msg = make_any_tuple(atom("compute"), 1, 2, 3);
  *
  * // note: this is more efficient then using send() three times because
  * //       send() would create a new tuple each time;
@@ -269,7 +268,7 @@
  *     on(atom("compute"), arg_match) >> [](int i0, int i1, int i2)
  *     {
  *         // send our result back to the sender of this messages
- *         return make_cow_tuple(atom("result"), i0 + i1 + i2);
+ *         return make_any_tuple(atom("result"), i0 + i1 + i2);
  *     }
  * );
  * @endcode
@@ -289,10 +288,10 @@
  * void math_actor() {
  *     receive_loop (
  *         on(atom("plus"), arg_match) >> [](int a, int b) {
- *             return make_cow_tuple(atom("result"), a + b);
+ *             return make_any_tuple(atom("result"), a + b);
  *         },
  *         on(atom("minus"), arg_match) >> [](int a, int b) {
- *             return make_cow_tuple(atom("result"), a - b);
+ *             return make_any_tuple(atom("result"), a - b);
  *         }
  *     );
  * }
@@ -395,7 +394,7 @@
  * send(self, u"hello unicode world!");
  *
  * // x has the type cppa::tuple<std::string, std::string>
- * auto x = make_cow_tuple("hello", "tuple");
+ * auto x = make_any_tuple("hello", "tuple");
  *
  * receive (
  *     // equal to: on(std::string("hello actor!"))

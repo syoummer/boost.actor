@@ -35,6 +35,8 @@
 #include <iterator>
 #include <typeinfo>
 
+#include "boost/intrusive_ptr.hpp"
+
 #include "boost/actor/config.hpp"
 #include "boost/actor/ref_counted.hpp"
 #include "boost/actor/uniform_type_info.hpp"
@@ -89,6 +91,39 @@ class abstract_tuple : public ref_counted {
 
     inline const_iterator  end() const { return {this, size()}; }
     inline const_iterator cend() const { return {this, size()}; }
+
+    class ptr {
+
+     public:
+
+        ptr() = default;
+        ptr(ptr&&) = default;
+        ptr(const ptr&) = default;
+        ptr& operator=(ptr&&) = default;
+        ptr& operator=(const ptr&) = default;
+
+        inline explicit ptr(abstract_tuple* p) : m_ptr(p) { }
+
+        inline void detach() { static_cast<void>(get_detached()); }
+
+        inline abstract_tuple* operator->() { return get_detached(); }
+        inline abstract_tuple& operator*() { return *get_detached(); }
+        inline const abstract_tuple* operator->() const { return m_ptr.get(); }
+        inline const abstract_tuple& operator*() const { return *m_ptr.get(); }
+        inline void swap(ptr& other) { m_ptr.swap(other.m_ptr); }
+        inline void reset(abstract_tuple* p = nullptr) { m_ptr.reset(p); }
+
+        inline explicit operator bool() const {
+            return static_cast<bool>(m_ptr);
+        }
+
+     private:
+
+        abstract_tuple* get_detached();
+
+        intrusive_ptr<abstract_tuple> m_ptr;
+
+    };
 
  private:
 

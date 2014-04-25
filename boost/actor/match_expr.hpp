@@ -31,6 +31,8 @@
 #ifndef BOOST_ACTOR_MATCH_EXPR_HPP
 #define BOOST_ACTOR_MATCH_EXPR_HPP
 
+#include <vector>
+
 #include "boost/none.hpp"
 #include "boost/variant.hpp"
 
@@ -83,8 +85,8 @@ struct invoke_util_impl : invoke_util_base<FilteredPattern> {
     template<class Tuple>
     static bool can_invoke(const std::type_info& type_token,
                            const Tuple& tup) {
-        typedef typename match_impl_from_type_list<Tuple, Pattern>::type mimpl;
-        return type_token == typeid(FilteredPattern) ||  mimpl::_(tup);
+        typename select_matcher<Tuple, Pattern>::type mimpl;
+        return type_token == typeid(FilteredPattern) ||  mimpl(tup);
     }
 
     template<typename PtrType, class Tuple>
@@ -93,19 +95,19 @@ struct invoke_util_impl : invoke_util_base<FilteredPattern> {
                                bool,
                                PtrType*,
                                Tuple& tup) {
-        typedef typename match_impl_from_type_list<
-                    typename std::remove_const<Tuple>::type,
-                    Pattern
-                >::type
-                mimpl;
-        util::limited_vector<size_t, util::tl_size<FilteredPattern>::value> mv;
+        typename select_matcher<
+                typename std::remove_const<Tuple>::type,
+                Pattern
+            >::type
+            mimpl;
+        std::vector<size_t> mv;
         if (type_token == typeid(FilteredPattern)) {
             for (size_t i = 0; i < util::tl_size<FilteredPattern>::value; ++i) {
                 result[i] = const_cast<void*>(tup.at(i));
             }
             return true;
         }
-        else if (mimpl::_(tup, mv)) {
+        else if (mimpl(tup, mv)) {
             for (size_t i = 0; i < util::tl_size<FilteredPattern>::value; ++i) {
                 result[i] = const_cast<void*>(tup.at(mv[i]));
             }
@@ -369,11 +371,6 @@ struct projection_partial_function_pair {
     typedef PartialFun second_type;
     Projection first;
     PartialFun second;
-    /*
-    template<typename... Ts>
-    projection_partial_function_pair(Ts&&... args)
-    : data(std::forward<Ts>(args)...) { }
-    */
     projection_partial_function_pair() = default;
     projection_partial_function_pair(const projection_partial_function_pair&) = default;
     projection_partial_function_pair(Projection pr, PartialFun pf) : first(std::move(pr)), second(std::move(pf)) { }
@@ -741,55 +738,6 @@ class match_expr {
         return apply(tmp);
     }
 
-    template<typename T, typename... Ts>
-    typename std::enable_if<
-           not std::is_same<
-               typename util::rm_const_and_ref<T>::type,
-               any_tuple
-           >::value
-        && not is_cow_tuple<T>::value,
-        result_type
-    >::type
-    operator()(T&& arg0, Ts&&... args) {
-        // wraps and applies implicit conversions to args
-        typedef std::tuple<
-                    typename detail::mexpr_fwd<
-                        has_manipulator,
-                        T
-                    >::type,
-                    typename detail::mexpr_fwd<
-                        has_manipulator,
-                        Ts
-                    >::type...
-                >
-                tuple_type;
-        tuple_type tup{std::forward<T>(arg0), std::forward<Ts>(args)...};
-        auto& type_token = typeid(typename tuple_type::types);
-        auto bitmask = get_cache_entry(&type_token, tup);
-        // ref_type keeps track of whether this match_expr is a mutator
-        typedef typename std::conditional<
-                    has_manipulator,
-                    tuple_type&,
-                    const tuple_type&
-                >::type
-                ref_type;
-        // same here
-        typedef typename std::conditional<
-                    has_manipulator,
-                    void*,
-                    const void*
-                >::type
-                ptr_type;
-        // iterate over cases and return if any case was invoked
-        return detail::unroll_expr<result_type>(m_cases,
-                                                bitmask,
-                                                idx_token,
-                                                type_token,
-                                                false, // not dynamically_typed
-                                                static_cast<ptr_type>(nullptr),
-                                                static_cast<ref_type>(tup));
-    }
-
     template<class... Ds>
     match_expr<Cs..., Ds...> or_else(const match_expr<Ds...>& other) const {
         std::tuple<util::rebindable_reference<const Cs>...,
@@ -824,7 +772,7 @@ class match_expr {
 
     typedef std::pair<const std::type_info*, std::uint64_t> cache_element;
 
-    util::limited_vector<cache_element, cache_size> m_cache;
+    std::vector<cache_element> m_cache;
 
     // ring buffer like access to m_cache
     size_t m_cache_begin;
@@ -916,14 +864,6 @@ struct is_match_expr<match_expr<Cs...>> {
     static constexpr bool value = true;
 };
 
-template<class List>
-struct match_expr_from_type_list;
-
-template<typename... Ts>
-struct match_expr_from_type_list<util::type_list<Ts...> > {
-    typedef match_expr<Ts...> type;
-};
-
 template<typename... Lhs, typename... Rhs>
 inline match_expr<Lhs..., Rhs...> operator,(const match_expr<Lhs...>& lhs,
                                             const match_expr<Rhs...>& rhs) {
@@ -946,11 +886,12 @@ const match_expr<Cs...>& match_expr_collect(const match_expr<Cs...>& arg) {
 }
 
 template<typename T, typename... Ts>
-typename match_expr_from_type_list<
+            typename util::tl_apply<
                 typename util::tl_concat<
                     typename T::cases_list,
                     typename Ts::cases_list...
-                >::type
+                >::type,
+                match_expr
             >::type
 match_expr_collect(const T& arg, const Ts&... args) {
     typename util::tl_apply<
@@ -976,7 +917,7 @@ namespace detail {
 // end of recursion
 template<class Data, class Token>
 behavior_impl_ptr concat_rec(const Data& data, Token) {
-    typedef typename match_expr_from_type_list<Token>::type combined_type;
+    typedef typename util::tl_apply<Token, match_expr>::type combined_type;
     auto lvoid = [] { };
     typedef default_behavior_impl<combined_type, decltype(lvoid)> impl_type;
     return new impl_type(data, util::duration{}, lvoid);
@@ -994,7 +935,7 @@ template<class Data, class Token, typename F>
 behavior_impl_ptr concat_rec(const Data& data,
                              Token,
                              const timeout_definition<F>& arg) {
-    typedef typename match_expr_from_type_list<Token>::type combined_type;
+    typedef typename util::tl_apply<Token, match_expr>::type combined_type;
     return new default_behavior_impl<combined_type, F>{data, arg};
 }
 

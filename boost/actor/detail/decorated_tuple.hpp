@@ -35,7 +35,6 @@
 #include <algorithm>
 
 #include "boost/actor/config.hpp"
-#include "boost/actor/cow_ptr.hpp"
 #include "boost/actor/ref_counted.hpp"
 #include "boost/actor/uniform_type_info.hpp"
 
@@ -59,7 +58,7 @@ class decorated_tuple : public abstract_tuple {
 
     typedef std::vector<size_t> vector_type;
 
-    typedef cow_ptr<abstract_tuple> pointer;
+    typedef abstract_tuple::ptr pointer;
 
     typedef const std::type_info* rtti;
 

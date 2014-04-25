@@ -76,7 +76,7 @@ struct group_nameserver : event_based_actor {
     behavior make_behavior() override {
         return (
             on(atom("GET_GROUP"), arg_match) >> [](const std::string& name) {
-                return make_cow_tuple(atom("GROUP"), group::get("local", name));
+                return make_any_tuple(atom("GROUP"), group::get("local", name));
             },
             on(atom("SHUTDOWN")) >> [=] {
                 quit();

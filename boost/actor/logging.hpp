@@ -167,7 +167,7 @@ oss_wr operator<<(oss_wr&& lhs, T rhs) {
 
 #define BOOST_ACTOR_PRINT_ERROR_IMPL(lvlname, classname, funname, message) {   \
         std::cerr << "[" << lvlname << "] " << classname << "::"               \
-                  << funname << ": " << message << "\nStack trace:\n";         \
+                  << funname << ": " << message << "\n";                       \
     } BOOST_ACTOR_VOID_STMT
 
 #ifndef BOOST_ACTOR_LOG_LEVEL

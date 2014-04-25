@@ -46,9 +46,9 @@ void ping(event_based_actor* self, size_t num_pings) {
             self->send(pong, atom("ping"), 1);
             self->become (
                 on(atom("pong"), arg_match)
-                >> [=](int value) -> cow_tuple<atom_value, int> {
+                >> [=](int value) -> std::tuple<atom_value, int> {
                     if (++*count >= num_pings) self->quit();
-                    return make_cow_tuple(atom("ping"), value + 1);
+                    return std::make_tuple(atom("ping"), value + 1);
                 },
                 others() >> BOOST_ACTOR_UNEXPECTED_MSG_CB(self)
             );
@@ -61,13 +61,13 @@ void pong(event_based_actor* self) {
     BOOST_ACTOR_CHECKPOINT();
     self->become  (
         on(atom("ping"), arg_match)
-        >> [=](int value) -> cow_tuple<atom_value, int> {
+        >> [=](int value) -> std::tuple<atom_value, int> {
             BOOST_ACTOR_CHECKPOINT();
             self->monitor(self->last_sender());
             // set next behavior
             self->become (
                 on(atom("ping"), arg_match) >> [](int val) {
-                    return make_cow_tuple(atom("pong"), val);
+                    return make_any_tuple(atom("pong"), val);
                 },
                 on_arg_match >> [=](const down_msg& dm) {
                     self->quit(dm.reason);

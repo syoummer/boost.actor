@@ -31,6 +31,8 @@
 #include "boost/actor/any_tuple.hpp"
 #include "boost/actor/singletons.hpp"
 
+#include "boost/actor/detail/decorated_tuple.hpp"
+
 namespace boost {
 namespace actor {
 

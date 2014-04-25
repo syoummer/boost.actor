@@ -105,13 +105,6 @@ int main() {
         "@conn_closed",              // connection_closed_msg
         "@new_conn",                 // new_connection_msg
         "@new_data",                 // new_data_msg
-        // default announced cppa tuples
-        "@<>+@atom",                 // {atom_value}
-        "@<>+@atom+@actor",          // {atom_value, actor_ptr}
-        "@<>+@atom+@proc",           // {atom_value, node_id}
-        "@<>+@atom+@proc+@u32+@u32", // {atom_value, node_id, uint32_t, uint32_t}
-        "@<>+@atom+@u32",            // {atom_value, uint32_t}
-        "@<>+@atom+@u32+@str"        // {atom_value, uint32_t, std::string}
     };
     // holds the type names we see at runtime
     std::set<std::string> found;

@@ -24,7 +24,6 @@
 
 #include "test.hpp"
 
-#include "boost/actor/cow_tuple.hpp"
 #include "boost/actor/any_tuple.hpp"
 #include "boost/actor/announce.hpp"
 #include "boost/actor/any_tuple.hpp"

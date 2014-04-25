@@ -40,7 +40,6 @@
 #include "boost/actor/channel.hpp"
 #include "boost/actor/behavior.hpp"
 #include "boost/actor/any_tuple.hpp"
-#include "boost/actor/cow_tuple.hpp"
 #include "boost/actor/spawn_fwd.hpp"
 #include "boost/actor/message_id.hpp"
 #include "boost/actor/match_expr.hpp"
@@ -195,46 +194,6 @@ class local_actor : public extend<abstract_actor>::with<memory_cached> {
     }
 
     /**
-     * @brief Sends @p what to @p whom.
-     * @param prio Priority of the message.
-     * @param whom Receiver of the message.
-     * @param what Message content as a tuple.
-     */
-    template<typename... Rs, typename... Ts>
-    void send_tuple(message_priority prio,
-                    const typed_actor<Rs...>& whom,
-                    cow_tuple<Ts...> what) {
-        check_typed_input(whom, what);
-        send_tuple(prio, whom.m_ptr, any_tuple{std::move(what)});
-    }
-
-    /**
-     * @brief Sends @p what to @p whom.
-     * @param whom Receiver of the message.
-     * @param what Message content as a tuple.
-     */
-    template<typename... Rs, typename... Ts>
-    void send_tuple(const typed_actor<Rs...>& whom,
-                    cow_tuple<Ts...> what) {
-        check_typed_input(whom, what);
-        send_tuple_impl(message_priority::normal, whom, std::move(what));
-    }
-
-    /**
-     * @brief Sends <tt>{what...}</tt> to @p whom.
-     * @param prio Priority of the message.
-     * @param whom Receiver of the message.
-     * @param what Message elements.
-     * @pre <tt>sizeof...(Ts) > 0</tt>.
-     */
-    template<typename... Rs, typename... Ts>
-    void send(message_priority prio,
-              const typed_actor<Rs...>& whom,
-              cow_tuple<Ts...> what) {
-        send_tuple(prio, whom, make_cow_tuple(std::forward<Ts>(what)...));
-    }
-
-    /**
      * @brief Sends <tt>{what...}</tt> to @p whom.
      * @param whom Receiver of the message.
      * @param what Message elements.
@@ -242,8 +201,16 @@ class local_actor : public extend<abstract_actor>::with<memory_cached> {
      */
     template<typename... Rs, typename... Ts>
     void send(const typed_actor<Rs...>& whom, Ts... what) {
-        send_tuple(message_priority::normal, whom,
-                   make_cow_tuple(std::forward<Ts>(what)...));
+        check_typed_input(whom,
+                          util::type_list<
+                              typename detail::implicit_conversions<
+                                  typename util::rm_const_and_ref<
+                                      Ts
+                                  >::type
+                              >::type...
+                          >{});
+        send_tuple(message_priority::normal, actor{whom.m_ptr.get()},
+                   make_any_tuple(std::forward<Ts>(what)...));
     }
 
     /**
@@ -525,11 +492,8 @@ class local_actor : public extend<abstract_actor>::with<memory_cached> {
     template<typename... Rs, typename... Ts>
     message_id sync_send_tuple_impl(message_priority mp,
                                     const typed_actor<Rs...>& whom,
-                                    cow_tuple<Ts...>&& what) {
-        check_typed_input(whom, what);
-        return sync_send_tuple_impl(mp,
-                                    actor{whom.m_ptr.get()},
-                                    any_tuple{std::move(what)});
+                                    any_tuple&& msg) {
+        return sync_send_tuple_impl(mp, actor{whom.m_ptr.get()}, std::move(msg));
     }
 
     // returns 0 if last_dequeued() is an asynchronous or sync request message,
@@ -557,6 +521,18 @@ class local_actor : public extend<abstract_actor>::with<memory_cached> {
     virtual optional<behavior&> sync_handler(message_id msg_id) = 0;
 
  protected:
+
+    template<typename... Rs, template<typename...> class T, typename... Ts>
+    static void check_typed_input(const typed_actor<Rs...>&, const T<Ts...>&) {
+        static constexpr int input_pos = util::tl_find_if<
+                                             util::type_list<Rs...>,
+                                             detail::input_is<
+                                                 util::type_list<Ts...>
+                                             >::template eval
+                                         >::value;
+        static_assert(input_pos >= 0,
+                      "typed actor does not support given input");
+    }
 
     template<typename... Ts>
     inline mailbox_element* new_mailbox_element(Ts&&... args) {
@@ -588,19 +564,6 @@ class local_actor : public extend<abstract_actor>::with<memory_cached> {
     /** @endcond */
 
  private:
-
-    template<typename... Rs, typename... Ts>
-    static void check_typed_input(const typed_actor<Rs...>&,
-                                  const cow_tuple<Ts...>&) {
-        static constexpr int input_pos = util::tl_find_if<
-                                             util::type_list<Rs...>,
-                                             detail::input_is<
-                                                 util::type_list<Ts...>
-                                             >::template eval
-                                         >::value;
-        static_assert(input_pos >= 0,
-                      "typed actor does not support given input");
-    }
 
     std::function<void()> m_sync_failure_handler;
     std::function<void()> m_sync_timeout_handler;

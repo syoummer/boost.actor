@@ -42,7 +42,6 @@
 #include "boost/actor/actor.hpp"
 #include "boost/actor/channel.hpp"
 #include "boost/actor/any_tuple.hpp"
-#include "boost/actor/cow_tuple.hpp"
 #include "boost/actor/attachable.hpp"
 #include "boost/actor/scoped_actor.hpp"
 #include "boost/actor/spawn_options.hpp"

@@ -49,13 +49,6 @@ namespace util {
 template<typename...> struct type_list;
 } // namespace util
 
-// forward declaration of cow_tuple
-template<typename...> class cow_tuple;
-
-// forward declarations of get(const tuple<...>&)
-template<size_t N, typename... Ts>
-const typename util::type_at<N, Ts...>::type& get(const cow_tuple<Ts...>&);
-
 // forward declarations of get(detail::pseudo_tuple<...>&)
 template<size_t N, typename... Ts>
 const typename util::type_at<N, Ts...>::type& get(const detail::pseudo_tuple<Ts...>& tv);
@@ -63,10 +56,6 @@ const typename util::type_at<N, Ts...>::type& get(const detail::pseudo_tuple<Ts.
 // forward declarations of get(util::type_list<...>&)
 template<size_t N, typename... Ts>
 typename util::type_at<N, Ts...>::type get(const util::type_list<Ts...>&);
-
-// forward declarations of get_ref(tuple<...>&)
-template<size_t N, typename... Ts>
-typename util::type_at<N, Ts...>::type& get_ref(cow_tuple<Ts...>&);
 
 // forward declarations of get_ref(detail::pseudo_tuple<...>&)
 template<size_t N, typename... Ts>

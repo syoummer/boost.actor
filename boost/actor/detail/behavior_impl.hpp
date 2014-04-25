@@ -31,6 +31,7 @@
 #ifndef BEHAVIOR_IMPL_HPP
 #define BEHAVIOR_IMPL_HPP
 
+#include <tuple>
 #include <type_traits>
 
 #include "boost/none.hpp"
@@ -44,6 +45,8 @@
 #include "boost/actor/skip_message.hpp"
 #include "boost/actor/timeout_definition.hpp"
 
+#include "boost/actor/util/call.hpp"
+#include "boost/actor/util/int_list.hpp"
 #include "boost/actor/util/duration.hpp"
 #include "boost/actor/util/type_traits.hpp"
 
@@ -74,20 +77,22 @@ struct optional_any_tuple_visitor : static_visitor<bhvr_invoke_result> {
     inline bhvr_invoke_result operator()(const skip_message_t&) const { return none; }
     inline bhvr_invoke_result operator()(unit_t&) const { return any_tuple{}; }
     inline bhvr_invoke_result operator()(const unit_t&) const { return any_tuple{}; }
-    template<typename T>
-    inline bhvr_invoke_result operator()(T& value, typename std::enable_if<not is_message_id_wrapper<T>::value>::type* = 0) const {
-        return make_any_tuple(std::move(value));
+    template<typename T, typename... Ts>
+    inline typename std::enable_if<not is_message_id_wrapper<T>::value,
+                                   bhvr_invoke_result>::type
+    operator()(T& v, Ts&... vs) const {
+        return make_any_tuple(std::move(v), std::move(vs)...);
     }
     template<typename T>
     inline bhvr_invoke_result operator()(T& value, typename std::enable_if<is_message_id_wrapper<T>::value>::type* = 0) const {
         return make_any_tuple(atom("MESSAGE_ID"), value.get_message_id().integer_value());
     }
-    template<typename... Ts>
-    inline bhvr_invoke_result operator()(cow_tuple<Ts...>& value) const {
-        return any_tuple{std::move(value)};
-    }
     inline bhvr_invoke_result operator()(any_tuple& value) const {
         return std::move(value);
+    }
+    template<typename... Ts>
+    inline bhvr_invoke_result operator()(std::tuple<Ts...>& value) const {
+        return util::apply_args(*this, value, util::get_indices(value));
     }
 };
 

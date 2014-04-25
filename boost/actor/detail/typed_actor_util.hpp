@@ -31,7 +31,8 @@
 #ifndef BOOST_ACTOR_TYPED_ACTOR_UTIL_HPP
 #define BOOST_ACTOR_TYPED_ACTOR_UTIL_HPP
 
-#include "boost/actor/cow_tuple.hpp"
+#include <tuple>
+
 #include "boost/actor/replies_to.hpp"
 
 #include "boost/actor/util/type_list.hpp"
@@ -58,7 +59,7 @@ struct deduce_signature_helper<R, util::type_list<Ts...>> {
 };
 
 template<typename... Rs, typename... Ts>
-struct deduce_signature_helper<cow_tuple<Rs...>, util::type_list<Ts...>> {
+struct deduce_signature_helper<std::tuple<Rs...>, util::type_list<Ts...>> {
     typedef typename replies_to<Ts...>::template with<Rs...> type;
 };
 
@@ -116,7 +117,7 @@ struct lifted_result_type {
 };
 
 template<typename... Ts>
-struct lifted_result_type<cow_tuple<Ts...>> {
+struct lifted_result_type<std::tuple<Ts...>> {
     typedef util::type_list<Ts...> type;
 };
 

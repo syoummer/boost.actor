@@ -20,8 +20,6 @@ boost/actor/blocking_actor.hpp
 boost/actor/channel.hpp
 boost/actor/config.hpp
 boost/actor/continue_helper.hpp
-boost/actor/cow_ptr.hpp
-boost/actor/cow_tuple.hpp
 boost/actor/cppa.hpp
 boost/actor/cppa_fwd.hpp
 boost/actor/deserializer.hpp
@@ -168,7 +166,6 @@ boost/actor/util/get_root_uuid.hpp
 boost/actor/util/guard.hpp
 boost/actor/util/int_list.hpp
 boost/actor/util/left_or_right.hpp
-boost/actor/util/limited_vector.hpp
 boost/actor/util/producer_consumer_list.hpp
 boost/actor/util/purge_refs.hpp
 boost/actor/util/rebindable_reference.hpp
@@ -291,7 +288,6 @@ unit_testing/test.cpp
 unit_testing/test.hpp
 unit_testing/test_atom.cpp
 unit_testing/test_broker.cpp
-unit_testing/test_fixed_vector.cpp
 unit_testing/test_intrusive_containers.cpp
 unit_testing/test_intrusive_ptr.cpp
 unit_testing/test_local_group.cpp

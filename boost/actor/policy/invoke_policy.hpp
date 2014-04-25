@@ -223,7 +223,7 @@ class invoke_policy {
                     if (fhdl) fhdl.deliver(make_any_tuple(unit));
                 }
             } else {
-                if (   detail::matches<atom_value, std::uint64_t>(*res)
+                if (   res->template has_types<atom_value, std::uint64_t>()
                     && res->template get_as<atom_value>(0) == atom("MESSAGE_ID")) {
                     BOOST_ACTOR_LOG_DEBUG("message handler returned a "
                                    "message id wrapper");

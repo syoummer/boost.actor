@@ -67,5 +67,15 @@ std::string get_tuple_type_names(const detail::abstract_tuple& tup) {
     return result;
 }
 
+abstract_tuple* abstract_tuple::ptr::get_detached() {
+    auto p = m_ptr.get();
+    if (!p->unique()) {
+        auto np = p->copy();
+        m_ptr.reset(np);
+        return np;
+    }
+    return p;
+}
+
 } } // namespace actor
 } // namespace boost::detail

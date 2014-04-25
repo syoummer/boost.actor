@@ -326,8 +326,6 @@ class server : public event_based_actor {
 
 int main(int argc, char** argv) {
     announce<actor_vector>();
-    announce_tuple<atom_value, int>();
-    announce_tuple<atom_value, atom_value, int>();
     string app_path = argv[0];
     bool run_remote_actor = true;
     bool run_as_server = false;

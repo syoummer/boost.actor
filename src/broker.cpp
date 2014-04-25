@@ -174,8 +174,9 @@ class broker::scribe : public extend<broker::servant>::with<buffered_writing> {
     scribe(broker_ptr parent, input_stream_ptr in, output_stream_ptr out)
     : super{get_middleman(), out, move(parent), in->read_handle(), out->write_handle()}
     , m_is_continue_reading{false}, m_dirty{false}
-    , m_policy{broker::at_least}, m_policy_buffer_size{0}, m_in{in} {
-        auto& ndm = get_ref<0>(m_read_msg);
+    , m_policy{broker::at_least}, m_policy_buffer_size{0}, m_in{in}
+    , m_read_msg(make_any_tuple(new_data_msg{})) {
+        auto& ndm = read_msg();
         ndm.handle = connection_handle::from_int(in->read_handle());
         ndm.buf.final_size(default_max_buffer_size);
     }
@@ -202,7 +203,7 @@ class broker::scribe : public extend<broker::servant>::with<buffered_writing> {
                                << m_broker->exit_reason());
                 return continue_reading_result::closed;
             }
-            auto& buf = get_ref<0>(m_read_msg).buf;
+            auto& buf = read_msg().buf;
             if (m_dirty) {
                 m_dirty = false;
                 if (m_policy == broker::at_most || m_policy == broker::exactly) {
@@ -227,8 +228,9 @@ class broker::scribe : public extend<broker::servant>::with<buffered_writing> {
                || m_policy == broker::at_most) {
                 BOOST_ACTOR_LOG_DEBUG("invoke io actor");
                 m_broker->invoke_message({invalid_actor_addr, nullptr}, m_read_msg);
-                BOOST_ACTOR_LOG_INFO_IF(!m_read_msg.vals()->unique(), "detached buffer");
-                get_ref<0>(m_read_msg).buf.clear();
+                BOOST_ACTOR_LOG_INFO_IF(!m_read_msg.vals()->unique(),
+                                        "client detached buffer");
+                read_msg().buf.clear();
             }
         }
     }
@@ -246,12 +248,16 @@ class broker::scribe : public extend<broker::servant>::with<buffered_writing> {
 
  private:
 
+    new_data_msg& read_msg() {
+        return m_read_msg.get_as_mutable<new_data_msg>(0);
+    }
+
     bool m_is_continue_reading;
     bool m_dirty;
     broker::policy_flag m_policy;
     size_t m_policy_buffer_size;
     input_stream_ptr m_in;
-    cow_tuple<new_data_msg> m_read_msg;
+    any_tuple m_read_msg;
 
 };
 
@@ -267,8 +273,9 @@ class broker::doorman : public broker::servant {
     ~doorman();
 
     doorman(broker_ptr parent, acceptor_uptr ptr)
-            : super{move(parent), ptr->file_handle()} {
-        get_ref<0>(m_accept_msg).source = accept_handle::from_int(ptr->file_handle());
+            : super{move(parent), ptr->file_handle()}
+            , m_accept_msg(make_any_tuple(new_connection_msg{})) {
+        accept_msg().source = accept_handle::from_int(ptr->file_handle());
         m_ptr.swap(ptr);
     }
 
@@ -285,8 +292,8 @@ class broker::doorman : public broker::servant {
             if (opt) {
                 using namespace std;
                 auto& p = *opt;
-                get_ref<0>(m_accept_msg).handle = m_broker->add_scribe(move(p.first),
-                                                                       move(p.second));
+                accept_msg().handle = m_broker->add_scribe(move(p.first),
+                                                           move(p.second));
                 m_broker->invoke_message({invalid_actor_addr, nullptr}, m_accept_msg);
             }
             else return continue_reading_result::continue_later;
@@ -302,8 +309,12 @@ class broker::doorman : public broker::servant {
 
  private:
 
+    new_connection_msg& accept_msg() {
+        return m_accept_msg.get_as_mutable<new_connection_msg>(0);
+    }
+
     acceptor_uptr m_ptr;
-    cow_tuple<new_connection_msg> m_accept_msg;
+    any_tuple m_accept_msg;
 
 };
 

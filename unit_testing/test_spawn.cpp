@@ -235,7 +235,7 @@ class fixed_stack : public sb_actor<fixed_stack> {
     fixed_stack(size_t max) : max_size(max)  {
         full = (
             on(atom("push"), arg_match) >> [=](int) { /* discard */ },
-            on(atom("pop")) >> [=]() -> cow_tuple<atom_value, int> {
+            on(atom("pop")) >> [=]() -> std::tuple<atom_value, int> {
                 auto result = data.back();
                 data.pop_back();
                 become(filled);
@@ -247,7 +247,7 @@ class fixed_stack : public sb_actor<fixed_stack> {
                 data.push_back(what);
                 if (data.size() == max_size) become(full);
             },
-            on(atom("pop")) >> [=]() -> cow_tuple<atom_value, int> {
+            on(atom("pop")) >> [=]() -> std::tuple<atom_value, int> {
                 auto result = data.back();
                 data.pop_back();
                 if (data.empty()) become(empty);
@@ -684,7 +684,7 @@ void test_spawn() {
         }
         s->receive (
             on(atom("get")) >> [] {
-                return make_cow_tuple(42, 2);
+                return std::make_tuple(42, 2);
             }
         );
     });
@@ -824,7 +824,7 @@ void test_spawn() {
     auto f = [](const string& name) -> behavior {
         return (
             on(atom("get_name")) >> [name] {
-                return make_cow_tuple(atom("name"), name);
+                return std::make_tuple(atom("name"), name);
             }
         );
     };

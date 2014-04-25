@@ -49,7 +49,6 @@
 
 #include "boost/actor/util/duration.hpp"
 #include "boost/actor/util/scope_guard.hpp"
-#include "boost/actor/util/limited_vector.hpp"
 #include "boost/actor/util/shared_spinlock.hpp"
 #include "boost/actor/util/shared_lock_guard.hpp"
 
@@ -789,11 +788,6 @@ void push_native_type(abstract_int_tinfo* m [][2]) {
     push_native_type<T1, Ts...>(m);
 }
 
-template<typename... Ts>
-inline void push_hint(uniform_type_info_map* thisptr) {
-    thisptr->insert(uniform_type_info_ptr{new meta_cow_tuple<Ts...>});
-}
-
 class utim_impl : public uniform_type_info_map {
 
  public:
@@ -894,13 +888,6 @@ class utim_impl : public uniform_type_info_map {
             abort();
         }
 #       endif
-        // insert default hints
-        push_hint<atom_value>(this);
-        push_hint<atom_value, std::uint32_t>(this);
-        push_hint<atom_value, node_id_ptr>(this);
-        push_hint<atom_value, actor>(this);
-        push_hint<atom_value, node_id_ptr, std::uint32_t, std::uint32_t>(this);
-        push_hint<atom_value, std::uint32_t, std::string>(this);
     }
 
     pointer by_rtti(const std::type_info& ti) const {

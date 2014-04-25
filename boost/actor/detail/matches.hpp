@@ -28,8 +28,8 @@
 \******************************************************************************/
 
 
-#ifndef BOOST_ACTOR_MATCHES_HPP
-#define BOOST_ACTOR_MATCHES_HPP
+#ifndef BOOST_ACTOR_DETAIL_MATCHES_HPP
+#define BOOST_ACTOR_DETAIL_MATCHES_HPP
 
 #include <numeric>
 
@@ -47,7 +47,7 @@ struct matcher;
 
 template<class Tuple, typename... T>
 struct matcher<wildcard_position::nil, Tuple, T...> {
-    static inline bool tmatch(const Tuple& tup) {
+    bool operator()(const Tuple& tup) const {
         if (not tup.dynamically_typed()) {
             // statically typed tuples return &typeid(type_list<T...>)
             // as type token
@@ -61,10 +61,8 @@ struct matcher<wildcard_position::nil, Tuple, T...> {
         }
         return false;
     }
-
-    static inline bool tmatch(const Tuple& tup,
-                              util::limited_vector<size_t, sizeof...(T)>& mv) {
-        if (tmatch(tup)) {
+    bool operator()(const Tuple& tup, std::vector<size_t>& mv) const {
+        if ((*this)(tup)) {
             mv.resize(sizeof...(T));
             std::iota(mv.begin(), mv.end(), 0);
             return true;
@@ -76,8 +74,7 @@ struct matcher<wildcard_position::nil, Tuple, T...> {
 template<class Tuple, typename... T>
 struct matcher<wildcard_position::trailing, Tuple, T...> {
     static constexpr size_t size = sizeof...(T) - 1;
-
-    static inline bool tmatch(const Tuple& tup) {
+    bool operator()(const Tuple& tup) const {
         if (tup.size() >= size) {
             auto& tarr = static_types_array<T...>::arr;
             auto begin = tup.begin();
@@ -86,10 +83,8 @@ struct matcher<wildcard_position::trailing, Tuple, T...> {
         }
         return false;
     }
-
-    static inline bool tmatch(const Tuple& tup,
-                             util::limited_vector<size_t, size>& mv) {
-        if (tmatch(tup)) {
+    bool operator()(const Tuple& tup, std::vector<size_t>& mv) const {
+        if ((*this)(tup)) {
             mv.resize(size);
             std::iota(mv.begin(), mv.end(), 0);
             return true;
@@ -100,10 +95,10 @@ struct matcher<wildcard_position::trailing, Tuple, T...> {
 
 template<class Tuple>
 struct matcher<wildcard_position::leading, Tuple, anything> {
-    static inline bool tmatch(const Tuple&) {
+    bool operator()(const Tuple&) const {
         return true;
     }
-    static inline bool tmatch(const Tuple&, util::limited_vector<size_t, 0>&) {
+    bool operator()(const Tuple&, std::vector<size_t>&) const {
         return true;
     }
 };
@@ -111,8 +106,7 @@ struct matcher<wildcard_position::leading, Tuple, anything> {
 template<class Tuple, typename... T>
 struct matcher<wildcard_position::leading, Tuple, T...> {
     static constexpr size_t size = sizeof...(T) - 1;
-
-    static inline bool tmatch(const Tuple& tup) {
+    bool operator()(const Tuple& tup) const {
         auto tup_size = tup.size();
         if (tup_size >= size) {
             auto& tarr = static_types_array<T...>::arr;
@@ -123,10 +117,8 @@ struct matcher<wildcard_position::leading, Tuple, T...> {
         }
         return false;
     }
-
-    static inline bool tmatch(const Tuple& tup,
-                              util::limited_vector<size_t, size>& mv) {
-        if (tmatch(tup)) {
+    bool operator()(const Tuple& tup, std::vector<size_t>& mv) const {
+        if ((*this)(tup)) {
             mv.resize(size);
             std::iota(mv.begin(), mv.end(), tup.size() - size);
             return true;
@@ -146,7 +138,7 @@ struct matcher<wildcard_position::in_between, Tuple, T...> {
                   && wc_pos < (sizeof...(T) - 1),
                   "illegal wildcard position");
 
-    static inline bool tmatch(const Tuple& tup) {
+    bool operator()(const Tuple& tup) const {
         auto tup_size = tup.size();
         if (tup_size >= (size - 1)) {
             auto& tarr = static_types_array<T...>::arr;
@@ -164,9 +156,8 @@ struct matcher<wildcard_position::in_between, Tuple, T...> {
         return false;
     }
 
-    static inline bool tmatch(const Tuple& tup,
-                              util::limited_vector<size_t, size - 1>& mv) {
-        if (tmatch(tup)) {
+    bool operator()(const Tuple& tup, std::vector<size_t>& mv) const {
+        if ((*this)(tup)) {
             // first range
             mv.resize(size - 1);
             auto begin = mv.begin();
@@ -189,9 +180,9 @@ struct matcher<wildcard_position::multiple, Tuple, T...> {
 
     template<class TupleIter, class PatternIter,
              class Push, class Commit, class Rollback>
-    static bool match(TupleIter tbegin, TupleIter tend,
-                      PatternIter pbegin, PatternIter pend,
-                      Push& push, Commit& commit, Rollback& rollback) {
+    bool operator()(TupleIter tbegin, TupleIter tend,
+                    PatternIter pbegin, PatternIter pend,
+                    Push& push, Commit& commit, Rollback& rollback) const {
         while (!(pbegin == pend && tbegin == tend)) {
             if (pbegin == pend) {
                 // reached end of pattern while some values remain unmatched
@@ -226,7 +217,7 @@ struct matcher<wildcard_position::multiple, Tuple, T...> {
         return true; // pbegin == pend && tbegin == tend
     }
 
-    static inline bool tmatch(const Tuple& tup) {
+    bool operator()(const Tuple& tup) const {
         auto& tarr = static_types_array<T...>::arr;
         if (tup.size() >= (sizeof...(T) - wc_count)) {
             auto fpush = [](const typename Tuple::const_iterator&) { };
@@ -239,7 +230,7 @@ struct matcher<wildcard_position::multiple, Tuple, T...> {
     }
 
     template<class MappingVector>
-    static inline bool tmatch(const Tuple& tup, MappingVector& mv) {
+    bool operator()(const Tuple& tup, MappingVector& mv) const {
         auto& tarr = static_types_array<T...>::arr;
         if (tup.size() >= (sizeof...(T) - wc_count)) {
             size_t commited_size = 0;
@@ -260,96 +251,19 @@ struct matcher<wildcard_position::multiple, Tuple, T...> {
     }
 };
 
-// implementation for zero or one wildcards
-template<wildcard_position PC, class Tuple, typename... Ts>
-struct match_impl {
-    static inline bool _(const Tuple& tup) {
-        return matcher<PC, Tuple, Ts...>::tmatch(tup);
-    }
-
-    template<size_t Size>
-    static inline bool _(const Tuple& tup,
-                         util::limited_vector<size_t, Size>& mv) {
-        return matcher<PC, Tuple, Ts...>::tmatch(tup, mv);
-    }
-};
-
-// implementation for multiple wildcards
-template<class Tuple, typename... Ts>
-struct match_impl<wildcard_position::multiple, Tuple, Ts...> {
-    static constexpr auto PC = wildcard_position::multiple;
-
-    static inline bool _(const Tuple& tup) {
-        return matcher<PC, Tuple, Ts...>::tmatch(tup);
-    }
-
-    template<size_t Size>
-    static inline bool _(const Tuple& tup,
-                         util::limited_vector<size_t, Size>& mv) {
-        return matcher<PC, Tuple, Ts...>::tmatch(tup, mv);
-    }
-
-};
-
 template<class Tuple, class List>
-struct match_impl_from_type_list;
+struct select_matcher;
 
 template<class Tuple, typename... Ts>
-struct match_impl_from_type_list<Tuple, util::type_list<Ts...> > {
-    typedef match_impl<get_wildcard_position<util::type_list<Ts...>>(),
-                       Tuple,
-                       Ts...>
+struct select_matcher<Tuple, util::type_list<Ts...> > {
+    typedef matcher<get_wildcard_position<util::type_list<Ts...>>(),
+                    Tuple,
+                    Ts...>
             type;
 };
-
-/*
- * @brief Returns true if this tuple matches the pattern <tt>{Ts...}</tt>.
- */
-template<typename... Ts>
-bool matches(const any_tuple& tup) {
-    typedef util::type_list<Ts...> tl;
-    return match_impl<get_wildcard_position<tl>(), any_tuple, Ts...>
-           ::_(tup);
-}
-
-/*
- * @brief Returns true if this tuple matches the pattern <tt>{Ts...}</tt>.
- */
-template<typename... Ts>
-bool matches(const any_tuple& tup,
-             util::limited_vector<
-                                 size_t,
-                                 util::tl_count_not<
-                                     util::type_list<Ts...>,
-                                     is_anything>::value>& mv) {
-    typedef util::type_list<Ts...> tl;
-    return match_impl<get_wildcard_position<tl>(), any_tuple, Ts...>
-           ::_(tup, mv);
-}
-
-// support for type_list based matching
-template<typename... Ts>
-inline bool matches(const any_tuple& tup, const util::type_list<Ts...>&) {
-    return matches<Ts...>(tup);
-}
-
-template<typename... Ts>
-inline bool matches(const any_tuple& tup, const util::type_list<Ts...>&,
-                    util::limited_vector<
-                                        size_t,
-                                        util::tl_count_not<
-                                            util::type_list<Ts...>,
-                                            is_anything>::value>& mv) {
-    return matches<Ts...>(tup, mv);
-}
-
-template<typename... Ts>
-inline bool matches_types(const any_tuple& tup, const util::type_list<Ts...>&) {
-    return matches<Ts...>(tup);
-}
 
 } // namespace detail
 } // namespace actor
 } // namespace boost
 
-#endif // BOOST_ACTOR_MATCHES_HPP
+#endif // BOOST_ACTOR_DETAIL_MATCHES_HPP

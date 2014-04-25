@@ -16,7 +16,6 @@
 
 #include "boost/actor/on.hpp"
 #include "boost/actor/cppa.hpp"
-#include "boost/actor/cow_tuple.hpp"
 #include "boost/actor/any_tuple.hpp"
 #include "boost/actor/to_string.hpp"
 #include "boost/intrusive_ptr.hpp"
@@ -151,12 +150,6 @@ void check_type_list() {
     static_assert(std::is_same<zz3, zz9>::value, "tl_group_by failed");
 }
 
-void check_default_ctors() {
-    BOOST_ACTOR_PRINT(__func__);
-    cow_tuple<int> zero;
-    BOOST_ACTOR_CHECK_EQUAL(get<0>(zero), 0);
-}
-
 void check_guards() {
     BOOST_ACTOR_PRINT(__func__);
 
@@ -175,7 +168,7 @@ void check_guards() {
     BOOST_ACTOR_CHECK_NOT_INVOKED(f02, (2, 1));
     BOOST_ACTOR_CHECK_INVOKED(f02, (42, 21));
 
-    BOOST_ACTOR_CHECK(f02(make_cow_tuple(42, 21)));
+    BOOST_ACTOR_CHECK(f02(make_any_tuple(42, 21)));
     BOOST_ACTOR_CHECK_EQUAL(invoked, "f02");
     invoked.clear();
 
@@ -211,13 +204,13 @@ void check_guards() {
     BOOST_ACTOR_CHECK_NOT_INVOKED(f07, (0));
     BOOST_ACTOR_CHECK_NOT_INVOKED(f07, (1));
     BOOST_ACTOR_CHECK_INVOKED(f07, (2));
-    BOOST_ACTOR_CHECK(f07(make_cow_tuple(2)));
+    BOOST_ACTOR_CHECK(f07(make_any_tuple(2)));
 
     int f08_val = 666;
     auto f08 = on<int>() >> [&](int& mref) { mref = 8; invoked = "f08"; };
     BOOST_ACTOR_CHECK_INVOKED(f08, (f08_val));
     BOOST_ACTOR_CHECK_EQUAL(f08_val, 8);
-    any_tuple f08_any_val = make_cow_tuple(666);
+    any_tuple f08_any_val = make_any_tuple(666);
     BOOST_ACTOR_CHECK(f08(f08_any_val));
     BOOST_ACTOR_CHECK_EQUAL(f08_any_val.get_as<int>(0), 8);
 
@@ -226,7 +219,7 @@ void check_guards() {
     BOOST_ACTOR_CHECK_NOT_INVOKED(f09, ("hello lambda", f09_val));
     BOOST_ACTOR_CHECK_INVOKED(f09, ("0", f09_val));
     BOOST_ACTOR_CHECK_EQUAL(f09_val, 9);
-    any_tuple f09_any_val = make_cow_tuple("0", 666);
+    any_tuple f09_any_val = make_any_tuple("0", 666);
     BOOST_ACTOR_CHECK(f09(f09_any_val));
     BOOST_ACTOR_CHECK_EQUAL(f09_any_val.get_as<int>(1), 9);
     f09_any_val.get_as_mutable<int>(1) = 666;
@@ -334,9 +327,8 @@ void check_wildcards() {
     BOOST_ACTOR_CHECK_INVOKED(f13, (1.f, 1.5f, 2.f));
     BOOST_ACTOR_CHECK_EQUAL(f13_fun, 3);
 
-    // check type correctness of make_cow_tuple()
-    auto t0 = make_cow_tuple("1", 2);
-    BOOST_ACTOR_CHECK((std::is_same<decltype(t0), cow_tuple<std::string, int>>::value));
+    // check type correctness of make_any_tuple()
+    auto t0 = make_any_tuple("1", 2);
     auto t0_0 = get<0>(t0);
     auto t0_1 = get<1>(t0);
     // check implicit type conversion
@@ -347,14 +339,12 @@ void check_wildcards() {
     // use tuple cast to get a subtuple
     any_tuple at0(t0);
     auto v0opt = tuple_cast<std::string, anything>(at0);
-    BOOST_ACTOR_CHECK((std::is_same<decltype(v0opt), optional<cow_tuple<std::string>>>::value));
     BOOST_ACTOR_CHECK((v0opt));
     BOOST_ACTOR_CHECK(   at0.size() == 2
                && at0.at(0) == &get<0>(t0)
                && at0.at(1) == &get<1>(t0));
     if (v0opt) {
         auto& v0 = *v0opt;
-        BOOST_ACTOR_CHECK((std::is_same<decltype(v0), cow_tuple<std::string>&>::value));
         BOOST_ACTOR_CHECK((std::is_same<decltype(get<0>(v0)), const std::string&>::value));
         BOOST_ACTOR_CHECK_EQUAL(v0.size(), 1);
         BOOST_ACTOR_CHECK_EQUAL(get<0>(v0), "1");
@@ -366,17 +356,17 @@ void check_wildcards() {
         BOOST_ACTOR_CHECK_EQUAL(get<0>(v0), "1");              // v0 contains old value
         BOOST_ACTOR_CHECK(&get<0>(t0) != &get<0>(v0));         // no longer the same
         // check operator==
-        auto lhs = make_cow_tuple(1, 2, 3, 4);
-        auto rhs = make_cow_tuple(static_cast<std::uint8_t>(1), 2.0, 3, 4);
+        auto lhs = make_any_tuple(1, 2, 3, 4);
+        auto rhs = make_any_tuple(static_cast<std::uint8_t>(1), 2.0, 3, 4);
         BOOST_ACTOR_CHECK(lhs == rhs);
         BOOST_ACTOR_CHECK(rhs == lhs);
     }
-    any_tuple at1 = make_cow_tuple("one", 2, 3.f, 4.0); {
+    any_tuple at1 = make_any_tuple("one", 2, 3.f, 4.0); {
         // perfect match
         auto opt0 = tuple_cast<std::string, int, float, double>(at1);
         BOOST_ACTOR_CHECK(opt0);
         if (opt0) {
-            BOOST_ACTOR_CHECK((*opt0 == make_cow_tuple("one", 2, 3.f, 4.0)));
+            BOOST_ACTOR_CHECK((*opt0 == make_any_tuple("one", 2, 3.f, 4.0)));
             BOOST_ACTOR_CHECK(&get<0>(*opt0) == at1.at(0));
             BOOST_ACTOR_CHECK(&get<1>(*opt0) == at1.at(1));
             BOOST_ACTOR_CHECK(&get<2>(*opt0) == at1.at(2));
@@ -400,7 +390,7 @@ void check_wildcards() {
         auto opt3 = tuple_cast<std::string, anything, double>(at1);
         BOOST_ACTOR_CHECK(opt3);
         if (opt3) {
-            BOOST_ACTOR_CHECK((*opt3 == make_cow_tuple("one", 4.0)));
+            BOOST_ACTOR_CHECK((*opt3 == make_any_tuple("one", 4.0)));
             BOOST_ACTOR_CHECK_EQUAL(get<0>(*opt3), "one");
             BOOST_ACTOR_CHECK_EQUAL(get<1>(*opt3), 4.0);
             BOOST_ACTOR_CHECK(&get<0>(*opt3) == at1.at(0));

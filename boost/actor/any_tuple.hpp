@@ -34,12 +34,13 @@
 #include <type_traits>
 
 #include "boost/actor/config.hpp"
-#include "boost/actor/cow_ptr.hpp"
-#include "boost/actor/cow_tuple.hpp"
 
+#include "boost/actor/util/call.hpp"
+#include "boost/actor/util/int_list.hpp"
 #include "boost/actor/util/comparable.hpp"
 #include "boost/actor/util/type_traits.hpp"
 
+#include "boost/actor/detail/tuple_vals.hpp"
 #include "boost/actor/detail/abstract_tuple.hpp"
 #include "boost/actor/detail/implicit_conversions.hpp"
 
@@ -60,9 +61,9 @@ class any_tuple {
     typedef detail::abstract_tuple* raw_ptr;
 
     /**
-     * @brief A smart pointer to the data.
+     * @brief A (COW) smart pointer to the data.
      */
-    typedef cow_ptr<detail::abstract_tuple> data_ptr;
+    typedef detail::abstract_tuple::ptr data_ptr;
 
     /**
      * @brief An iterator to access each element as <tt>const void*</tt>.
@@ -73,18 +74,6 @@ class any_tuple {
      * @brief Creates an empty tuple.
      */
     any_tuple() = default;
-
-    /**
-     * @brief Creates a tuple from @p t.
-     */
-    template<typename... Ts>
-    any_tuple(const cow_tuple<Ts...>& arg) : m_vals(arg.vals()) { }
-
-    /**
-     * @brief Creates a tuple and moves the content from @p t.
-     */
-    template<typename... Ts>
-    any_tuple(cow_tuple<Ts...>&& arg) : m_vals(std::move(arg.m_vals)) { }
 
     /**
      * @brief Move constructor.
@@ -146,6 +135,12 @@ class any_tuple {
      *        of the element at position @p p.
      */
     const uniform_type_info* type_at(size_t p) const;
+
+    /**
+     * @brief Returns true if this message has the types @p Ts.
+     */
+    template<typename... Ts>
+    bool has_types() const;
 
     /**
      * @brief Returns @c true if <tt>*this == other</tt>, otherwise false.
@@ -221,6 +216,9 @@ class any_tuple {
 
     explicit any_tuple(const data_ptr& vals);
 
+    template<typename... Ts>
+    static inline any_tuple move_from_tuple(std::tuple<Ts...>&&);
+
     /** @endcond */
 
  private:
@@ -249,7 +247,10 @@ inline bool operator!=(const any_tuple& lhs, const any_tuple& rhs) {
  */
 template<typename... Ts>
 inline any_tuple make_any_tuple(Ts&&... args) {
-    return make_cow_tuple(std::forward<Ts>(args)...);
+    using namespace detail;
+    typedef tuple_vals<typename strip_and_convert<Ts>::type...> data;
+    auto ptr = new data(std::forward<Ts>(args)...);
+    return any_tuple{detail::abstract_tuple::ptr{ptr}};
 }
 
 /******************************************************************************
@@ -319,6 +320,30 @@ inline any_tuple any_tuple::take(size_t n) const {
 inline any_tuple any_tuple::take_right(size_t n) const {
     return n >= size() ? *this : drop(size() - n);
 }
+
+struct move_from_tuple_helper {
+    template<typename... Ts>
+    inline any_tuple operator()(Ts&... vs) {
+        return make_any_tuple(std::move(vs)...);
+    }
+};
+
+template<typename... Ts>
+inline any_tuple any_tuple::move_from_tuple(std::tuple<Ts...>&& tup) {
+    move_from_tuple_helper f;
+    return util::apply_args(f, tup, util::get_indices(tup));
+}
+
+template<typename... Ts>
+bool any_tuple::has_types() const {
+    if (size() != sizeof...(Ts)) return false;
+    const std::type_info* ts[] = { &typeid(Ts)... };
+    for (size_t i = 0 ; i < sizeof...(Ts); ++i) {
+        if (!type_at(i)->equal_to(*ts[i])) return false;
+    }
+    return true;
+}
+
 
 } // namespace actor
 } // namespace boost

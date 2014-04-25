@@ -176,6 +176,7 @@ inline const uniform_type_info* announce(const Ts&... args) {
  * @}
  */
 
+/*
 namespace detail {
 
 template<long Pos, typename Tuple, typename T>
@@ -224,90 +225,8 @@ void do_deserialize(deserializer* source, Tuple& tup, util::int_list<I, Is...>) 
     do_deserialize(source, tup, util::int_list<Is...>{});
 }
 
-template<typename T, typename... Ts>
-class meta_cow_tuple : public uniform_type_info {
-
- public:
-
-    typedef cow_tuple<T, Ts...> tuple_type;
-
-    meta_cow_tuple() {
-        //m_name = "@<>+";
-        //m_name += detail::to_uniform_name<T>();
-        std::vector<std::string> names{"@<>",
-                                       detail::to_uniform_name<T>(),
-                                       detail::to_uniform_name<Ts>()...};
-        m_name = join(names, "+");
-        //util::splice(m_name, "+", detail::to_uniform_name<Ts>()...);
-    }
-
-    const char* name() const override {
-        return m_name.c_str();
-    }
-
-    void serialize(const void* instance, serializer* sink) const override {
-        auto& ref = *cast(instance);
-        do_serialize(sink, ref, util::get_indices(ref));
-    }
-
-    void deserialize(void* instance, deserializer* source) const override {
-        auto& ref = *cast(instance);
-        do_deserialize(source, ref, util::get_indices(ref));
-    }
-
-    uniform_value create(const uniform_value& other) const override {
-        return create_impl<tuple_type>(other);
-    }
-
-    any_tuple as_any_tuple(void* instance) const override {
-        return (instance) ? any_tuple{*cast(instance)} : any_tuple{};
-    }
-
-    bool equal_to(const std::type_info& tinfo) const override {
-        return typeid(tuple_type) == tinfo;
-    }
-
-    bool equals(const void* instance1, const void* instance2) const override {
-        return *cast(instance1) == *cast(instance2);
-    }
-
- private:
-
-    inline tuple_type* cast(void* ptr) const {
-        return reinterpret_cast<tuple_type*>(ptr);
-    }
-
-    inline const tuple_type* cast(const void* ptr) const {
-        return reinterpret_cast<const tuple_type*>(ptr);
-    }
-
-    std::string m_name;
-
-};
-
 } // namespace detail
-
-/**
- * @addtogroup TypeSystem
- * @{
- */
-
-/**
- * @brief Adds a hint to the type system of libcppa. This type hint can
- *        increase the network performance, because libcppa
- *        can use the hint to create tuples with full static type
- *        information rather than using fully dynamically typed tuples.
- */
-template<typename T, typename... Ts>
-inline void announce_tuple() {
-    typedef detail::meta_cow_tuple<T, Ts...> meta_type;
-    uniform_type_info_ptr ptr{new meta_type};
-    get_uniform_type_info_map()->insert(std::move(ptr));
-}
-
-/**
- * @}
- */
+*/
 
 } // namespace actor
 } // namespace boost
