@@ -27,46 +27,50 @@
  * along with libcppa. If not, see <http://www.gnu.org/licenses/>.            *
 \******************************************************************************/
 
+#ifndef BOOST_ACTOR_DETAIL_TUPLE_DUMMY_HPP
+#define TUPLE_DUMMY_HPP
 
-/******************************************************************************\
- * Based on work by the mingw-w64 project;                                    *
- * original header:                                                           *
- *                                                                            *
- * Copyright (c) 2012 mingw-w64 project                                       *
- *                                                                            *
- * Contributing author: Kai Tietz                                             *
- *                                                                            *
- * Permission is hereby granted, free of charge, to any person obtaining a    *
- * copy of this software and associated documentation files (the "Software"), *
- * to deal in the Software without restriction, including without limitation  *
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,   *
- * and/or sell copies of the Software, and to permit persons to whom the      *
- * Software is furnished to do so, subject to the following conditions:       *
- *                                                                            *
- * The above copyright notice and this permission notice shall be included in *
- * all copies or substantial portions of the Software.                        *
- *                                                                            *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR *
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,   *
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL    *
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER *
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING    *
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER        *
- * DEALINGS IN THE SOFTWARE.                                                  *
-\******************************************************************************/
+#include "boost/actor/cppa_fwd.hpp"
 
-#ifndef BOOST_ACTOR_DETAIL_EXECINFO_WINDOWS_HPP
-#define BOOST_ACTOR_DETAIL_EXECINFO_WINDOWS_HPP
+#include "boost/actor/util/type_list.hpp"
+
+#include "boost/actor/detail/tuple_iterator.hpp"
 
 namespace boost {
 namespace actor {
 namespace detail {
 
-int backtrace(void** buffer, int size);
-void backtrace_symbols_fd(void* const* buffer, int size, int fd);
+struct tuple_dummy {
+    typedef util::empty_type_list types;
+    typedef tuple_iterator<tuple_dummy> const_iterator;
+    inline size_t size() const {
+        return 0;
+    }
+    inline void* mutable_at(size_t) {
+        return nullptr;
+    }
+    inline const void* at(size_t) const {
+        return nullptr;
+    }
+    inline const uniform_type_info* type_at(size_t) const {
+        return nullptr;
+    }
+    inline const std::type_info* type_token() const {
+        return &typeid(util::empty_type_list);
+    }
+    inline bool dynamically_typed() const {
+        return false;
+    }
+    inline const_iterator begin() const {
+        return {this};
+    }
+    inline const_iterator end() const {
+        return {this, 0};
+    }
+};
 
 } // namespace detail
 } // namespace actor
 } // namespace boost
 
-#endif // BOOST_ACTOR_DETAIL_EXECINFO_WINDOWS_HPP
+#endif // TUPLE_DUMMY_HPP

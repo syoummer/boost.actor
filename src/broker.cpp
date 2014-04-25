@@ -510,14 +510,14 @@ void broker::erase_acceptor(int id) {
 connection_handle broker::add_scribe(input_stream_ptr in, output_stream_ptr out) {
     using namespace std;
     auto id = connection_handle::from_int(in->read_handle());
-    m_io.insert(make_pair(id, create_unique<scribe>(this, move(in), move(out))));
+    m_io.insert(make_pair(id, scribe_pointer{new scribe(this, move(in), move(out))}));
     return id;
 }
 
 accept_handle broker::add_doorman(acceptor_uptr ptr) {
     using namespace std;
     auto id = accept_handle::from_int(ptr->file_handle());
-    m_accept.insert(make_pair(id, create_unique<doorman>(this, std::move(ptr))));
+    m_accept.insert(make_pair(id, doorman_pointer{new doorman(this, std::move(ptr))}));
     return id;
 }
 

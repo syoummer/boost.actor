@@ -36,7 +36,6 @@ boost/actor/detail/decorated_tuple.hpp
 boost/actor/detail/default_uniform_type_info.hpp
 boost/actor/detail/demangle.hpp
 boost/actor/detail/disablable_delete.hpp
-boost/actor/detail/execinfo_windows.hpp
 boost/actor/detail/fd_util.hpp
 boost/actor/detail/functor_based_actor.hpp
 boost/actor/detail/functor_based_blocking_actor.hpp
@@ -309,3 +308,4 @@ unit_testing/test_uniform_type.cpp
 unit_testing/test_yield_interface.cpp
 boost/actor/detail/make_counted.hpp
 boost/actor/detail/tuple_zip.hpp
+boost/actor/detail/tuple_dummy.hpp

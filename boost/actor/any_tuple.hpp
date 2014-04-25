@@ -211,9 +211,6 @@ class any_tuple {
 
     /** @cond PRIVATE */
 
-    template<typename T>
-    static inline any_tuple view(T&& value);
-
     inline void force_detach();
 
     void reset();
@@ -310,7 +307,6 @@ inline void any_tuple::force_detach() {
 inline const std::string* any_tuple::tuple_type_names() const {
     return m_vals->tuple_type_names();
 }
-
 
 inline size_t any_tuple::size() const {
     return m_vals ? m_vals->size() : 0;

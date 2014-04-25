@@ -203,7 +203,7 @@ int main(int argc, char** argv) {
                  << endl;
         }
     };
-    pfun(any_tuple::view(args));
+    //pfun(any_tuple::view(args));
     await_all_actors_done();
     shutdown();
 }

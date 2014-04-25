@@ -791,7 +791,7 @@ void push_native_type(abstract_int_tinfo* m [][2]) {
 
 template<typename... Ts>
 inline void push_hint(uniform_type_info_map* thisptr) {
-    thisptr->insert(create_unique<meta_cow_tuple<Ts...>>());
+    thisptr->insert(uniform_type_info_ptr{new meta_cow_tuple<Ts...>});
 }
 
 class utim_impl : public uniform_type_info_map {
@@ -918,9 +918,9 @@ class utim_impl : public uniform_type_info_map {
         }
         if (!result && name.compare(0, 3, "@<>") == 0) {
             // create tuple UTI on-the-fly
-            result = insert(create_unique<default_meta_tuple>(name));
+            result = insert(uniform_type_info_ptr{new default_meta_tuple(name)});
         }
-        return result; //(res) ? res : find_name(m_user_types, name);
+        return result;
     }
 
     std::vector<pointer> get_all() const {
@@ -932,7 +932,7 @@ class utim_impl : public uniform_type_info_map {
         return res;
     }
 
-    pointer insert(std::unique_ptr<uniform_type_info> uti) {
+    pointer insert(uniform_type_info_ptr uti) {
         std::unique_lock<util::shared_spinlock> guard(m_lock);
         auto e = m_user_types.end();
         auto i = std::lower_bound(m_user_types.begin(), e, uti.get(),

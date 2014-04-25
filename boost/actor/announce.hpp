@@ -107,7 +107,7 @@ namespace actor {
  *         is returned and @p uniform_type was deleted.
  */
 const uniform_type_info* announce(const std::type_info& tinfo,
-                                  std::unique_ptr<uniform_type_info> utype);
+                                  uniform_type_info_ptr utype);
 
 // deals with member pointer
 /**
@@ -169,7 +169,7 @@ compound_member(const std::pair<GRes (Parent::*)() const,
 template<class C, typename... Ts>
 inline const uniform_type_info* announce(const Ts&... args) {
     auto ptr = new detail::default_uniform_type_info<C>(args...);
-    return announce(typeid(C), std::unique_ptr<uniform_type_info>{ptr});
+    return announce(typeid(C), uniform_type_info_ptr{ptr});
 }
 
 /**
@@ -301,7 +301,8 @@ class meta_cow_tuple : public uniform_type_info {
 template<typename T, typename... Ts>
 inline void announce_tuple() {
     typedef detail::meta_cow_tuple<T, Ts...> meta_type;
-    get_uniform_type_info_map()->insert(create_unique<meta_type>());
+    uniform_type_info_ptr ptr{new meta_type};
+    get_uniform_type_info_map()->insert(std::move(ptr));
 }
 
 /**

@@ -31,13 +31,9 @@
 #ifndef BOOST_ACTOR_CONFIG_HPP
 #define BOOST_ACTOR_CONFIG_HPP
 
+#include "boost/config.hpp"
+
 // Config pararameters defined by the build system (usually CMake):
-//
-// BOOST_ACTOR_STANDALONE_BUILD:
-//     - builds libcppa without Boost
-//
-// BOOST_ACTOR_DISABLE_CONTEXT_SWITCHING:
-//     - disables context switching even if Boost is available
 //
 // BOOST_ACTOR_DEBUG_MODE:
 //     - check requirements at runtime
@@ -45,26 +41,10 @@
 // BOOST_ACTOR_LOG_LEVEL:
 //     - denotes the amount of logging, ranging from error messages only (0)
 //       to complete traces (4)
-//
-// BOOST_ACTOR_OPENCL:
-//     - enables optional OpenCL module
-
-/**
- * @brief Denotes the libcppa version in the format {MAJOR}{MINOR}{PATCH},
- *        whereas each number is a two-digit decimal number without
- *        leading zeros (e.g. 900 is version 0.9.0).
- */
-#define BOOST_ACTOR_VERSION 900
-
-#define BOOST_ACTOR_MAJOR_VERSION (BOOST_ACTOR_VERSION / 100000)
-#define BOOST_ACTOR_MINOR_VERSION ((BOOST_ACTOR_VERSION / 100) % 1000)
-#define BOOST_ACTOR_PATCH_VERSION (BOOST_ACTOR_VERSION % 100)
 
 // sets BOOST_ACTOR_DEPRECATED, BOOST_ACTOR_ANNOTATE_FALLTHROUGH,
 // BOOST_ACTOR_PUSH_WARNINGS and BOOST_ACTOR_POP_WARNINGS
-#if defined(__clang__)
-#  define BOOST_ACTOR_CLANG
-#  define BOOST_ACTOR_DEPRECATED __attribute__((__deprecated__))
+#ifdef BOOST_CLANG
 #  define BOOST_ACTOR_PUSH_WARNINGS                                                   \
         _Pragma("clang diagnostic push")                                       \
         _Pragma("clang diagnostic ignored \"-Wall\"")                          \
@@ -84,19 +64,7 @@
 #  define BOOST_ACTOR_POP_WARNINGS                                                    \
         _Pragma("clang diagnostic pop")
 #  define BOOST_ACTOR_ANNOTATE_FALLTHROUGH [[clang::fallthrough]]
-#elif defined(__GNUC__)
-#  define BOOST_ACTOR_GCC
-#  define BOOST_ACTOR_DEPRECATED __attribute__((__deprecated__))
-#  define BOOST_ACTOR_PUSH_WARNINGS
-#  define BOOST_ACTOR_POP_WARNINGS
-#  define BOOST_ACTOR_ANNOTATE_FALLTHROUGH static_cast<void>(0)
-#elif defined(_MSC_VER)
-#  define BOOST_ACTOR_DEPRECATED __declspec(deprecated)
-#  define BOOST_ACTOR_PUSH_WARNINGS
-#  define BOOST_ACTOR_POP_WARNINGS
-#  define BOOST_ACTOR_ANNOTATE_FALLTHROUGH static_cast<void>(0)
 #else
-#  define BOOST_ACTOR_DEPRECATED
 #  define BOOST_ACTOR_PUSH_WARNINGS
 #  define BOOST_ACTOR_POP_WARNINGS
 #  define BOOST_ACTOR_ANNOTATE_FALLTHROUGH static_cast<void>(0)
@@ -105,9 +73,6 @@
 // detect OS
 #if defined(__APPLE__)
 #  define BOOST_ACTOR_MACOS
-#  ifndef _GLIBCXX_HAS_GTHREADS
-#    define _GLIBCXX_HAS_GTHREADS
-#  endif
 #elif defined(__linux__)
 #  define BOOST_ACTOR_LINUX
 #   include <linux/version.h>
@@ -120,51 +85,29 @@
 #  error Platform and/or compiler not supportet
 #endif
 
-#include <memory>
 #include <cstdio>
 #include <cstdlib>
 
-// import backtrace and backtrace_symbols_fd into cppa::detail
-#ifdef BOOST_ACTOR_WINDOWS
-#include "boost/actor/detail/execinfo_windows.hpp"
-#else
-#include <execinfo.h>
-namespace boost {
-namespace actor {
-namespace detail {
-using ::backtrace;
-using ::backtrace_symbols_fd;
-} // namespace detail
-} // namespace actor
-} // namespace boost
-#endif
-
-//
 #ifdef BOOST_ACTOR_DEBUG_MODE
-#   define BOOST_ACTOR_REQUIRE__(stmt, file, line)                                    \
+#   define BOOST_ACTOR_REQUIRE__(stmt, file, line)                             \
         printf("%s:%u: requirement failed '%s'\n", file, line, stmt);          \
-        {                                                                      \
-            void* array[10];                                                   \
-            auto cppa_bt_size = ::cppa::detail::backtrace(array, 10);          \
-            ::cppa::detail::backtrace_symbols_fd(array, cppa_bt_size, 2);      \
-        }                                                                      \
         abort()
-#   define BOOST_ACTOR_REQUIRE(stmt)                                                  \
+#   define BOOST_ACTOR_REQUIRE(stmt)                                           \
         if ((stmt) == false) {                                                 \
-            BOOST_ACTOR_REQUIRE__(#stmt, __FILE__, __LINE__);                         \
+            BOOST_ACTOR_REQUIRE__(#stmt, __FILE__, __LINE__);                  \
         }((void) 0)
 #else
 #   define BOOST_ACTOR_REQUIRE(unused) static_cast<void>(0)
 #endif
 
-#define BOOST_ACTOR_CRITICAL__(error, file, line) {                                   \
+#define BOOST_ACTOR_CRITICAL__(error, file, line) {                            \
         printf("%s:%u: critical error: '%s'\n", file, line, error);            \
         exit(7);                                                               \
     } ((void) 0)
 
 #define BOOST_ACTOR_CRITICAL(error) BOOST_ACTOR_CRITICAL__(error, __FILE__, __LINE__)
 
-#ifdef BOOST_ACTOR_WINDOWS
+#ifdef BOOST_WINDOWS
 #   include <w32api.h>
 #   undef _WIN32_WINNT
 #   undef WINVER
@@ -183,16 +126,8 @@ using ::backtrace_symbols_fd;
 namespace boost {
 namespace actor {
 
-/**
- * @brief An alternative for the 'missing' @p std::make_unqiue.
- */
-template<typename T, typename... Args>
-std::unique_ptr<T> create_unique(Args&&... args) {
-    return std::unique_ptr<T>{new T(std::forward<Args>(args)...)};
-}
-
 // platform-dependent types for sockets and some utility functions
-#ifdef BOOST_ACTOR_WINDOWS
+#ifdef BOOST_WINDOWS
     typedef SOCKET native_socket_type;
     typedef const char* setsockopt_ptr;
     typedef const char* socket_send_ptr;

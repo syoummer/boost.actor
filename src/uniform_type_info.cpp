@@ -67,7 +67,7 @@ namespace { inline detail::uniform_type_info_map& uti_map() {
 uniform_value_t::~uniform_value_t() { }
 
 const uniform_type_info* announce(const std::type_info&,
-                                  std::unique_ptr<uniform_type_info> utype) {
+                                  uniform_type_info_ptr utype) {
     return uti_map().insert(std::move(utype));
 }
 

@@ -131,7 +131,7 @@ int main() {
     BOOST_ACTOR_CHECK_EQUAL(detail::impl_id<strmap>(), 2);
     BOOST_ACTOR_CHECK_EQUAL(token::value, 2);
 
-    announce(typeid(raw_struct), create_unique<raw_struct_type_info>());
+    announce(typeid(raw_struct), uniform_type_info_ptr{new raw_struct_type_info});
 
     actor_namespace addressing;
 

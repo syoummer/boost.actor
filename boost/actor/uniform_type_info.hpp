@@ -281,6 +281,8 @@ class uniform_type_info {
 
 };
 
+typedef std::unique_ptr<uniform_type_info> uniform_type_info_ptr;
+
 /**
  * @relates uniform_type_info
  */

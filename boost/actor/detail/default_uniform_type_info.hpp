@@ -49,13 +49,13 @@ namespace boost {
 namespace actor {
 namespace detail {
 
-typedef std::unique_ptr<uniform_type_info> unique_uti;
+typedef uniform_type_info_ptr uniform_type_info_ptr;
 
 // check if there's a 'push_back' that takes a C::value_type
 template<typename T>
 char sfinae_has_push_back(T* ptr,
-                               typename T::value_type* val = nullptr,
-                               decltype(ptr->push_back(*val))* = nullptr);
+                          typename T::value_type* val = nullptr,
+                          decltype(ptr->push_back(*val))* = nullptr);
 
 long sfinae_has_push_back(void*); // SFNINAE default
 
@@ -217,7 +217,7 @@ class forwarding_serialize_policy {
 
  public:
 
-    inline forwarding_serialize_policy(unique_uti uti)
+    inline forwarding_serialize_policy(uniform_type_info_ptr uti)
             : m_uti(std::move(uti)) { }
 
     template<typename T>
@@ -232,7 +232,7 @@ class forwarding_serialize_policy {
 
  private:
 
-    unique_uti m_uti;
+    uniform_type_info_ptr m_uti;
 
 };
 
@@ -410,38 +410,38 @@ struct fake_access_policy {
 };
 
 template<typename T, class C>
-unique_uti new_member_tinfo(T C::* memptr) {
+uniform_type_info_ptr new_member_tinfo(T C::* memptr) {
     typedef memptr_access_policy<T, C> access_policy;
     typedef member_tinfo<T, access_policy> result_type;
-    return unique_uti(new result_type(memptr));
+    return uniform_type_info_ptr(new result_type(memptr));
 }
 
 template<typename T, class C>
-unique_uti new_member_tinfo(T C::* memptr,
-                            std::unique_ptr<uniform_type_info> meminf) {
+uniform_type_info_ptr new_member_tinfo(T C::* memptr,
+                            uniform_type_info_ptr meminf) {
     typedef memptr_access_policy<T, C> access_policy;
     typedef member_tinfo<T, access_policy, forwarding_serialize_policy> tinfo;
-    return unique_uti(new tinfo(memptr, std::move(meminf)));
+    return uniform_type_info_ptr(new tinfo(memptr, std::move(meminf)));
 }
 
 template<class C, typename GRes, typename SRes, typename SArg>
-unique_uti new_member_tinfo(GRes (C::*getter)() const,
+uniform_type_info_ptr new_member_tinfo(GRes (C::*getter)() const,
                             SRes (C::*setter)(SArg)) {
     typedef getter_setter_access_policy<C, GRes, SRes, SArg> access_policy;
     typedef typename util::rm_const_and_ref<GRes>::type value_type;
     typedef member_tinfo<value_type, access_policy> result_type;
-    return unique_uti(new result_type(access_policy(getter, setter)));
+    return uniform_type_info_ptr(new result_type(access_policy(getter, setter)));
 }
 
 template<class C, typename GRes, typename SRes, typename SArg>
-unique_uti new_member_tinfo(GRes (C::*getter)() const,
+uniform_type_info_ptr new_member_tinfo(GRes (C::*getter)() const,
                             SRes (C::*setter)(SArg),
-                            std::unique_ptr<uniform_type_info> meminf) {
+                            uniform_type_info_ptr meminf) {
     typedef getter_setter_access_policy<C, GRes, SRes, SArg> access_policy;
     typedef typename util::rm_const_and_ref<GRes>::type value_type;
     typedef member_tinfo<value_type, access_policy, forwarding_serialize_policy>
             tinfo;
-    return unique_uti(new tinfo(access_policy(getter, setter),
+    return uniform_type_info_ptr(new tinfo(access_policy(getter, setter),
                                 std::move(meminf)));
 }
 
@@ -457,7 +457,7 @@ class default_uniform_type_info : public util::abstract_uniform_type_info<T> {
 
     default_uniform_type_info() {
         typedef member_tinfo<T, fake_access_policy<T> > result_type;
-        m_members.push_back(unique_uti(new result_type));
+        m_members.push_back(uniform_type_info_ptr(new result_type));
     }
 
     void serialize(const void* obj, serializer* s) const override {
@@ -510,7 +510,7 @@ class default_uniform_type_info : public util::abstract_uniform_type_info<T> {
                        util::abstract_uniform_type_info<R>*
                    >& pr,
                    Ts&&... args) {
-        m_members.push_back(new_member_tinfo(pr.first, unique_uti(pr.second)));
+        m_members.push_back(new_member_tinfo(pr.first, uniform_type_info_ptr(pr.second)));
         push_back(std::forward<Ts>(args)...);
     }
 
@@ -541,11 +541,11 @@ class default_uniform_type_info : public util::abstract_uniform_type_info<T> {
                    Ts&&... args) {
         m_members.push_back(new_member_tinfo(pr.first.first,
                                              pr.first.second,
-                                             unique_uti(pr.second)));
+                                             uniform_type_info_ptr(pr.second)));
         push_back(std::forward<Ts>(args)...);
     }
 
-    std::vector<unique_uti> m_members;
+    std::vector<uniform_type_info_ptr> m_members;
 
 };
 

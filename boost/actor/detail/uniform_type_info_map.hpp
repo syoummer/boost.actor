@@ -142,7 +142,7 @@ class uniform_type_info_map {
 
     virtual std::vector<pointer> get_all() const = 0;
 
-    virtual pointer insert(std::unique_ptr<uniform_type_info> uti) = 0;
+    virtual pointer insert(uniform_type_info_ptr uti) = 0;
 
     static uniform_type_info_map* create_singleton();
 

@@ -170,7 +170,7 @@ void testee(event_based_actor* self, size_t remaining) {
 
 int main() {
     // the tree_type_info is owned by libcppa after this function call
-    announce(typeid(tree), std::unique_ptr<uniform_type_info>{new tree_type_info});
+    announce(typeid(tree), uniform_type_info_ptr{new tree_type_info});
 
     tree t0; // create a tree and fill it with some data
 
