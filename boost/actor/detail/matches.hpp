@@ -33,7 +33,7 @@
 
 #include <numeric>
 
-#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/message.hpp"
 #include "boost/actor/wildcard_position.hpp"
 
 #include "boost/actor/util/type_list.hpp"

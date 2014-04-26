@@ -34,7 +34,7 @@
 #include <cstdint>
 
 #include "boost/actor/extend.hpp"
-#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/message.hpp"
 #include "boost/actor/actor_addr.hpp"
 #include "boost/actor/message_id.hpp"
 #include "boost/actor/ref_counted.hpp"
@@ -57,7 +57,7 @@ class mailbox_element : public extend<memory_managed>::with<memory_cached> {
     mailbox_element* next;   // intrusive next pointer
     bool             marked; // denotes if this node is currently processed
     actor_addr       sender;
-    any_tuple        msg;    // 'content field'
+    message        msg;    // 'content field'
     message_id       mid;
 
     ~mailbox_element();
@@ -76,7 +76,7 @@ class mailbox_element : public extend<memory_managed>::with<memory_cached> {
 
     mailbox_element() = default;
 
-    mailbox_element(msg_hdr_cref hdr, any_tuple data);
+    mailbox_element(msg_hdr_cref hdr, message data);
 
 };
 

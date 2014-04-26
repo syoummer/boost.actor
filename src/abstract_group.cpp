@@ -30,7 +30,7 @@
 
 #include "boost/actor/cppa.hpp"
 #include "boost/actor/abstract_group.hpp"
-#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/message.hpp"
 #include "boost/actor/singletons.hpp"
 #include "boost/actor/util/shared_spinlock.hpp"
 
@@ -74,7 +74,7 @@ struct group_nameserver : event_based_actor {
     behavior make_behavior() override {
         return (
             on(atom("GET_GROUP"), arg_match) >> [](const std::string& name) {
-                return make_any_tuple(atom("GROUP"), group::get("local", name));
+                return make_message(atom("GROUP"), group::get("local", name));
             },
             on(atom("SHUTDOWN")) >> [=] {
                 quit();
@@ -91,7 +91,7 @@ void publish_local_groups(std::uint16_t port, const char* addr) {
     }
     catch (std::exception&) {
         gn->enqueue({invalid_actor_addr, nullptr},
-                    make_any_tuple(atom("SHUTDOWN")),
+                    make_message(atom("SHUTDOWN")),
                     nullptr);
         throw;
     }

@@ -41,7 +41,7 @@
 
 #include "boost/actor/on.hpp"
 #include "boost/actor/behavior.hpp"
-#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/message.hpp"
 #include "boost/actor/ref_counted.hpp"
 #include "boost/intrusive_ptr.hpp"
 #include "boost/actor/may_have_timeout.hpp"
@@ -58,7 +58,7 @@ class behavior;
 
 /**
  * @brief A partial function implementation
- *        for {@link cppa::any_tuple any_tuples}.
+ *        for {@link cppa::message messages}.
  */
 class partial_function {
 
@@ -89,7 +89,7 @@ class partial_function {
      * @brief Returns @p true if this partial function is defined for the
      *        types of @p value, false otherwise.
      */
-    inline bool defined_at(const any_tuple& value);
+    inline bool defined_at(const message& value);
 
     /**
      * @brief Returns a value if @p arg was matched by one of the
@@ -99,7 +99,7 @@ class partial_function {
      *       does not evaluate guards.
      */
     template<typename T>
-    inline optional<any_tuple> operator()(T&& arg);
+    inline optional<message> operator()(T&& arg);
 
     /**
      * @brief Adds a fallback which is used where
@@ -143,12 +143,12 @@ partial_function::partial_function(const T& arg, Ts&&... args)
              detail::lift_to_match_expr(arg),
              detail::lift_to_match_expr(std::forward<Ts>(args))...)) { }
 
-inline bool partial_function::defined_at(const any_tuple& value) {
+inline bool partial_function::defined_at(const message& value) {
     return (m_impl) && m_impl->defined_at(value);
 }
 
 template<typename T>
-inline optional<any_tuple> partial_function::operator()(T&& arg) {
+inline optional<message> partial_function::operator()(T&& arg) {
     return (m_impl) ? m_impl->invoke(std::forward<T>(arg)) : none;
 }
 

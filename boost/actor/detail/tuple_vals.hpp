@@ -37,7 +37,7 @@
 #include "boost/actor/util/type_list.hpp"
 
 #include "boost/actor/detail/types_array.hpp"
-#include "boost/actor/detail/abstract_tuple.hpp"
+#include "boost/actor/detail/message_data.hpp"
 #include "boost/actor/detail/serialize_tuple.hpp"
 
 namespace boost {
@@ -67,12 +67,12 @@ struct tup_ptr_access<Pos, Max, false> {
 };
 
 template<typename... Ts>
-class tuple_vals : public abstract_tuple {
+class tuple_vals : public message_data {
 
     static_assert(sizeof...(Ts) > 0,
                   "tuple_vals is not allowed to be empty");
 
-    typedef abstract_tuple super;
+    typedef message_data super;
 
  public:
 
@@ -124,13 +124,13 @@ class tuple_vals : public abstract_tuple {
         return m_types[pos];
     }
 
-    bool equals(const abstract_tuple& other) const {
+    bool equals(const message_data& other) const {
         if (size() != other.size()) return false;
         const tuple_vals* o = dynamic_cast<const tuple_vals*>(&other);
         if (o) {
             return m_data == (o->m_data);
         }
-        return abstract_tuple::equals(other);
+        return message_data::equals(other);
     }
 
     const std::type_info* type_token() const {

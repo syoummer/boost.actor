@@ -41,7 +41,7 @@
 #include "boost/actor/atom.hpp"
 #include "boost/actor/actor.hpp"
 #include "boost/actor/channel.hpp"
-#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/message.hpp"
 #include "boost/actor/attachable.hpp"
 #include "boost/actor/scoped_actor.hpp"
 #include "boost/actor/spawn_options.hpp"
@@ -171,8 +171,8 @@ class coordinator {
     template<typename Duration, typename... Data>
     void delayed_send(message_header hdr,
                       const Duration& rel_time,
-                      any_tuple data           ) {
-        auto tup = make_any_tuple(atom("SEND"),
+                      message data           ) {
+        auto tup = make_message(atom("SEND"),
                                   util::duration{rel_time},
                                   std::move(hdr),
                                   std::move(data));
@@ -182,9 +182,9 @@ class coordinator {
     template<typename Duration, typename... Data>
     void delayed_reply(message_header hdr,
                        const Duration& rel_time,
-                       any_tuple data           ) {
+                       message data           ) {
         BOOST_ACTOR_REQUIRE(hdr.id.valid() && hdr.id.is_response());
-        auto tup = make_any_tuple(atom("SEND"),
+        auto tup = make_message(atom("SEND"),
                                   util::duration{rel_time},
                                   std::move(hdr),
                                   std::move(data));

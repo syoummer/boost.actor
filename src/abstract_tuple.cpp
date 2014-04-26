@@ -28,36 +28,36 @@
 \******************************************************************************/
 
 
-#include "boost/actor/detail/abstract_tuple.hpp"
+#include "boost/actor/detail/message_data.hpp"
 
 namespace boost {
 namespace actor {
 namespace detail {
 
-abstract_tuple::abstract_tuple(bool is_dynamic) : m_is_dynamic(is_dynamic) { }
+message_data::message_data(bool is_dynamic) : m_is_dynamic(is_dynamic) { }
 
-bool abstract_tuple::equals(const abstract_tuple &other) const {
+bool message_data::equals(const message_data &other) const {
     return    this == &other
            || (   size() == other.size()
                && std::equal(begin(), end(), other.begin(), detail::full_eq));
 }
 
-abstract_tuple::abstract_tuple(const abstract_tuple& other)
+message_data::message_data(const message_data& other)
 : m_is_dynamic(other.m_is_dynamic) { }
 
-const std::type_info* abstract_tuple::type_token() const {
+const std::type_info* message_data::type_token() const {
     return &typeid(void);
 }
 
-const void* abstract_tuple::native_data() const {
+const void* message_data::native_data() const {
     return nullptr;
 }
 
-void* abstract_tuple::mutable_native_data() {
+void* message_data::mutable_native_data() {
     return nullptr;
 }
 
-std::string get_tuple_type_names(const detail::abstract_tuple& tup) {
+std::string get_tuple_type_names(const detail::message_data& tup) {
     std::string result = "@<>";
     for (size_t i = 0; i < tup.size(); ++i) {
         auto uti = tup.type_at(i);
@@ -67,7 +67,7 @@ std::string get_tuple_type_names(const detail::abstract_tuple& tup) {
     return result;
 }
 
-abstract_tuple* abstract_tuple::ptr::get_detached() {
+message_data* message_data::ptr::get_detached() {
     auto p = m_ptr.get();
     if (!p->unique()) {
         auto np = p->copy();

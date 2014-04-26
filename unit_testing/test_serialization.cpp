@@ -24,9 +24,9 @@
 
 #include "test.hpp"
 
-#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/message.hpp"
 #include "boost/actor/announce.hpp"
-#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/message.hpp"
 #include "boost/actor/to_string.hpp"
 #include "boost/actor/serializer.hpp"
 #include "boost/actor/from_string.hpp"
@@ -44,7 +44,6 @@
 
 #include "boost/actor/detail/ieee_754.hpp"
 #include "boost/actor/detail/safe_equal.hpp"
-#include "boost/actor/detail/object_array.hpp"
 
 using namespace std;
 using namespace boost::actor;
@@ -141,7 +140,7 @@ int main() {
     oarr->push_back(object::from(static_cast<uint32_t>(42)));
     oarr->push_back(object::from("foo"  ));
 
-    any_tuple atuple1{static_cast<any_tuple::raw_ptr>(oarr)};
+    message atuple1{static_cast<message::raw_ptr>(oarr)};
     try {
         bool ok = false;
         partial_function check {
@@ -193,29 +192,29 @@ int main() {
 
     try {
         scoped_actor self;
-        auto ttup = make_any_tuple(1, 2, actor{self.get()});
+        auto ttup = make_message(1, 2, actor{self.get()});
         io::buffer wr_buf;
         binary_serializer bs(&wr_buf, &addressing);
         bs << ttup;
         binary_deserializer bd(wr_buf.data(), wr_buf.size(), &addressing);
-        any_tuple ttup2;
-        uniform_typeid<any_tuple>()->deserialize(&ttup2, &bd);
+        message ttup2;
+        uniform_typeid<message>()->deserialize(&ttup2, &bd);
         BOOST_ACTOR_CHECK(ttup  == ttup2);
     }
     catch (std::exception& e) { BOOST_ACTOR_FAILURE(to_verbose_string(e)); }
 
     try {
         scoped_actor self;
-        auto ttup = make_any_tuple(1, 2, actor{self.get()});
+        auto ttup = make_message(1, 2, actor{self.get()});
         io::buffer wr_buf;
         binary_serializer bs(&wr_buf, &addressing);
         bs << ttup;
         bs << ttup;
         binary_deserializer bd(wr_buf.data(), wr_buf.size(), &addressing);
-        any_tuple ttup2;
-        any_tuple ttup3;
-        uniform_typeid<any_tuple>()->deserialize(&ttup2, &bd);
-        uniform_typeid<any_tuple>()->deserialize(&ttup3, &bd);
+        message ttup2;
+        message ttup3;
+        uniform_typeid<message>()->deserialize(&ttup2, &bd);
+        uniform_typeid<message>()->deserialize(&ttup3, &bd);
         BOOST_ACTOR_CHECK(ttup  == ttup2);
         BOOST_ACTOR_CHECK(ttup  == ttup3);
         BOOST_ACTOR_CHECK(ttup2 == ttup3);
@@ -229,8 +228,8 @@ int main() {
         bs << atuple1;
         // deserialize b2 from buf
         binary_deserializer bd(wr_buf.data(), wr_buf.size(), &addressing);
-        any_tuple atuple2;
-        uniform_typeid<any_tuple>()->deserialize(&atuple2, &bd);
+        message atuple2;
+        uniform_typeid<message>()->deserialize(&atuple2, &bd);
         bool ok = false;
         partial_function check {
             [&](uint32_t val0, string val1) {
@@ -261,15 +260,15 @@ int main() {
 
     // test serialization of enums
     try {
-        auto enum_tuple = make_any_tuple(test_enum::b);
+        auto enum_tuple = make_message(test_enum::b);
         // serialize b1 to buf
         io::buffer wr_buf;
         binary_serializer bs(&wr_buf, &addressing);
         bs << enum_tuple;
         // deserialize b2 from buf
         binary_deserializer bd(wr_buf.data(), wr_buf.size(), &addressing);
-        any_tuple enum_tuple2;
-        uniform_typeid<any_tuple>()->deserialize(&enum_tuple2, &bd);
+        message enum_tuple2;
+        uniform_typeid<message>()->deserialize(&enum_tuple2, &bd);
         bool ok = false;
         partial_function check {
             [&](test_enum val) {

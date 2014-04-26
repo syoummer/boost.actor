@@ -53,8 +53,7 @@
 #include "boost/actor/binary_deserializer.hpp"
 
 #include "boost/actor/detail/raw_access.hpp"
-
-#include "boost/actor/intrusive/single_reader_queue.hpp"
+#include "boost/actor/detail/single_reader_queue.hpp"
 
 #include "boost/actor/io/acceptor.hpp"
 #include "boost/actor/io/middleman.hpp"
@@ -202,7 +201,7 @@ abstract_actor_ptr remote_actor_impl(stream_ptr_pair io, string_set expected) {
     struct remote_actor_result { remote_actor_result* next; actor value; };
     std::mutex qmtx;
     std::condition_variable qcv;
-    intrusive::single_reader_queue<remote_actor_result> q;
+    detail::single_reader_queue<remote_actor_result> q;
     mm->run_later([mm, io, pinfptr, remote_aid, &q, &qmtx, &qcv] {
         BOOST_ACTOR_LOGC_TRACE("cppa",
                         "remote_actor$create_connection", "");

@@ -28,43 +28,66 @@
 \******************************************************************************/
 
 
-#ifndef BOOST_ACTOR_OBJECT_IMPL_HPP
-#define BOOST_ACTOR_OBJECT_IMPL_HPP
+#include "boost/actor/message.hpp"
+#include "boost/actor/singletons.hpp"
 
-#include "boost/actor/object.hpp"
-
-namespace boost {
-namespace actor {
-
-template<typename T>
-const utype& uniform_type_info();
-
-} // namespace actor
-} // namespace boost
+#include "boost/actor/detail/decorated_tuple.hpp"
 
 namespace boost {
 namespace actor {
-namespace detail {
 
-template<typename T>
-struct obj_impl : object {
-    T m_value;
-    obj_impl() : m_value() { }
-    obj_impl(const T& v) : m_value(v) { }
-    virtual object* copy() const { return new obj_impl(m_value); }
-    virtual const utype& type() const { return uniform_type_info<T>(); }
-    virtual void* mutable_value() { return &m_value; }
-    virtual const void* value() const { return &m_value; }
-    virtual void serialize(serializer& s) const {
-        s << m_value;
-    }
-    virtual void deserialize(deserializer& d) {
-        d >> m_value;
-    }
-};
+message::message(detail::message_data* ptr) : m_vals(ptr) { }
 
-} // namespace detail
+message::message(message&& other) : m_vals(std::move(other.m_vals)) { }
+
+message::message(const data_ptr& vals) : m_vals(vals) { }
+
+message& message::operator=(message&& other) {
+    m_vals.swap(other.m_vals);
+    return *this;
+}
+
+void message::reset() {
+    m_vals.reset();
+}
+
+void* message::mutable_at(size_t p) {
+    BOOST_ACTOR_REQUIRE(m_vals != nullptr);
+    return m_vals->mutable_at(p);
+}
+
+const void* message::at(size_t p) const {
+    BOOST_ACTOR_REQUIRE(m_vals != nullptr);
+    return m_vals->at(p);
+}
+
+const uniform_type_info* message::type_at(size_t p) const {
+    BOOST_ACTOR_REQUIRE(m_vals != nullptr);
+    return m_vals->type_at(p);
+}
+
+bool message::equals(const message& other) const {
+    BOOST_ACTOR_REQUIRE(m_vals != nullptr);
+    return m_vals->equals(*other.vals());
+}
+
+message message::drop(size_t n) const {
+    BOOST_ACTOR_REQUIRE(m_vals != nullptr);
+    if (n == 0) return *this;
+    if (n >= size()) return message{};
+    return message{detail::decorated_tuple::create(m_vals, n)};
+}
+
+message message::drop_right(size_t n) const {
+    BOOST_ACTOR_REQUIRE(m_vals != nullptr);
+    using namespace std;
+    if (n == 0) return *this;
+    if (n >= size()) return message{};
+    vector<size_t> mapping(size() - n);
+    size_t i = 0;
+    generate(mapping.begin(), mapping.end(), [&] { return i++; });
+    return message{detail::decorated_tuple::create(m_vals, move(mapping))};
+}
+
 } // namespace actor
 } // namespace boost
-
-#endif // BOOST_ACTOR_OBJECT_IMPL_HPP

@@ -73,7 +73,7 @@ class actor_proxy : public abstract_actor {
      * middleman's thread.
      * @note This function is guaranteed to be called non-concurrently.
      */
-    virtual void deliver(msg_hdr_cref hdr, any_tuple msg) = 0;
+    virtual void deliver(msg_hdr_cref hdr, message msg) = 0;
 
  protected:
 

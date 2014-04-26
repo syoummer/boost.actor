@@ -20,10 +20,10 @@ void blocking_math_fun(blocking_actor* self) {
         // - on<atom("plus"), int, int>()
         // - on(atom("plus"), val<int>, val<int>)
         on(atom("plus"), arg_match) >> [](int a, int b) {
-            return make_any_tuple(atom("result"), a + b);
+            return make_message(atom("result"), a + b);
         },
         on(atom("minus"), arg_match) >> [](int a, int b) {
-            return make_any_tuple(atom("result"), a - b);
+            return make_message(atom("result"), a - b);
         },
         on(atom("quit")) >> [&]() {
             // note: this actor uses the blocking API, hence self->quit()
@@ -37,10 +37,10 @@ void calculator(event_based_actor* self) {
     // execute this behavior until actor terminates
     self->become (
         on(atom("plus"), arg_match) >> [](int a, int b) {
-            return make_any_tuple(atom("result"), a + b);
+            return make_message(atom("result"), a + b);
         },
         on(atom("minus"), arg_match) >> [](int a, int b) {
-            return make_any_tuple(atom("result"), a - b);
+            return make_message(atom("result"), a - b);
         },
         on(atom("quit")) >> [=] {
             // terminate actor with normal exit reason

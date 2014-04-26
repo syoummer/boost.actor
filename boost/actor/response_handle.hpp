@@ -65,7 +65,7 @@ struct blocking_response_handle_tag { };
  *        and enables <tt>sync_send(...).then(...)</tt>.
  *
  * @tparam Self The type of the actor this handle belongs to.
- * @tparam Result Either any_tuple or type_list<R1, R2, ... Rn>.
+ * @tparam Result Either message or type_list<R1, R2, ... Rn>.
  * @tparam Tag Either {@link nonblocking_response_handle_tag} or
  *             {@link blocking_response_handle_tag}.
  */
@@ -76,7 +76,7 @@ class response_handle;
  *                           nonblocking + untyped                            *
  ******************************************************************************/
 template<class Self>
-class response_handle<Self, any_tuple, nonblocking_response_handle_tag> {
+class response_handle<Self, message, nonblocking_response_handle_tag> {
 
  public:
 
@@ -161,7 +161,7 @@ class response_handle<Self, util::type_list<Ts...>, nonblocking_response_handle_
  *                             blocking + untyped                             *
  ******************************************************************************/
 template<class Self>
-class response_handle<Self, any_tuple, blocking_response_handle_tag> {
+class response_handle<Self, message, blocking_response_handle_tag> {
 
  public:
 

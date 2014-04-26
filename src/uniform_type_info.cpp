@@ -43,9 +43,9 @@
 #include "boost/actor/atom.hpp"
 #include "boost/actor/actor.hpp"
 #include "boost/actor/logging.hpp"
-#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/message.hpp"
 #include "boost/actor/announce.hpp"
-#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/message.hpp"
 #include "boost/intrusive_ptr.hpp"
 #include "boost/actor/uniform_type_info.hpp"
 

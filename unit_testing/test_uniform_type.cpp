@@ -17,7 +17,7 @@
 
 #include "boost/actor/atom.hpp"
 #include "boost/actor/announce.hpp"
-#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/message.hpp"
 #include "boost/actor/serializer.hpp"
 #include "boost/actor/deserializer.hpp"
 #include "boost/actor/message_header.hpp"
@@ -87,7 +87,7 @@ int main() {
         "@cn_hdl",                   // io::connection_handle
         "@atom",                     // atom_value
         "@addr",                     // actor address
-        "@tuple",                    // any_tuple
+        "@tuple",                    // message
         "@header",                   // message_header
         "@actor",                    // actor_ptr
         "@group",                    // group
@@ -152,7 +152,7 @@ int main() {
                     std::uint8_t, std::uint16_t, std::uint32_t, std::uint64_t,
                     std::string, std::u16string, std::u32string,
                     float, double,
-                    atom_value, any_tuple, message_header,
+                    atom_value, message, message_header,
                     actor, group,
                     channel, node_id_ptr
                  >::arr;
@@ -174,7 +174,7 @@ int main() {
         uniform_typeid<float>(),
         uniform_typeid<double>(),
         uniform_typeid<atom_value>(),
-        uniform_typeid<any_tuple>(),
+        uniform_typeid<message>(),
         uniform_typeid<message_header>(),
         uniform_typeid<actor>(),
         uniform_typeid<group>(),

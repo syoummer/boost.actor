@@ -44,10 +44,11 @@
 #include "boost/actor/group.hpp"
 #include "boost/actor/logging.hpp"
 #include "boost/actor/announce.hpp"
-#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/message.hpp"
 #include "boost/actor/message_header.hpp"
 #include "boost/actor/abstract_group.hpp"
 #include "boost/actor/actor_namespace.hpp"
+#include "boost/actor/message_builder.hpp"
 
 #include "boost/actor/util/duration.hpp"
 #include "boost/actor/util/scope_guard.hpp"
@@ -55,7 +56,6 @@
 
 #include "boost/actor/detail/raw_access.hpp"
 #include "boost/actor/detail/safe_equal.hpp"
-#include "boost/actor/detail/object_array.hpp"
 #include "boost/actor/detail/uniform_type_info_map.hpp"
 #include "boost/actor/detail/default_uniform_type_info.hpp"
 
@@ -70,7 +70,7 @@ namespace detail {
     { "boost::actor::acceptor_closed_msg",              "@acceptor_closed"    },
     { "boost::actor::actor",                            "@actor"              },
     { "boost::actor::actor_addr",                       "@addr"               },
-    { "boost::actor::any_tuple",                        "@tuple"              },
+    { "boost::actor::message",                        "@tuple"              },
     { "boost::actor::atom_value",                       "@atom"               },
     { "boost::actor::channel",                          "@channel"            },
     { "boost::actor::connection_closed_msg",            "@conn_closed"        },
@@ -291,7 +291,7 @@ void deserialize_impl(channel& ptrref, deserializer* source) {
     }
 }
 
-void serialize_impl(const any_tuple& tup, serializer* sink) {
+void serialize_impl(const message& tup, serializer* sink) {
     auto tname = tup.tuple_type_names();
     auto uti = get_uniform_type_info_map()
                ->by_uniform_name(tname
@@ -311,13 +311,13 @@ void serialize_impl(const any_tuple& tup, serializer* sink) {
     sink->end_object();
 }
 
-void deserialize_impl(any_tuple& atref, deserializer* source) {
+void deserialize_impl(message& atref, deserializer* source) {
     auto uti = source->begin_object();
     auto uval = uti->create();
     //auto ptr = uti->new_instance();
     uti->deserialize(uval->val, source);
     source->end_object();
-    atref = uti->as_any_tuple(uval->val);
+    atref = uti->as_message(uval->val);
 }
 
 void serialize_impl(msg_hdr_cref hdr, serializer* sink) {
@@ -503,8 +503,8 @@ class uti_base : public uniform_type_info {
         return create_impl<T>(other);
     }
 
-    any_tuple as_any_tuple(void* instance) const override {
-        return make_any_tuple(deref(instance));
+    message as_message(void* instance) const override {
+        return make_message(deref(instance));
     }
 
     static inline const T& deref(const void* ptr) {
@@ -591,8 +591,8 @@ class int_tinfo : public abstract_int_tinfo {
         return static_name();
     }
 
-    any_tuple as_any_tuple(void* instance) const override {
-        return make_any_tuple(deref(instance));
+    message as_message(void* instance) const override {
+        return make_message(deref(instance));
     }
 
  protected:
@@ -648,8 +648,8 @@ class buffer_type_info_impl : public uniform_type_info {
         return static_name();
     }
 
-    any_tuple as_any_tuple(void* instance) const override {
-        return make_any_tuple(deref(instance));
+    message as_message(void* instance) const override {
+        return make_message(deref(instance));
     }
 
  protected:
@@ -686,13 +686,11 @@ class buffer_type_info_impl : public uniform_type_info {
 
 };
 
-class default_meta_tuple : public uniform_type_info {
+class default_meta_message : public uniform_type_info {
 
  public:
 
-    typedef intrusive_ptr<object_array> shared_object_array;
-
-    default_meta_tuple(const std::string& name) {
+    default_meta_message(const std::string& name) {
         m_name = name;
         std::vector<std::string> elements;
         split(elements, name, is_any_of("+"));
@@ -708,18 +706,18 @@ class default_meta_tuple : public uniform_type_info {
     }
 
     uniform_value create(const uniform_value& other) const override {
-        auto res = create_impl<shared_object_array>(other);
+        auto res = create_impl<message>(other);
         if (!other) {
             // res is not a copy => fill with values
-            shared_object_array soa{new object_array};
-            for (auto& e : m_elements) soa->push_back(e->create());
-            *cast(res->val) = std::move(soa);
+            message_builder mb;
+            for (auto& e : m_elements) mb.append(e->create());
+            *cast(res->val) = mb.to_message();
         }
         return res;
     }
 
-    any_tuple as_any_tuple(void* ptr) const override {
-        return any_tuple{static_cast<any_tuple::raw_ptr>(cast(ptr)->get())};
+    message as_message(void* ptr) const override {
+        return *cast(ptr);
     }
 
     const char* name() const override {
@@ -727,17 +725,19 @@ class default_meta_tuple : public uniform_type_info {
     }
 
     void serialize(const void* ptr, serializer* sink) const override {
-        auto& oarr = *(cast(ptr)->get());
+        auto& msg = *cast(ptr);
+        BOOST_ACTOR_REQUIRE(msg.size() == m_elements.size());
         for (size_t i = 0; i < m_elements.size(); ++i) {
-            m_elements[i]->serialize(oarr.at(i), sink);
+            m_elements[i]->serialize(msg.at(i), sink);
         }
     }
 
     void deserialize(void* ptr, deserializer* source) const override {
-        auto& oarr = *(cast(ptr)->get());
+        message_builder mb;
         for (size_t i = 0; i < m_elements.size(); ++i) {
-            m_elements[i]->deserialize(oarr.mutable_at(i), source);
+            mb.append(m_elements[i]->deserialize(source));
         }
+        *cast(ptr) = mb.to_message();
     }
 
     bool equal_to(const std::type_info&) const override {
@@ -745,8 +745,8 @@ class default_meta_tuple : public uniform_type_info {
     }
 
     bool equals(const void* instance1, const void* instance2) const override {
-        auto& lhs = *(cast(instance1)->get());
-        auto& rhs = *(cast(instance2)->get());
+        auto& lhs = *cast(instance1);
+        auto& rhs = *cast(instance2);
         full_eq_type cmp;
         return std::equal(lhs.begin(), lhs.end(), rhs.begin(), cmp);
     }
@@ -756,12 +756,12 @@ class default_meta_tuple : public uniform_type_info {
     std::string m_name;
     std::vector<const uniform_type_info*> m_elements;
 
-    inline shared_object_array* cast(void* ptr) const {
-        return reinterpret_cast<shared_object_array*>(ptr);
+    inline message* cast(void* ptr) const {
+        return reinterpret_cast<message*>(ptr);
     }
 
-    inline const shared_object_array* cast(const void* ptr) const {
-        return reinterpret_cast<const shared_object_array*>(ptr);
+    inline const message* cast(const void* ptr) const {
+        return reinterpret_cast<const message*>(ptr);
     }
 
 };
@@ -906,7 +906,7 @@ class utim_impl : public uniform_type_info_map {
         }
         if (!result && name.compare(0, 3, "@<>") == 0) {
             // create tuple UTI on-the-fly
-            result = insert(uniform_type_info_ptr{new default_meta_tuple(name)});
+            result = insert(uniform_type_info_ptr{new default_meta_message(name)});
         }
         return result;
     }
@@ -966,7 +966,7 @@ class utim_impl : public uniform_type_info_map {
 
     // 10-19
     uti_impl<group_down_msg>                m_type_group_down;
-    uti_impl<any_tuple>                     m_type_tuple;
+    uti_impl<message>                     m_type_tuple;
     uti_impl<util::duration>                m_type_duration;
     uti_impl<sync_exited_msg>               m_type_sync_exited;
     uti_impl<sync_timeout_msg>              m_type_sync_timeout;

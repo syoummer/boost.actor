@@ -57,7 +57,7 @@ class behavior {
 
  public:
 
-    typedef std::function<optional<any_tuple> (any_tuple&)> continuation_fun;
+    typedef std::function<optional<message> (message&)> continuation_fun;
 
     /** @cond PRIVATE */
 
@@ -105,7 +105,7 @@ class behavior {
      *       does not evaluate guards.
      */
     template<typename T>
-    inline optional<any_tuple> operator()(T&& arg);
+    inline optional<message> operator()(T&& arg);
 
     /**
      * @brief Adds a continuation to this behavior that is executed
@@ -165,7 +165,7 @@ inline const util::duration& behavior::timeout() const {
 }
 
 template<typename T>
-inline optional<any_tuple> behavior::operator()(T&& arg) {
+inline optional<message> behavior::operator()(T&& arg) {
     return (m_impl) ? m_impl->invoke(std::forward<T>(arg)) : none;
 }
 

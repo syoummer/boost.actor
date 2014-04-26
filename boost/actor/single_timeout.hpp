@@ -31,7 +31,7 @@
 #ifndef BOOST_ACTOR_SINGLE_TIMEOUT_HPP
 #define BOOST_ACTOR_SINGLE_TIMEOUT_HPP
 
-#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/message.hpp"
 #include "boost/actor/system_messages.hpp"
 
 #include "boost/actor/util/duration.hpp"
@@ -60,7 +60,7 @@ class single_timeout : public Base {
         if (d.valid()) {
             m_has_timeout = true;
             auto tid = ++m_timeout_id;
-            auto msg = make_any_tuple(timeout_msg{tid});
+            auto msg = make_message(timeout_msg{tid});
             if (d.is_zero()) {
                 // immediately enqueue timeout message if duration == 0s
                 this->enqueue({this->address(), this}, std::move(msg),

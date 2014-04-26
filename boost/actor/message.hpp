@@ -41,7 +41,7 @@
 #include "boost/actor/util/type_traits.hpp"
 
 #include "boost/actor/detail/tuple_vals.hpp"
-#include "boost/actor/detail/abstract_tuple.hpp"
+#include "boost/actor/detail/message_data.hpp"
 #include "boost/actor/detail/implicit_conversions.hpp"
 
 namespace boost {
@@ -51,49 +51,49 @@ namespace actor {
  * @brief Describes a fixed-length copy-on-write tuple
  *        with elements of any type.
  */
-class any_tuple {
+class message {
 
  public:
 
     /**
      * @brief A raw pointer to the data.
      */
-    typedef detail::abstract_tuple* raw_ptr;
+    typedef detail::message_data* raw_ptr;
 
     /**
      * @brief A (COW) smart pointer to the data.
      */
-    typedef detail::abstract_tuple::ptr data_ptr;
+    typedef detail::message_data::ptr data_ptr;
 
     /**
      * @brief An iterator to access each element as <tt>const void*</tt>.
      */
-    typedef detail::abstract_tuple::const_iterator const_iterator;
+    typedef detail::message_data::const_iterator const_iterator;
 
     /**
      * @brief Creates an empty tuple.
      */
-    any_tuple() = default;
+    message() = default;
 
     /**
      * @brief Move constructor.
      */
-    any_tuple(any_tuple&&);
+    message(message&&);
 
     /**
      * @brief Copy constructor.
      */
-    any_tuple(const any_tuple&) = default;
+    message(const message&) = default;
 
     /**
      * @brief Move assignment.
      */
-    any_tuple& operator=(any_tuple&&);
+    message& operator=(message&&);
 
     /**
      * @brief Copy assignment.
      */
-    any_tuple& operator=(const any_tuple&) = default;
+    message& operator=(const message&) = default;
 
     /**
      * @brief Gets the size of this tuple.
@@ -103,22 +103,22 @@ class any_tuple {
     /**
      * @brief Creates a new tuple with all but the first n values.
      */
-    any_tuple drop(size_t n) const;
+    message drop(size_t n) const;
 
     /**
      * @brief Creates a new tuple with all but the last n values.
      */
-    any_tuple drop_right(size_t n) const;
+    message drop_right(size_t n) const;
 
     /**
      * @brief Creates a new tuple from the first n values.
      */
-    inline any_tuple take(size_t n) const;
+    inline message take(size_t n) const;
 
     /**
      * @brief Creates a new tuple from the last n values.
      */
-    inline any_tuple take_right(size_t n) const;
+    inline message take_right(size_t n) const;
 
     /**
      * @brief Gets a mutable pointer to the element at position @p p.
@@ -145,7 +145,7 @@ class any_tuple {
     /**
      * @brief Returns @c true if <tt>*this == other</tt>, otherwise false.
      */
-    bool equals(const any_tuple& other) const;
+    bool equals(const message& other) const;
 
     /**
      * @brief Returns true if <tt>size() == 0</tt>, otherwise false.
@@ -210,14 +210,14 @@ class any_tuple {
 
     void reset();
 
-    explicit any_tuple(raw_ptr);
+    explicit message(raw_ptr);
 
     inline const std::string* tuple_type_names() const;
 
-    explicit any_tuple(const data_ptr& vals);
+    explicit message(const data_ptr& vals);
 
     template<typename... Ts>
-    static inline any_tuple move_from_tuple(std::tuple<Ts...>&&);
+    static inline message move_from_tuple(std::tuple<Ts...>&&);
 
     /** @endcond */
 
@@ -228,114 +228,114 @@ class any_tuple {
 };
 
 /**
- * @relates any_tuple
+ * @relates message
  */
-inline bool operator==(const any_tuple& lhs, const any_tuple& rhs) {
+inline bool operator==(const message& lhs, const message& rhs) {
     return lhs.equals(rhs);
 }
 
 /**
- * @relates any_tuple
+ * @relates message
  */
-inline bool operator!=(const any_tuple& lhs, const any_tuple& rhs) {
+inline bool operator!=(const message& lhs, const message& rhs) {
     return !(lhs == rhs);
 }
 
 /**
- * @brief Creates an {@link any_tuple} containing the elements @p args.
+ * @brief Creates an {@link message} containing the elements @p args.
  * @param args Values to initialize the tuple elements.
  */
 template<typename... Ts>
-inline any_tuple make_any_tuple(Ts&&... args) {
+inline message make_message(Ts&&... args) {
     using namespace detail;
     typedef tuple_vals<typename strip_and_convert<Ts>::type...> data;
     auto ptr = new data(std::forward<Ts>(args)...);
-    return any_tuple{detail::abstract_tuple::ptr{ptr}};
+    return message{detail::message_data::ptr{ptr}};
 }
 
 /******************************************************************************
  *             inline and template member function implementations            *
  ******************************************************************************/
 
-inline bool any_tuple::empty() const {
+inline bool message::empty() const {
     return size() == 0;
 }
 
 template<typename T>
-inline const T& any_tuple::get_as(size_t p) const {
+inline const T& message::get_as(size_t p) const {
     BOOST_ACTOR_REQUIRE(*(type_at(p)) == typeid(T));
     return *reinterpret_cast<const T*>(at(p));
 }
 
 template<typename T>
-inline T& any_tuple::get_as_mutable(size_t p) {
+inline T& message::get_as_mutable(size_t p) {
     BOOST_ACTOR_REQUIRE(*(type_at(p)) == typeid(T));
     return *reinterpret_cast<T*>(mutable_at(p));
 }
 
-inline any_tuple::const_iterator any_tuple::begin() const {
+inline message::const_iterator message::begin() const {
     return m_vals->begin();
 }
 
-inline any_tuple::const_iterator any_tuple::end() const {
+inline message::const_iterator message::end() const {
     return m_vals->end();
 }
 
-inline any_tuple::data_ptr& any_tuple::vals() {
+inline message::data_ptr& message::vals() {
     return m_vals;
 }
 
-inline const any_tuple::data_ptr& any_tuple::vals() const {
+inline const message::data_ptr& message::vals() const {
     return m_vals;
 }
 
-inline const any_tuple::data_ptr& any_tuple::cvals() const {
+inline const message::data_ptr& message::cvals() const {
     return m_vals;
 }
 
-inline const std::type_info* any_tuple::type_token() const {
+inline const std::type_info* message::type_token() const {
     return m_vals->type_token();
 }
 
-inline bool any_tuple::dynamically_typed() const {
+inline bool message::dynamically_typed() const {
     return m_vals->dynamically_typed();
 }
 
-inline void any_tuple::force_detach() {
+inline void message::force_detach() {
     m_vals.detach();
 }
 
-inline const std::string* any_tuple::tuple_type_names() const {
+inline const std::string* message::tuple_type_names() const {
     return m_vals->tuple_type_names();
 }
 
-inline size_t any_tuple::size() const {
+inline size_t message::size() const {
     return m_vals ? m_vals->size() : 0;
 }
 
-inline any_tuple any_tuple::take(size_t n) const {
+inline message message::take(size_t n) const {
     return n >= size() ? *this : drop_right(size() - n);
 }
 
-inline any_tuple any_tuple::take_right(size_t n) const {
+inline message message::take_right(size_t n) const {
     return n >= size() ? *this : drop(size() - n);
 }
 
 struct move_from_tuple_helper {
     template<typename... Ts>
-    inline any_tuple operator()(Ts&... vs) {
-        return make_any_tuple(std::move(vs)...);
+    inline message operator()(Ts&... vs) {
+        return make_message(std::move(vs)...);
     }
 };
 
 template<typename... Ts>
-inline any_tuple any_tuple::move_from_tuple(std::tuple<Ts...>&& tup) {
+inline message message::move_from_tuple(std::tuple<Ts...>&& tup) {
     move_from_tuple_helper f;
     return util::apply_args(f, tup, util::get_indices(tup));
 }
 
 template<typename... Ts>
-bool any_tuple::has_types() const {
+bool message::has_types() const {
     if (size() != sizeof...(Ts)) return false;
     const std::type_info* ts[] = { &typeid(Ts)... };
     for (size_t i = 0 ; i < sizeof...(Ts); ++i) {

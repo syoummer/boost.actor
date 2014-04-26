@@ -34,8 +34,9 @@
 #include <type_traits>
 
 #include "boost/actor/mailbox_element.hpp"
+
 #include "boost/actor/detail/sync_request_bouncer.hpp"
-#include "boost/actor/intrusive/single_reader_queue.hpp"
+#include "boost/actor/detail/single_reader_queue.hpp"
 
 namespace boost {
 namespace actor {
@@ -69,7 +70,7 @@ class mailbox_based : public Base {
 
     typedef mailbox_based combined_type;
 
-    typedef intrusive::single_reader_queue<mailbox_element, del> mailbox_type;
+    typedef detail::single_reader_queue<mailbox_element, del> mailbox_type;
 
     template<typename... Ts>
     mailbox_based(Ts&&... args) : Base(std::forward<Ts>(args)...) { }

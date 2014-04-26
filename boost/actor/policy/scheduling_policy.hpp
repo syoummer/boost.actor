@@ -34,7 +34,7 @@
 namespace boost {
 namespace actor {
 
-class any_tuple;
+class message;
 class execution_unit;
 class message_header;
 
@@ -107,7 +107,7 @@ class scheduling_policy {
     template<class Actor>
     void enqueue(Actor* self,
                  msg_hdr_cref hdr,
-                 any_tuple& msg,
+                 message& msg,
                  execution_unit* host);
 
     /**

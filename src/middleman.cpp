@@ -68,8 +68,7 @@
 #include "boost/actor/detail/safe_equal.hpp"
 #include "boost/actor/detail/make_counted.hpp"
 #include "boost/actor/detail/actor_registry.hpp"
-
-#include "boost/actor/intrusive/single_reader_queue.hpp"
+#include "boost/actor/detail/single_reader_queue.hpp"
 
 #ifdef BOOST_ACTOR_WINDOWS
 #   include <io.h>
@@ -116,7 +115,7 @@ size_t num_queue_events(native_socket_type fd) {
 
 class middleman_event {
 
-    friend class intrusive::single_reader_queue<middleman_event>;
+    friend class detail::single_reader_queue<middleman_event>;
 
  public:
 
@@ -160,7 +159,7 @@ bool middleman::has_reader(continuable* ptr) {
     return m_handler->has_reader(ptr);
 }
 
-typedef intrusive::single_reader_queue<middleman_event> middleman_queue;
+typedef detail::single_reader_queue<middleman_event> middleman_queue;
 
 /*
  * A middleman also implements a "namespace" for actors.
@@ -234,7 +233,7 @@ class middleman_impl : public middleman {
 
     void deliver(const node_id& node,
                  msg_hdr_cref hdr,
-                 any_tuple msg                  ) override {
+                 message msg                  ) override {
         auto& entry = m_peers[node];
         if (entry.impl) {
             BOOST_ACTOR_REQUIRE(entry.queue != nullptr);
@@ -317,7 +316,7 @@ class middleman_impl : public middleman {
                                                  const node_id& node) {
             deliver(node,
                     {invalid_actor_addr, nullptr},
-                    make_any_tuple(atom("MONITOR"),
+                    make_message(atom("MONITOR"),
                                    m_node,
                                    aid));
         });

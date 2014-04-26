@@ -33,14 +33,13 @@
 
 #include <atomic>
 
-#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/message.hpp"
 #include "boost/actor/scheduler.hpp"
 #include "boost/actor/singletons.hpp"
 #include "boost/actor/message_header.hpp"
 
 #include "boost/actor/detail/yield_interface.hpp"
-
-#include "boost/actor/intrusive/single_reader_queue.hpp"
+#include "boost/actor/detail/single_reader_queue.hpp"
 
 namespace boost {
 namespace actor { namespace policy {
@@ -61,23 +60,23 @@ class cooperative_scheduling {
 
     template<class Actor>
     void enqueue(Actor* self, msg_hdr_cref hdr,
-                 any_tuple& msg, execution_unit* host) {
+                 message& msg, execution_unit* host) {
         auto e = self->new_mailbox_element(hdr, std::move(msg));
         switch (self->mailbox().enqueue(e)) {
-            case intrusive::enqueue_result::unblocked_reader: {
+            case detail::enqueue_result::unblocked_reader: {
                 // re-schedule actor
                 if (host) host->exec_later(self);
                 else get_scheduling_coordinator()->enqueue(self);
                 break;
             }
-            case intrusive::enqueue_result::queue_closed: {
+            case detail::enqueue_result::queue_closed: {
                 if (hdr.id.is_request()) {
                     detail::sync_request_bouncer f{self->exit_reason()};
                     f(hdr.sender, hdr.id);
                 }
                 break;
             }
-            case intrusive::enqueue_result::success:
+            case detail::enqueue_result::success:
                 // enqueued to a running actors' mailbox; nothing to do
                 break;
         }

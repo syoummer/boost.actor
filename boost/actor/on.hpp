@@ -38,7 +38,7 @@
 #include "boost/actor/unit.hpp"
 #include "boost/actor/atom.hpp"
 #include "boost/actor/anything.hpp"
-#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/message.hpp"
 #include "boost/actor/guard_expr.hpp"
 #include "boost/actor/match_expr.hpp"
 #include "boost/actor/skip_message.hpp"

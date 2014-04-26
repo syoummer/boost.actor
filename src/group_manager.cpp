@@ -40,7 +40,7 @@
 #include "boost/actor/cppa.hpp"
 #include "boost/actor/group.hpp"
 #include "boost/actor/to_string.hpp"
-#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/message.hpp"
 #include "boost/actor/serializer.hpp"
 #include "boost/actor/deserializer.hpp"
 #include "boost/actor/message_header.hpp"
@@ -69,7 +69,7 @@ class local_group : public abstract_group {
 
  public:
 
-    void send_all_subscribers(msg_hdr_cref hdr, const any_tuple& msg,
+    void send_all_subscribers(msg_hdr_cref hdr, const message& msg,
                               execution_unit* eu) {
         BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_TARG(hdr.sender, to_string) << ", "
                        << BOOST_ACTOR_TARG(msg, to_string));
@@ -79,7 +79,7 @@ class local_group : public abstract_group {
         }
     }
 
-    void enqueue(msg_hdr_cref hdr, any_tuple msg, execution_unit* eu) override {
+    void enqueue(msg_hdr_cref hdr, message msg, execution_unit* eu) override {
         BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_TARG(hdr, to_string) << ", "
                        << BOOST_ACTOR_TARG(msg, to_string));
         send_all_subscribers(hdr, msg, eu);
@@ -155,7 +155,7 @@ class local_broker : public event_based_actor {
                     demonitor(other);
                 }
             },
-            on(atom("FORWARD"), arg_match) >> [=](const any_tuple& what) {
+            on(atom("FORWARD"), arg_match) >> [=](const message& what) {
                 BOOST_ACTOR_LOGC_TRACE("cppa::local_broker", "init$FORWARD",
                                 BOOST_ACTOR_TARG(what, to_string));
                 // local forwarding
@@ -188,7 +188,7 @@ class local_broker : public event_based_actor {
 
  private:
 
-    void send_to_acquaintances(const any_tuple& what) {
+    void send_to_acquaintances(const message& what) {
         // send to all remote subscribers
         auto sender = last_sender();
         BOOST_ACTOR_LOG_DEBUG("forward message to " << m_acquaintances.size()
@@ -249,9 +249,9 @@ class local_group_proxy : public local_group {
         }
     }
 
-    void enqueue(msg_hdr_cref hdr, any_tuple msg, execution_unit* eu) override {
+    void enqueue(msg_hdr_cref hdr, message msg, execution_unit* eu) override {
         // forward message to the broker
-        m_broker->enqueue(hdr, make_any_tuple(atom("FORWARD"), move(msg)), eu);
+        m_broker->enqueue(hdr, make_message(atom("FORWARD"), move(msg)), eu);
     }
 
  private:
@@ -379,7 +379,7 @@ class remote_group : public abstract_group {
         BOOST_ACTOR_LOG_ERROR("should never be called");
     }
 
-    void enqueue(msg_hdr_cref hdr, any_tuple msg, execution_unit* eu) override {
+    void enqueue(msg_hdr_cref hdr, message msg, execution_unit* eu) override {
         BOOST_ACTOR_LOG_TRACE("");
         m_decorated->enqueue(hdr, std::move(msg), eu);
     }
@@ -390,7 +390,7 @@ class remote_group : public abstract_group {
         BOOST_ACTOR_LOG_TRACE("");
         group_down_msg gdm{group{this}};
         m_decorated->send_all_subscribers({invalid_actor_addr, nullptr},
-                                          make_any_tuple(gdm), nullptr);
+                                          make_message(gdm), nullptr);
     }
 
  private:

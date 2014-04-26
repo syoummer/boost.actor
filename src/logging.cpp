@@ -46,8 +46,7 @@
 #include "boost/actor/actor_proxy.hpp"
 
 #include "boost/actor/detail/singleton_manager.hpp"
-
-#include "boost/actor/intrusive/single_reader_queue.hpp"
+#include "boost/actor/detail/single_reader_queue.hpp"
 
 namespace boost {
 namespace actor {
@@ -151,7 +150,7 @@ class logging_impl : public logging {
     std::thread m_thread;
     std::mutex m_queue_mtx;
     std::condition_variable m_queue_cv;
-    intrusive::single_reader_queue<log_event> m_queue;
+    detail::single_reader_queue<log_event> m_queue;
 
 };
 

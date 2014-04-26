@@ -178,7 +178,7 @@ struct invoke_util_impl<wildcard_position::nil,
                                typename std::enable_if<
                                    std::is_same<
                                        typename std::remove_const<Tuple>::type,
-                                       detail::abstract_tuple
+                                       detail::message_data
                                    >::value == false
                                >::type* = 0) {
         std::integral_constant<bool,
@@ -202,7 +202,7 @@ struct invoke_util_impl<wildcard_position::nil,
                                typename std::enable_if<
                                    std::is_same<
                                        typename std::remove_const<Tuple>::type,
-                                       detail::abstract_tuple
+                                       detail::message_data
                                    >::value == true
                                >::type* = 0) {
         if (arg_types == typeid(util::type_list<Ts...>)) {
@@ -617,19 +617,19 @@ struct mexpr_fwd {
             type;
 };
 
-// detach_if_needed(any_tuple tup, bool do_detach)
-inline any_tuple& detach_if_needed(any_tuple& tup, std::true_type) {
+// detach_if_needed(message tup, bool do_detach)
+inline message& detach_if_needed(message& tup, std::true_type) {
     tup.force_detach();
     return tup;
 }
 
-inline any_tuple detach_if_needed(const any_tuple& tup, std::true_type) {
-    any_tuple cpy{tup};
+inline message detach_if_needed(const message& tup, std::true_type) {
+    message cpy{tup};
     cpy.force_detach();
     return cpy;
 }
 
-inline const any_tuple& detach_if_needed(const any_tuple& tup, std::false_type) {
+inline const message& detach_if_needed(const message& tup, std::false_type) {
     return tup;
 }
 
@@ -713,7 +713,7 @@ class match_expr {
         init();
     }
 
-    bool can_invoke(const any_tuple& tup) {
+    bool can_invoke(const message& tup) {
         auto type_token = tup.type_token();
         if (not tup.dynamically_typed()) {
             auto bitmask = get_cache_entry(type_token, tup);
@@ -725,16 +725,16 @@ class match_expr {
                                tup);
     }
 
-    inline result_type operator()(const any_tuple& tup) {
+    inline result_type operator()(const message& tup) {
         return apply(tup);
     }
 
-    inline result_type operator()(any_tuple& tup) {
+    inline result_type operator()(message& tup) {
         return apply(tup);
     }
 
-    inline result_type operator()(any_tuple&& tup) {
-        any_tuple tmp{tup};
+    inline result_type operator()(message&& tup) {
+        message tmp{tup};
         return apply(tmp);
     }
 

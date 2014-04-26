@@ -90,7 +90,7 @@ class broker : public extend<local_actor>::
 
     enum policy_flag { at_least, at_most, exactly };
 
-    void enqueue(msg_hdr_cref, any_tuple, execution_unit*) override;
+    void enqueue(msg_hdr_cref, message, execution_unit*) override;
 
     bool initialized() const;
 
@@ -178,7 +178,7 @@ class broker : public extend<local_actor>::
                                 input_stream_ptr in,
                                 output_stream_ptr out);
 
-    void invoke_message(msg_hdr_cref hdr, any_tuple msg);
+    void invoke_message(msg_hdr_cref hdr, message msg);
 
     bool invoke_message_from_cache();
 

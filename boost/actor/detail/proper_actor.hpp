@@ -41,7 +41,7 @@ class proper_actor_base : public Policies::resume_policy::template mixin<Base, D
 
     typedef typename Policies::scheduling_policy::timeout_type timeout_type;
 
-    void enqueue(msg_hdr_cref hdr, any_tuple msg, execution_unit* eu) override {
+    void enqueue(msg_hdr_cref hdr, message msg, execution_unit* eu) override {
         BOOST_ACTOR_PUSH_AID(dptr()->id());
         BOOST_ACTOR_LOG_DEBUG(BOOST_ACTOR_TARG(hdr, to_string)
                        << ", " << BOOST_ACTOR_TARG(msg, to_string));
@@ -305,7 +305,7 @@ class proper_actor<Base, Policies, true> : public proper_actor_base<Base,
     std::uint32_t request_timeout(const util::duration& d) {
         BOOST_ACTOR_REQUIRE(d.valid());
         auto tid = ++m_next_timeout_id;
-        auto msg = make_any_tuple(timeout_msg{tid});
+        auto msg = make_message(timeout_msg{tid});
         if (d.is_zero()) {
             // immediately enqueue timeout message if duration == 0s
             this->enqueue({this->address(), this},

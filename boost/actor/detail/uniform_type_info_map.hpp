@@ -65,7 +65,7 @@ using mapped_type_list = util::type_list<
     acceptor_closed_msg,
     actor,
     actor_addr,
-    any_tuple,
+    message,
     atom_value,
     channel,
     connection_closed_msg,

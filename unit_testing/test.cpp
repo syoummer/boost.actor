@@ -33,7 +33,7 @@ const char* cppa_strip_path(const char* file) {
     return res;
 }
 
-void cppa_unexpected_message(const char* file, size_t line, any_tuple t) {
+void cppa_unexpected_message(const char* file, size_t line, message t) {
     BOOST_ACTOR_PRINTERRC(file, line, "unexpected message: " << to_string(t));
 }
 

@@ -31,7 +31,8 @@
 #include <iterator>
 
 #include "test.hpp"
-#include "boost/actor/intrusive/single_reader_queue.hpp"
+
+#include "boost/actor/detail/single_reader_queue.hpp"
 
 using std::begin;
 using std::end;
@@ -57,12 +58,12 @@ inline bool operator==(int lhs, const iint& rhs) {
     return lhs == rhs.value;
 }
 
-typedef boost::actor::intrusive::single_reader_queue<iint> iint_queue;
+typedef boost::actor::detail::single_reader_queue<iint> iint_queue;
 
 int main() {
     BOOST_ACTOR_TEST(test_intrusive_containers);
 
-    boost::actor::intrusive::single_reader_queue<iint> q;
+    boost::actor::detail::single_reader_queue<iint> q;
     q.enqueue(new iint(1));
     q.enqueue(new iint(2));
     q.enqueue(new iint(3));

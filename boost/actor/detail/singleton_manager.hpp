@@ -46,7 +46,7 @@ namespace actor {
 namespace detail {
 
 class group_manager;
-class abstract_tuple;
+class message_data;
 class actor_registry;
 class uniform_type_info_map;
 
@@ -70,7 +70,7 @@ class singleton_manager {
 
     static uniform_type_info_map* get_uniform_type_info_map();
 
-    static abstract_tuple* get_tuple_dummy();
+    static message_data* get_tuple_dummy();
 
     static opencl::opencl_metainfo* get_opencl_metainfo();
 

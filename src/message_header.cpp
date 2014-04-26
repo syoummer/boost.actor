@@ -28,7 +28,7 @@
 \******************************************************************************/
 
 
-#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/message.hpp"
 #include "boost/actor/message_header.hpp"
 
 namespace boost {
@@ -49,7 +49,7 @@ bool operator!=(const message_header& lhs, const message_header& rhs) {
     return !(lhs == rhs);
 }
 
-void message_header::deliver(any_tuple msg) const {
+void message_header::deliver(message msg) const {
     if (receiver) receiver->enqueue(*this, std::move(msg), nullptr);
 }
 

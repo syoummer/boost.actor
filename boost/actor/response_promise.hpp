@@ -32,7 +32,7 @@
 #define BOOST_ACTOR_RESPONSE_PROMISE_HPP
 
 #include "boost/actor/actor.hpp"
-#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/message.hpp"
 #include "boost/actor/actor_addr.hpp"
 #include "boost/actor/message_id.hpp"
 
@@ -70,7 +70,7 @@ class response_promise {
     /**
      * @brief Sends @p response_message and invalidates this handle afterwards.
      */
-    void deliver(any_tuple response_message);
+    void deliver(message response_message);
 
  private:
 

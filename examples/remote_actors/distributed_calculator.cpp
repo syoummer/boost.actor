@@ -35,11 +35,11 @@ using namespace boost::program_options;
 // our "service"
 void calculator(event_based_actor* self) {
     self->become (
-        on(atom("plus"), arg_match) >> [](int a, int b) -> any_tuple {
-            return make_any_tuple(atom("result"), a + b);
+        on(atom("plus"), arg_match) >> [](int a, int b) -> message {
+            return make_message(atom("result"), a + b);
         },
-        on(atom("minus"), arg_match) >> [](int a, int b) -> any_tuple {
-            return make_any_tuple(atom("result"), a - b);
+        on(atom("minus"), arg_match) >> [](int a, int b) -> message {
+            return make_message(atom("result"), a - b);
         },
         on(atom("quit")) >> [=] {
             self->quit();

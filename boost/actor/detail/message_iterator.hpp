@@ -28,53 +28,89 @@
 \******************************************************************************/
 
 
-#include "boost/actor/detail/object_array.hpp"
+#ifndef BOOST_ACTOR_TUPLE_ITERATOR_HPP
+#define BOOST_ACTOR_TUPLE_ITERATOR_HPP
+
+#include <cstddef>
+
+#include "boost/actor/config.hpp"
 
 namespace boost {
 namespace actor {
 namespace detail {
 
-object_array::object_array() : super(true) { }
+template<class Tuple>
+class message_iterator {
 
-object_array::object_array(const object_array& other) : super(true) {
-    m_elements.reserve(other.m_elements.size());
-    for (auto& e : other.m_elements) m_elements.push_back(e->copy());
-}
+    size_t m_pos;
+    const Tuple* m_tuple;
 
-object_array::~object_array() { }
+ public:
 
-void object_array::push_back(uniform_value what) {
-    BOOST_ACTOR_REQUIRE(   what != nullptr
-                        && what->val != nullptr
-                        && what->ti != nullptr);
-    m_elements.push_back(std::move(what));
-}
+    inline message_iterator(const Tuple* tup, size_t pos = 0)
+        : m_pos(pos), m_tuple(tup) {
+    }
 
-void* object_array::mutable_at(size_t pos) {
-    return m_elements[pos]->val;
-}
+    message_iterator(const message_iterator&) = default;
 
-size_t object_array::size() const {
-    return m_elements.size();
-}
+    message_iterator& operator=(const message_iterator&) = default;
 
-object_array* object_array::copy() const {
-    return new object_array(*this);
-}
+    inline bool operator==(const message_iterator& other) const {
+        BOOST_ACTOR_REQUIRE(other.m_tuple == other.m_tuple);
+        return other.m_pos == m_pos;
+    }
 
-const void* object_array::at(size_t pos) const {
-    BOOST_ACTOR_REQUIRE(pos < size());
-    return m_elements[pos]->val;
-}
+    inline bool operator!=(const message_iterator& other) const {
+        return !(*this == other);
+    }
 
-const uniform_type_info* object_array::type_at(size_t pos) const {
-    BOOST_ACTOR_REQUIRE(pos < size());
-    return m_elements[pos]->ti;
-}
+    inline message_iterator& operator++() {
+        ++m_pos;
+        return *this;
+    }
 
-const std::string* object_array::tuple_type_names() const {
-    return nullptr; // get_tuple_type_names(*this);
-}
+    inline message_iterator& operator--() {
+        BOOST_ACTOR_REQUIRE(m_pos > 0);
+        --m_pos;
+        return *this;
+    }
 
-} } // namespace actor
-} // namespace boost::detail
+    inline message_iterator operator+(size_t offset) {
+        return {m_tuple, m_pos + offset};
+    }
+
+    inline message_iterator& operator+=(size_t offset) {
+        m_pos += offset;
+        return *this;
+    }
+
+    inline message_iterator operator-(size_t offset) {
+        BOOST_ACTOR_REQUIRE(m_pos >= offset);
+        return {m_tuple, m_pos - offset};
+    }
+
+    inline message_iterator& operator-=(size_t offset) {
+        BOOST_ACTOR_REQUIRE(m_pos >= offset);
+        m_pos -= offset;
+        return *this;
+    }
+
+    inline size_t position() const { return m_pos; }
+
+    inline const void* value() const {
+        return m_tuple->at(m_pos);
+    }
+
+    inline const uniform_type_info* type() const {
+        return m_tuple->type_at(m_pos);
+    }
+
+    inline message_iterator& operator*() { return *this; }
+
+};
+
+} // namespace detail
+} // namespace actor
+} // namespace boost
+
+#endif // BOOST_ACTOR_TUPLE_ITERATOR_HPP

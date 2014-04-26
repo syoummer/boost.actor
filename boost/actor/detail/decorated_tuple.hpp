@@ -41,16 +41,16 @@
 #include "boost/actor/util/type_list.hpp"
 
 #include "boost/actor/detail/tuple_vals.hpp"
-#include "boost/actor/detail/abstract_tuple.hpp"
+#include "boost/actor/detail/message_data.hpp"
 #include "boost/actor/detail/serialize_tuple.hpp"
 
 namespace boost {
 namespace actor {
 namespace detail {
 
-class decorated_tuple : public abstract_tuple {
+class decorated_tuple : public message_data {
 
-    typedef abstract_tuple super;
+    typedef message_data super;
 
     decorated_tuple& operator=(const decorated_tuple&) = delete;
 
@@ -58,7 +58,7 @@ class decorated_tuple : public abstract_tuple {
 
     typedef std::vector<size_t> vector_type;
 
-    typedef abstract_tuple::ptr pointer;
+    typedef message_data::ptr pointer;
 
     typedef const std::type_info* rtti;
 

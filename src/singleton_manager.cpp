@@ -34,7 +34,7 @@
 #include "boost/actor/logging.hpp"
 #include "boost/actor/scheduler.hpp"
 #include "boost/actor/exception.hpp"
-#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/message.hpp"
 #include "boost/actor/local_actor.hpp"
 
 #include "boost/actor/io/middleman.hpp"

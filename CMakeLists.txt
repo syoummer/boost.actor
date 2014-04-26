@@ -148,7 +148,6 @@ set(LIBCPPA_SRC
     src/actor_proxy.cpp
     src/actor_registry.cpp
     src/actor_ostream.cpp
-    src/any_tuple.cpp
     src/atom.cpp
     src/attachable.cpp
     src/behavior.cpp
@@ -190,11 +189,12 @@ set(LIBCPPA_SRC
     src/mailbox_element.cpp
     src/memory.cpp
     src/memory_managed.cpp
+    src/message.cpp
+    src/message_builder.cpp
     src/message_header.cpp
     src/middleman.cpp
     src/middleman_event_handler.cpp
     src/node_id.cpp
-    src/object_array.cpp
     src/output_stream.cpp
     src/partial_function.cpp
     src/ref_counted.cpp

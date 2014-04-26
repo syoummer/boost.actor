@@ -85,7 +85,7 @@ remote_actor_proxy::~remote_actor_proxy() {
     });
 }
 
-void remote_actor_proxy::deliver(msg_hdr_cref hdr, any_tuple msg) {
+void remote_actor_proxy::deliver(msg_hdr_cref hdr, message msg) {
     // this member function is exclusively called from default_peer from inside
     // the middleman's thread, therefore we can safely access
     // m_pending_requests here
@@ -99,7 +99,7 @@ void remote_actor_proxy::deliver(msg_hdr_cref hdr, any_tuple msg) {
     hdr.deliver(std::move(msg));
 }
 
-void remote_actor_proxy::forward_msg(msg_hdr_cref hdr, any_tuple msg) {
+void remote_actor_proxy::forward_msg(msg_hdr_cref hdr, message msg) {
     BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_ARG(m_id) << ", " << BOOST_ACTOR_TSARG(hdr)
                    << ", " << BOOST_ACTOR_TSARG(msg));
     if (hdr.receiver != this) {
@@ -110,7 +110,7 @@ void remote_actor_proxy::forward_msg(msg_hdr_cref hdr, any_tuple msg) {
     }
     if (hdr.sender && hdr.id.is_request()) {
         switch (m_pending_requests.enqueue(new_req_info(hdr.sender, hdr.id))) {
-            case intrusive::enqueue_result::queue_closed: {
+            case detail::enqueue_result::queue_closed: {
                 auto rsn = exit_reason();
                 m_parent->run_later([rsn, hdr] {
                     BOOST_ACTOR_LOGC_TRACE("cppa::io::remote_actor_proxy",
@@ -121,11 +121,11 @@ void remote_actor_proxy::forward_msg(msg_hdr_cref hdr, any_tuple msg) {
                 });
                 return; // no need to forward message
             }
-            case intrusive::enqueue_result::success: {
+            case detail::enqueue_result::success: {
                 BOOST_ACTOR_LOG_DEBUG("enqueued pending request to non-empty queue");
                 break;
             }
-            case intrusive::enqueue_result::unblocked_reader: {
+            case detail::enqueue_result::unblocked_reader: {
                 BOOST_ACTOR_LOG_DEBUG("enqueued pending request to empty queue");
                 break;
             }
@@ -141,7 +141,7 @@ void remote_actor_proxy::forward_msg(msg_hdr_cref hdr, any_tuple msg) {
     });
 }
 
-void remote_actor_proxy::enqueue(msg_hdr_cref hdr, any_tuple msg,
+void remote_actor_proxy::enqueue(msg_hdr_cref hdr, message msg,
                                  execution_unit*) {
     BOOST_ACTOR_REQUIRE(m_parent != nullptr);
     BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_TARG(hdr, to_string)
@@ -177,21 +177,21 @@ void remote_actor_proxy::link_to(const actor_addr& other) {
     if (link_to_impl(other)) {
         // causes remote actor to link to (proxy of) other
         // receiving peer will call: this->local_link_to(other)
-        forward_msg({address(), this}, make_any_tuple(atom("LINK"), other));
+        forward_msg({address(), this}, make_message(atom("LINK"), other));
     }
 }
 
 void remote_actor_proxy::unlink_from(const actor_addr& other) {
     if (unlink_from_impl(other)) {
         // causes remote actor to unlink from (proxy of) other
-        forward_msg({address(), this}, make_any_tuple(atom("UNLINK"), other));
+        forward_msg({address(), this}, make_message(atom("UNLINK"), other));
     }
 }
 
 bool remote_actor_proxy::establish_backlink(const actor_addr& other) {
     if (super::establish_backlink(other)) {
         // causes remote actor to unlink from (proxy of) other
-        forward_msg({address(), this}, make_any_tuple(atom("LINK"), other));
+        forward_msg({address(), this}, make_message(atom("LINK"), other));
         return true;
     }
     return false;
@@ -200,7 +200,7 @@ bool remote_actor_proxy::establish_backlink(const actor_addr& other) {
 bool remote_actor_proxy::remove_backlink(const actor_addr& other) {
     if (super::remove_backlink(other)) {
         // causes remote actor to unlink from (proxy of) other
-        forward_msg({address(), this}, make_any_tuple(atom("UNLINK"), other));
+        forward_msg({address(), this}, make_message(atom("UNLINK"), other));
         return true;
     }
     return false;

@@ -28,65 +28,75 @@
 \******************************************************************************/
 
 
-#include "boost/actor/any_tuple.hpp"
-#include "boost/actor/singletons.hpp"
+#include <vector>
 
-#include "boost/actor/detail/decorated_tuple.hpp"
+#include "boost/actor/message_builder.hpp"
+#include "boost/actor/uniform_type_info.hpp"
 
 namespace boost {
 namespace actor {
 
-any_tuple::any_tuple(detail::abstract_tuple* ptr) : m_vals(ptr) { }
+namespace {
 
-any_tuple::any_tuple(any_tuple&& other) : m_vals(std::move(other.m_vals)) { }
+class dynamic_msg_data : public detail::message_data {
 
-any_tuple::any_tuple(const data_ptr& vals) : m_vals(vals) { }
+    typedef message_data super;
 
-any_tuple& any_tuple::operator=(any_tuple&& other) {
-    m_vals.swap(other.m_vals);
+ public:
+
+    using message_data::const_iterator;
+
+    dynamic_msg_data(const dynamic_msg_data& other) : super(true){
+        for (auto& d : other.m_data) {
+            m_data.push_back(d->copy());
+        }
+    }
+
+    dynamic_msg_data(std::vector<uniform_value>&& data)
+            : super(true), m_data(std::move(data)) { }
+
+    const void* at(size_t pos) const override {
+        BOOST_ACTOR_REQUIRE(pos < size());
+        return m_data[pos]->val;
+    }
+
+    void* mutable_at(size_t pos) override {
+        BOOST_ACTOR_REQUIRE(pos < size());
+        return m_data[pos]->val;
+    }
+
+    size_t size() const override {
+        return m_data.size();
+    }
+
+    dynamic_msg_data* copy() const override {
+        return new dynamic_msg_data(*this);
+    }
+
+    const uniform_type_info* type_at(size_t pos) const override {
+        BOOST_ACTOR_REQUIRE(pos < size());
+        return m_data[pos]->ti;
+    }
+
+    const std::string* tuple_type_names() const override {
+        return nullptr; // get_tuple_type_names(*this);
+    }
+
+ private:
+
+    std::vector<uniform_value> m_data;
+
+};
+
+} // namespace <anonymous>
+
+message_builder& message_builder::append(uniform_value what) {
+    m_elements.push_back(std::move(what));
     return *this;
 }
 
-void any_tuple::reset() {
-    m_vals.reset();
-}
-
-void* any_tuple::mutable_at(size_t p) {
-    BOOST_ACTOR_REQUIRE(m_vals != nullptr);
-    return m_vals->mutable_at(p);
-}
-
-const void* any_tuple::at(size_t p) const {
-    BOOST_ACTOR_REQUIRE(m_vals != nullptr);
-    return m_vals->at(p);
-}
-
-const uniform_type_info* any_tuple::type_at(size_t p) const {
-    BOOST_ACTOR_REQUIRE(m_vals != nullptr);
-    return m_vals->type_at(p);
-}
-
-bool any_tuple::equals(const any_tuple& other) const {
-    BOOST_ACTOR_REQUIRE(m_vals != nullptr);
-    return m_vals->equals(*other.vals());
-}
-
-any_tuple any_tuple::drop(size_t n) const {
-    BOOST_ACTOR_REQUIRE(m_vals != nullptr);
-    if (n == 0) return *this;
-    if (n >= size()) return any_tuple{};
-    return any_tuple{detail::decorated_tuple::create(m_vals, n)};
-}
-
-any_tuple any_tuple::drop_right(size_t n) const {
-    BOOST_ACTOR_REQUIRE(m_vals != nullptr);
-    using namespace std;
-    if (n == 0) return *this;
-    if (n >= size()) return any_tuple{};
-    vector<size_t> mapping(size() - n);
-    size_t i = 0;
-    generate(mapping.begin(), mapping.end(), [&] { return i++; });
-    return any_tuple{detail::decorated_tuple::create(m_vals, move(mapping))};
+message message_builder::to_message() {
+    return message{new dynamic_msg_data(std::move(m_elements))};
 }
 
 } // namespace actor

@@ -58,7 +58,7 @@ class behavior_stack_based_impl : public single_timeout<Base, Subtype> {
     typedef behavior_stack_based_impl combined_type;
 
     typedef response_handle<behavior_stack_based_impl,
-                            any_tuple,
+                            message,
                             nonblocking_response_handle_tag>
             response_handle_type;
 

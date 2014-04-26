@@ -40,7 +40,8 @@
 #include "boost/actor/config.hpp"
 
 namespace boost {
-namespace actor { namespace intrusive {
+namespace actor {
+namespace detail {
 
 /**
  * @brief Denotes in which state queue and reader are after an enqueue.
@@ -378,7 +379,8 @@ class single_reader_queue {
 
 };
 
-} } // namespace actor
-} // namespace boost::util
+} // namespace detail
+} // namespace actor
+} // namespace boost
 
 #endif // BOOST_ACTOR_SINGLE_READER_QUEUE_HPP

@@ -60,7 +60,7 @@ inline detail::uniform_type_info_map* get_uniform_type_info_map() {
     return detail::singleton_manager::get_uniform_type_info_map();
 }
 
-inline detail::abstract_tuple* get_tuple_dummy() {
+inline detail::message_data* get_tuple_dummy() {
     return detail::singleton_manager::get_tuple_dummy();
 }
 

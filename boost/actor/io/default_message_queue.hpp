@@ -33,7 +33,7 @@
 
 #include <vector>
 
-#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/message.hpp"
 #include "boost/actor/ref_counted.hpp"
 #include "boost/actor/message_header.hpp"
 
@@ -45,7 +45,7 @@ class default_message_queue : public ref_counted {
 
  public:
 
-    typedef std::pair<message_header, any_tuple> value_type;
+    typedef std::pair<message_header, message> value_type;
 
     typedef value_type& reference;
 

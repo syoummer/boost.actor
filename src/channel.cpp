@@ -30,7 +30,7 @@
 
 #include "boost/actor/actor.hpp"
 #include "boost/actor/channel.hpp"
-#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/message.hpp"
 
 #include "boost/actor/detail/raw_access.hpp"
 

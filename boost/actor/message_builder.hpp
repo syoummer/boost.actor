@@ -33,49 +33,35 @@
 
 #include <vector>
 
+#include "boost/actor/message.hpp"
 #include "boost/actor/uniform_type_info.hpp"
 
-#include "boost/actor/detail/abstract_tuple.hpp"
+#include "boost/actor/detail/message_data.hpp"
 
 namespace boost {
 namespace actor {
-namespace detail {
 
-class object_array : public abstract_tuple {
-
-    typedef abstract_tuple super;
+class message_builder {
 
  public:
 
-    using abstract_tuple::const_iterator;
+    message_builder() = default;
 
-    object_array();
-    object_array(object_array&&) = default;
-    object_array(const object_array&);
-
-    ~object_array();
-
-    void push_back(uniform_value what);
+    message_builder(const message_builder&) = delete;
+    message_builder& operator=(const message_builder&) = delete;
 
     template<typename T>
-    void push_back(T what) {
+    message_builder& append(T what) {
         auto uti = uniform_typeid<T>();
         auto uval = uti->create();
         *reinterpret_cast<T*>(uval->val) = std::move(what);
-        push_back(std::move(uval));
+        return append(std::move(uval));
+        return *this;
     }
 
-    void* mutable_at(size_t pos) override;
+    message_builder& append(uniform_value what);
 
-    size_t size() const override;
-
-    object_array* copy() const override;
-
-    const void* at(size_t pos) const override;
-
-    const uniform_type_info* type_at(size_t pos) const override;
-
-    const std::string* tuple_type_names() const override;
+    message to_message();
 
  private:
 
@@ -83,7 +69,6 @@ class object_array : public abstract_tuple {
 
 };
 
-} // namespace detail
 } // namespace actor
 } // namespace boost
 

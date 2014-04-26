@@ -28,7 +28,7 @@ size_t cppa_error_count();
 void cppa_inc_error_count();
 std::string cppa_fill4(size_t value);
 const char* cppa_strip_path(const char* file);
-void cppa_unexpected_message(const char* file, size_t line, boost::actor::any_tuple t);
+void cppa_unexpected_message(const char* file, size_t line, boost::actor::message t);
 void cppa_unexpected_timeout(const char* file, size_t line);
 
 #define BOOST_ACTOR_STREAMIFY(fname, line, message)                                   \

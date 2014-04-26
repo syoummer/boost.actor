@@ -33,7 +33,7 @@
 
 #include "boost/actor/atom.hpp"
 #include "boost/actor/to_string.hpp"
-#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/message.hpp"
 #include "boost/actor/scheduler.hpp"
 #include "boost/actor/singletons.hpp"
 #include "boost/actor/actor_proxy.hpp"

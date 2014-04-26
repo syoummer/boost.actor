@@ -43,18 +43,18 @@
 
 #include "boost/actor/util/type_list.hpp"
 
-#include "boost/actor/detail/tuple_iterator.hpp"
+#include "boost/actor/detail/message_iterator.hpp"
 
 namespace boost {
 namespace actor {
 namespace detail {
 
-class abstract_tuple : public ref_counted {
+class message_data : public ref_counted {
 
  public:
 
-    abstract_tuple(bool dynamically_typed);
-    abstract_tuple(const abstract_tuple& other);
+    message_data(bool dynamically_typed);
+    message_data(const message_data& other);
 
     // mutators
     virtual void* mutable_at(size_t pos) = 0;
@@ -62,7 +62,7 @@ class abstract_tuple : public ref_counted {
 
     // accessors
     virtual size_t size() const = 0;
-    virtual abstract_tuple* copy() const = 0;
+    virtual message_data* copy() const = 0;
     virtual const void* at(size_t pos) const = 0;
     virtual const uniform_type_info* type_at(size_t pos) const = 0;
     virtual const std::string* tuple_type_names() const = 0;
@@ -82,9 +82,9 @@ class abstract_tuple : public ref_counted {
     // (default returns &typeid(void))
     virtual const std::type_info* type_token() const;
 
-    bool equals(const abstract_tuple& other) const;
+    bool equals(const message_data& other) const;
 
-    typedef tuple_iterator<abstract_tuple> const_iterator;
+    typedef message_iterator<message_data> const_iterator;
 
     inline const_iterator  begin() const { return {this}; }
     inline const_iterator cbegin() const { return {this}; }
@@ -102,16 +102,16 @@ class abstract_tuple : public ref_counted {
         ptr& operator=(ptr&&) = default;
         ptr& operator=(const ptr&) = default;
 
-        inline explicit ptr(abstract_tuple* p) : m_ptr(p) { }
+        inline explicit ptr(message_data* p) : m_ptr(p) { }
 
         inline void detach() { static_cast<void>(get_detached()); }
 
-        inline abstract_tuple* operator->() { return get_detached(); }
-        inline abstract_tuple& operator*() { return *get_detached(); }
-        inline const abstract_tuple* operator->() const { return m_ptr.get(); }
-        inline const abstract_tuple& operator*() const { return *m_ptr.get(); }
+        inline message_data* operator->() { return get_detached(); }
+        inline message_data& operator*() { return *get_detached(); }
+        inline const message_data* operator->() const { return m_ptr.get(); }
+        inline const message_data& operator*() const { return *m_ptr.get(); }
         inline void swap(ptr& other) { m_ptr.swap(other.m_ptr); }
-        inline void reset(abstract_tuple* p = nullptr) { m_ptr.reset(p); }
+        inline void reset(message_data* p = nullptr) { m_ptr.reset(p); }
 
         inline explicit operator bool() const {
             return static_cast<bool>(m_ptr);
@@ -119,9 +119,9 @@ class abstract_tuple : public ref_counted {
 
      private:
 
-        abstract_tuple* get_detached();
+        message_data* get_detached();
 
-        intrusive_ptr<abstract_tuple> m_ptr;
+        intrusive_ptr<message_data> m_ptr;
 
     };
 
@@ -134,8 +134,8 @@ class abstract_tuple : public ref_counted {
 struct full_eq_type {
     constexpr full_eq_type() { }
     template<class Tuple>
-    inline bool operator()(const tuple_iterator<Tuple>& lhs,
-                           const tuple_iterator<Tuple>& rhs) const {
+    inline bool operator()(const message_iterator<Tuple>& lhs,
+                           const message_iterator<Tuple>& rhs) const {
         return    lhs.type() == rhs.type()
                && lhs.type()->equals(lhs.value(), rhs.value());
     }
@@ -144,13 +144,13 @@ struct full_eq_type {
 struct types_only_eq_type {
     constexpr types_only_eq_type() { }
     template<class Tuple>
-    inline bool operator()(const tuple_iterator<Tuple>& lhs,
+    inline bool operator()(const message_iterator<Tuple>& lhs,
                            const uniform_type_info* rhs     ) const {
         return lhs.type() == rhs;
     }
     template<class Tuple>
     inline bool operator()(const uniform_type_info* lhs,
-                           const tuple_iterator<Tuple>& rhs) const {
+                           const message_iterator<Tuple>& rhs) const {
         return lhs == rhs.type();
     }
 };
@@ -160,7 +160,7 @@ constexpr full_eq_type full_eq;
 constexpr types_only_eq_type types_only_eq;
 } // namespace <anonymous>
 
-std::string get_tuple_type_names(const detail::abstract_tuple&);
+std::string get_tuple_type_names(const detail::message_data&);
 
 } // namespace detail
 } // namespace actor

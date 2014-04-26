@@ -46,7 +46,7 @@ class channel;
 class node_id;
 class behavior;
 class resumable;
-class any_tuple;
+class message;
 class actor_addr;
 class actor_proxy;
 class scoped_actor;

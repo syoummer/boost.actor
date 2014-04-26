@@ -32,7 +32,7 @@
 #define BOOST_ACTOR_ACTOR_OSTREAM_HPP
 
 #include "boost/actor/actor.hpp"
-#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/message.hpp"
 #include "boost/actor/to_string.hpp"
 
 namespace boost {
@@ -63,11 +63,11 @@ class actor_ostream {
         return write(std::move(arg));
     }
 
-    inline actor_ostream& operator<<(const any_tuple& arg) {
+    inline actor_ostream& operator<<(const message& arg) {
         return write(boost::actor::to_string(arg));
     }
 
-    // disambiguate between conversion to string and to any_tuple
+    // disambiguate between conversion to string and to message
     inline actor_ostream& operator<<(const char* arg) {
         return *this << std::string{arg};
     }
@@ -75,7 +75,7 @@ class actor_ostream {
     template<typename T>
     inline typename std::enable_if<
            !std::is_convertible<T, std::string>::value
-        && !std::is_convertible<T, any_tuple>::value,
+        && !std::is_convertible<T, message>::value,
         actor_ostream&
     >::type
     operator<<(T&& arg) {

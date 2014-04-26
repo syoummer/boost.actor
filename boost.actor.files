@@ -7,7 +7,7 @@ boost/actor/actor_namespace.hpp
 boost/actor/actor_ostream.hpp
 boost/actor/actor_proxy.hpp
 boost/actor/announce.hpp
-boost/actor/any_tuple.hpp
+boost/actor/message.hpp
 boost/actor/anything.hpp
 boost/actor/atom.hpp
 boost/actor/attachable.hpp
@@ -23,7 +23,7 @@ boost/actor/continue_helper.hpp
 boost/actor/cppa.hpp
 boost/actor/cppa_fwd.hpp
 boost/actor/deserializer.hpp
-boost/actor/detail/abstract_tuple.hpp
+boost/actor/detail/message_data.hpp
 boost/actor/detail/actor_registry.hpp
 boost/actor/detail/atom_val.hpp
 boost/actor/detail/behavior_impl.hpp
@@ -43,9 +43,7 @@ boost/actor/detail/ieee_754.hpp
 boost/actor/detail/implicit_conversions.hpp
 boost/actor/detail/matches.hpp
 boost/actor/detail/memory.hpp
-boost/actor/detail/object_array.hpp
-boost/actor/detail/object_impl.hpp
-boost/actor/detail/opt_impls.hpp
+boost/actor/message_builder.hpp
 boost/actor/detail/projection.hpp
 boost/actor/detail/proper_actor.hpp
 boost/actor/detail/pseudo_tuple.hpp
@@ -58,7 +56,7 @@ boost/actor/detail/swap_bytes.hpp
 boost/actor/detail/sync_request_bouncer.hpp
 boost/actor/detail/rebind_tdata.hpp
 boost/actor/detail/to_uniform_name.hpp
-boost/actor/detail/tuple_iterator.hpp
+boost/actor/detail/message_iterator.hpp
 boost/actor/detail/tuple_vals.hpp
 boost/actor/detail/typed_actor_util.hpp
 boost/actor/detail/types_array.hpp
@@ -75,7 +73,7 @@ boost/actor/from_string.hpp
 boost/actor/get.hpp
 boost/actor/group.hpp
 boost/actor/guard_expr.hpp
-boost/actor/intrusive/single_reader_queue.hpp
+boost/actor/detail/single_reader_queue.hpp
 boost/actor/io/accept_handle.hpp
 boost/actor/io/acceptor.hpp
 boost/actor/io/broker.hpp
@@ -205,7 +203,7 @@ src/actor_namespace.cpp
 src/actor_ostream.cpp
 src/actor_proxy.cpp
 src/actor_registry.cpp
-src/any_tuple.cpp
+src/message.cpp
 src/atom.cpp
 src/attachable.cpp
 src/behavior.cpp
@@ -254,7 +252,7 @@ src/middleman_event_handler.cpp
 src/middleman_event_handler_epoll.cpp
 src/middleman_event_handler_poll.cpp
 src/node_id.cpp
-src/object_array.cpp
+src/message_builder.cpp
 src/output_stream.cpp
 src/partial_function.cpp
 src/peer.cpp

@@ -34,7 +34,7 @@
 
 #include "boost/actor/util/type_list.hpp"
 
-#include "boost/actor/detail/tuple_iterator.hpp"
+#include "boost/actor/detail/message_iterator.hpp"
 
 namespace boost {
 namespace actor {
@@ -42,7 +42,7 @@ namespace detail {
 
 struct tuple_dummy {
     typedef util::empty_type_list types;
-    typedef tuple_iterator<tuple_dummy> const_iterator;
+    typedef message_iterator<tuple_dummy> const_iterator;
     inline size_t size() const {
         return 0;
     }

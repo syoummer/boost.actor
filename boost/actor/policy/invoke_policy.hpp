@@ -149,7 +149,7 @@ class invoke_policy {
 
     template<class Actor>
     msg_type filter_msg(Actor* self, mailbox_element* node) {
-        const any_tuple& msg = node->msg;
+        const message& msg = node->msg;
         auto mid = node->mid;
         if (msg.size() == 1) {
             if (msg.type_at(0)->equal_to(typeid(exit_msg))) {
@@ -198,8 +198,8 @@ class invoke_policy {
     // - extracts response message from handler
     // - returns true if fun was successfully invoked
     template<class Actor, class Fun, class MaybeResponseHandle = int>
-    optional<any_tuple> invoke_fun(Actor* self,
-                                   any_tuple& msg,
+    optional<message> invoke_fun(Actor* self,
+                                   message& msg,
                                    message_id& mid,
                                    Fun& fun,
                                    MaybeResponseHandle hdl = MaybeResponseHandle{}) {
@@ -220,7 +220,7 @@ class invoke_policy {
                                      << " did not reply to a "
                                         "synchronous request message");
                     auto fhdl = fetch_response_promise(self, hdl);
-                    if (fhdl) fhdl.deliver(make_any_tuple(unit));
+                    if (fhdl) fhdl.deliver(make_message(unit));
                 }
             } else {
                 if (   res->template has_types<atom_value, std::uint64_t>()
@@ -237,11 +237,11 @@ class invoke_policy {
                     if (ref_opt) {
                         behavior cpy = *ref_opt;
                         *ref_opt = cpy.add_continuation(
-                            [=](any_tuple& intermediate) -> optional<any_tuple> {
+                            [=](message& intermediate) -> optional<message> {
                                 if (!intermediate.empty()) {
                                     // do no use lamba expresion type to
                                     // avoid recursive template instantiaton
-                                    behavior::continuation_fun f2 = [=](any_tuple& m) -> optional<any_tuple> {
+                                    behavior::continuation_fun f2 = [=](message& m) -> optional<message> {
                                         return std::move(m);
                                     };
                                     auto mutable_mid = mid;
@@ -268,7 +268,7 @@ class invoke_policy {
                     if (fhdl) {
                         fhdl.deliver(std::move(*res));
                         // inform caller about success
-                        return any_tuple{};
+                        return message{};
                     }
                 }
             }

@@ -67,7 +67,7 @@ void pong(event_based_actor* self) {
             // set next behavior
             self->become (
                 on(atom("ping"), arg_match) >> [](int val) {
-                    return make_any_tuple(atom("pong"), val);
+                    return make_message(atom("pong"), val);
                 },
                 on_arg_match >> [=](const down_msg& dm) {
                     self->quit(dm.reason);

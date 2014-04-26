@@ -30,7 +30,7 @@
 
 #include "boost/actor/group.hpp"
 #include "boost/actor/channel.hpp"
-#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/message.hpp"
 #include "boost/actor/singletons.hpp"
 
 #include "boost/actor/detail/group_manager.hpp"

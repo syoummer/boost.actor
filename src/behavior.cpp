@@ -59,15 +59,15 @@ class continuation_decorator : public detail::behavior_impl {
         return none;
     }
 
-    bhvr_invoke_result invoke(any_tuple& tup) {
+    bhvr_invoke_result invoke(message& tup) {
         return invoke_impl(tup);
     }
 
-    bhvr_invoke_result invoke(const any_tuple& tup) {
+    bhvr_invoke_result invoke(const message& tup) {
         return invoke_impl(tup);
     }
 
-    bool defined_at(const any_tuple& tup) {
+    bool defined_at(const message& tup) {
         return m_decorated->defined_at(tup);
     }
 

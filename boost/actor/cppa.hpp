@@ -47,7 +47,7 @@
 #include "boost/actor/sb_actor.hpp"
 #include "boost/actor/scheduler.hpp"
 #include "boost/actor/to_string.hpp"
-#include "boost/actor/any_tuple.hpp"
+#include "boost/actor/message.hpp"
 #include "boost/actor/singletons.hpp"
 #include "boost/actor/typed_actor.hpp"
 #include "boost/actor/exit_reason.hpp"
@@ -174,7 +174,7 @@
  * tuple @p x and @p y, whereas @p y is a copy of @p x:
  *
  * @code
- * auto x = make_any_tuple(1, 2, 3);
+ * auto x = make_message(1, 2, 3);
  * auto y = x;
  * @endcode
  *
@@ -236,7 +236,7 @@
  * send(a1, atom("hello"), "hello a1!");
  *
  * // send a message to a1, a2 and a3
- * auto msg = make_any_tuple(atom("compute"), 1, 2, 3);
+ * auto msg = make_message(atom("compute"), 1, 2, 3);
  *
  * // note: this is more efficient then using send() three times because
  * //       send() would create a new tuple each time;
@@ -268,7 +268,7 @@
  *     on(atom("compute"), arg_match) >> [](int i0, int i1, int i2)
  *     {
  *         // send our result back to the sender of this messages
- *         return make_any_tuple(atom("result"), i0 + i1 + i2);
+ *         return make_message(atom("result"), i0 + i1 + i2);
  *     }
  * );
  * @endcode
@@ -288,10 +288,10 @@
  * void math_actor() {
  *     receive_loop (
  *         on(atom("plus"), arg_match) >> [](int a, int b) {
- *             return make_any_tuple(atom("result"), a + b);
+ *             return make_message(atom("result"), a + b);
  *         },
  *         on(atom("minus"), arg_match) >> [](int a, int b) {
- *             return make_any_tuple(atom("result"), a - b);
+ *             return make_message(atom("result"), a - b);
  *         }
  *     );
  * }
@@ -332,7 +332,7 @@
  * std::vector<int> vec {1, 2, 3, 4};
  * auto i = vec.begin();
  * receive_for(i, vec.end()) (
- *     on(atom("get")) >> [&]() -> any_tuple { return {atom("result"), *i}; }
+ *     on(atom("get")) >> [&]() -> message { return {atom("result"), *i}; }
  * );
  * @endcode
  *
@@ -394,7 +394,7 @@
  * send(self, u"hello unicode world!");
  *
  * // x has the type cppa::tuple<std::string, std::string>
- * auto x = make_any_tuple("hello", "tuple");
+ * auto x = make_message("hello", "tuple");
  *
  * receive (
  *     // equal to: on(std::string("hello actor!"))
@@ -436,7 +436,7 @@ namespace actor {
 /**
  * @brief Sends @p to a message under the identity of @p from.
  */
-inline void send_tuple_as(const actor& from, const channel& to, any_tuple msg) {
+inline void send_tuple_as(const actor& from, const channel& to, message msg) {
     if (to) to->enqueue({from.address(), to}, std::move(msg), nullptr);
 }
 
@@ -445,13 +445,13 @@ inline void send_tuple_as(const actor& from, const channel& to, any_tuple msg) {
  */
 template<typename... Ts>
 void send_as(const actor& from, const channel& to, Ts&&... args) {
-    send_tuple_as(from, to, make_any_tuple(std::forward<Ts>(args)...));
+    send_tuple_as(from, to, make_message(std::forward<Ts>(args)...));
 }
 
 /**
  * @brief Anonymously sends @p to a message.
  */
-inline void anon_send_tuple(const channel& to, any_tuple msg) {
+inline void anon_send_tuple(const channel& to, message msg) {
     send_tuple_as(invalid_actor, to, std::move(msg));
 }
 

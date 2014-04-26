@@ -270,7 +270,7 @@ class fixed_stack : public sb_actor<fixed_stack> {
 
 behavior echo_actor(event_based_actor* self) {
     return (
-        others() >> [=]() -> any_tuple {
+        others() >> [=]() -> message {
             self->quit(exit_reason::normal);
             return self->last_dequeued();
         }
@@ -284,7 +284,7 @@ struct simple_mirror : sb_actor<simple_mirror> {
 
     simple_mirror() {
         init_state = (
-            others() >> [=]() -> any_tuple {
+            others() >> [=]() -> message {
                 return last_dequeued();
             }
         );
@@ -348,7 +348,7 @@ struct slave : event_based_actor {
 
 void test_serial_reply() {
     auto mirror_behavior = [=](event_based_actor* self) {
-        self->become(others() >> [=]() -> any_tuple {
+        self->become(others() >> [=]() -> message {
             BOOST_ACTOR_PRINT("return self->last_dequeued()");
             return self->last_dequeued();
         });
@@ -485,8 +485,8 @@ void test_continuation() {
 void test_simple_reply_response() {
     auto s = spawn([](event_based_actor* self) -> behavior {
         return (
-            others() >> [=]() -> any_tuple {
-                BOOST_ACTOR_CHECK(self->last_dequeued() == make_any_tuple(atom("hello")));
+            others() >> [=]() -> message {
+                BOOST_ACTOR_CHECK(self->last_dequeued() == make_message(atom("hello")));
                 self->quit();
                 return self->last_dequeued();
             }
@@ -496,7 +496,7 @@ void test_simple_reply_response() {
     self->send(s, atom("hello"));
     self->receive(
         others() >> [&] {
-            BOOST_ACTOR_CHECK(self->last_dequeued() == make_any_tuple(atom("hello")));
+            BOOST_ACTOR_CHECK(self->last_dequeued() == make_message(atom("hello")));
         }
     );
     self->await_all_other_actors_done();
@@ -523,7 +523,7 @@ void test_spawn() {
     BOOST_ACTOR_PRINT("test self->send()");
     self->send(self, 1, 2, 3, true);
     self->receive(on(1, 2, 3, true) >> [] { });
-    self->send_tuple(self, any_tuple{});
+    self->send_tuple(self, message{});
     self->receive(on() >> [] { });
     self->await_all_other_actors_done();
     BOOST_ACTOR_CHECKPOINT();
@@ -791,7 +791,7 @@ void test_spawn() {
         others() >> BOOST_ACTOR_UNEXPECTED_MSG_CB_REF(self)
     );
     // kill joe and bob
-    auto poison_pill = make_any_tuple(atom("done"));
+    auto poison_pill = make_message(atom("done"));
     anon_send_tuple(joe, poison_pill);
     anon_send_tuple(bob, poison_pill);
     self->await_all_other_actors_done();
