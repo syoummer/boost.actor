@@ -163,7 +163,6 @@ boost/actor/util/compare_tuples.hpp
 boost/actor/util/duration.hpp
 boost/actor/util/get_mac_addresses.hpp
 boost/actor/util/get_root_uuid.hpp
-boost/actor/util/guard.hpp
 boost/actor/util/int_list.hpp
 boost/actor/util/left_or_right.hpp
 boost/actor/util/producer_consumer_list.hpp
@@ -171,13 +170,11 @@ boost/actor/util/purge_refs.hpp
 boost/actor/util/rebindable_reference.hpp
 boost/actor/util/ripemd_160.hpp
 boost/actor/util/scope_guard.hpp
-boost/actor/util/shared_lock_guard.hpp
 boost/actor/util/shared_spinlock.hpp
 boost/actor/util/tbind.hpp
 boost/actor/util/type_list.hpp
 boost/actor/util/type_pair.hpp
 boost/actor/util/type_traits.hpp
-boost/actor/util/upgrade_lock_guard.hpp
 boost/actor/util/wrapped.hpp
 boost/actor/wildcard_position.hpp
 examples/aout.cpp

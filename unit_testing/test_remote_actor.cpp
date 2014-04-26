@@ -242,6 +242,8 @@ class server : public event_based_actor {
         return await_spawn_ping();
     }
 
+    server(bool run_in_loop) : m_run_in_loop(run_in_loop) { }
+
  private:
 
     behavior await_spawn_ping() {
@@ -314,11 +316,14 @@ class server : public event_based_actor {
             on(atom("GClient"), arg_match) >> [=](actor gclient) {
                 await_down(this, spawn<monitored>(spawn5_server, gclient, true), [=] {
                     BOOST_ACTOR_CHECKPOINT();
-                    quit();
+                    if (!m_run_in_loop) quit();
+                    else become(await_spawn_ping());
                 });
             }
         );
     }
+
+    bool m_run_in_loop;
 
 };
 
@@ -365,7 +370,7 @@ int main(int argc, char** argv) {
     }
     { // lifetime scope of self
         scoped_actor self;
-        auto serv = self->spawn<server, monitored>();
+        auto serv = self->spawn<server, monitored>(run_as_server);
         uint16_t port = 4242;
         bool success = false;
         do {
@@ -410,9 +415,9 @@ int main(int argc, char** argv) {
             BOOST_ACTOR_CHECKPOINT();
             if (run_remote_actor) child.join();
             BOOST_ACTOR_CHECKPOINT();
-            self->await_all_other_actors_done();
         }
         while (run_as_server);
+        self->await_all_other_actors_done();
     } // lifetime scope of self
     await_all_actors_done();
     shutdown();

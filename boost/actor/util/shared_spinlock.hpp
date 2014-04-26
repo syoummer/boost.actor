@@ -57,11 +57,10 @@ class shared_spinlock {
     void unlock_shared();
     bool try_lock_shared();
 
-    /**
-     * @brief Upgrades a shared lock to an exclusive lock (must be released
-     *        through a call to {@link lock()} afterwards).
-     */
     void lock_upgrade();
+    void unlock_upgrade();
+    void unlock_upgrade_and_lock();
+    void unlock_and_lock_upgrade();
 
 };
 

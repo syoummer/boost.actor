@@ -80,7 +80,10 @@ actor_addr actor_namespace::read(deserializer* source) {
     }
     else if (pid == this_node->process_id() && hid == this_node->host_id()) {
         // identifies this exact process on this host, ergo: local actor
-        return get_actor_registry()->get(aid)->address();
+        auto a = get_actor_registry()->get(aid);
+        // might be invalid
+        return a ? a->address() : invalid_actor_addr;
+
     }
     else {
         // identifies a remote actor; create proxy if needed

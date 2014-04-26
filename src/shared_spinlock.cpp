@@ -41,11 +41,10 @@ inline long min_long() { return std::numeric_limits<long>::min(); }
 } // namespace <anonymous>
 
 namespace boost {
-namespace actor { namespace util {
+namespace actor {
+namespace util {
 
-shared_spinlock::shared_spinlock() : m_flag(0) {
-
-}
+shared_spinlock::shared_spinlock() : m_flag(0) { }
 
 void shared_spinlock::lock() {
     long v = m_flag.load();
@@ -62,8 +61,21 @@ void shared_spinlock::lock() {
 }
 
 void shared_spinlock::lock_upgrade() {
+    lock_shared();
+}
+
+void shared_spinlock::unlock_upgrade() {
+    unlock_shared();
+}
+
+void shared_spinlock::unlock_upgrade_and_lock() {
     unlock_shared();
     lock();
+}
+
+void shared_spinlock::unlock_and_lock_upgrade() {
+    unlock();
+    lock_upgrade();
 }
 
 void shared_spinlock::unlock() {
@@ -98,5 +110,6 @@ bool shared_spinlock::try_lock_shared() {
     return (v >= 0) ? m_flag.compare_exchange_weak(v, v + 1) : false;
 }
 
-} } // namespace actor
-} // namespace boost::util
+} // namespace util
+} // namespace actor
+} // namespace boost

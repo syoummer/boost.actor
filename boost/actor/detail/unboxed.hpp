@@ -33,7 +33,6 @@
 
 #include <memory>
 
-#include "boost/actor/util/guard.hpp"
 #include "boost/actor/util/wrapped.hpp"
 
 namespace boost {
@@ -63,11 +62,6 @@ struct unboxed<util::wrapped<T> ()> {
 template<typename T>
 struct unboxed<util::wrapped<T> (*)()> {
     typedef typename util::wrapped<T>::type type;
-};
-
-template<typename T>
-struct unboxed<std::unique_ptr<util::guard<T>>> {
-    typedef T type;
 };
 
 } // namespace detail

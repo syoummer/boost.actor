@@ -40,6 +40,7 @@
 #include "boost/actor/unit.hpp"
 
 #include "boost/actor/util/call.hpp"
+#include "boost/actor/util/int_list.hpp"
 #include "boost/actor/util/type_list.hpp"
 #include "boost/actor/util/type_traits.hpp"
 #include "boost/actor/util/left_or_right.hpp"

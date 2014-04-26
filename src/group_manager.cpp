@@ -35,6 +35,8 @@
 #include <stdexcept>
 #include <condition_variable>
 
+#include "boost/thread/locks.hpp"
+
 #include "boost/actor/cppa.hpp"
 #include "boost/actor/group.hpp"
 #include "boost/actor/to_string.hpp"
@@ -49,19 +51,16 @@
 #include "boost/actor/detail/raw_access.hpp"
 #include "boost/actor/detail/group_manager.hpp"
 
-#include "boost/actor/util/shared_spinlock.hpp"
-#include "boost/actor/util/shared_lock_guard.hpp"
-#include "boost/actor/util/upgrade_lock_guard.hpp"
-
 namespace boost {
 namespace actor {
 namespace detail {
 
 namespace {
 
-typedef std::lock_guard<util::shared_spinlock> exclusive_guard;
-typedef util::shared_lock_guard<util::shared_spinlock> shared_guard;
-typedef util::upgrade_lock_guard<util::shared_spinlock> upgrade_guard;
+typedef lock_guard<util::shared_spinlock> exclusive_guard;
+typedef shared_lock<util::shared_spinlock> shared_guard;
+typedef upgrade_lock<util::shared_spinlock> upgrade_guard;
+typedef upgrade_to_unique_lock<util::shared_spinlock> upgrade_to_unique_guard;
 
 class local_broker;
 class local_group_module;
@@ -295,7 +294,7 @@ class local_group_module : public abstract_group::module {
     , m_actor_utype(uniform_typeid<actor>()){ }
 
     group get(const std::string& identifier) override {
-        shared_guard guard(m_instances_mtx);
+        upgrade_guard guard(m_instances_mtx);
         auto i = m_instances.find(identifier);
         if (i != m_instances.end()) {
             return {i->second};
@@ -303,7 +302,7 @@ class local_group_module : public abstract_group::module {
         else {
             auto tmp = make_counted<local_group>(true, this, identifier);
             { // lifetime scope of uguard
-                upgrade_guard uguard(guard);
+                upgrade_to_unique_guard uguard(guard);
                 auto p = m_instances.insert(make_pair(identifier, tmp));
                 // someone might preempt us
                 return {p.first->second};
@@ -322,7 +321,7 @@ class local_group_module : public abstract_group::module {
             return this->get(identifier);
         }
         else {
-            shared_guard guard(m_proxies_mtx);
+            upgrade_guard guard(m_proxies_mtx);
             auto i = m_proxies.find(broker);
             if (i != m_proxies.end()) {
                 return {i->second};
@@ -330,7 +329,7 @@ class local_group_module : public abstract_group::module {
             else {
                 local_group_ptr tmp{new local_group_proxy{broker, this,
                                                           identifier}};
-                upgrade_guard uguard(guard);
+                upgrade_to_unique_guard uguard(guard);
                 auto p = m_proxies.insert(std::make_pair(broker, tmp));
                 // someone might preempt us
                 return {p.first->second};

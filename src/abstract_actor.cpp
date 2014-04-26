@@ -48,7 +48,6 @@
 #include "boost/actor/io/middleman.hpp"
 
 #include "boost/actor/util/shared_spinlock.hpp"
-#include "boost/actor/util/shared_lock_guard.hpp"
 
 #include "boost/actor/detail/raw_access.hpp"
 #include "boost/actor/detail/actor_registry.hpp"

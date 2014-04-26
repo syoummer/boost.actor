@@ -36,6 +36,8 @@
 #include <algorithm>
 #include <type_traits>
 
+#include "boost/thread/lock_types.hpp"
+
 #include "boost/algorithm/string/split.hpp"
 #include "boost/algorithm/string/classification.hpp"
 
@@ -50,7 +52,6 @@
 #include "boost/actor/util/duration.hpp"
 #include "boost/actor/util/scope_guard.hpp"
 #include "boost/actor/util/shared_spinlock.hpp"
-#include "boost/actor/util/shared_lock_guard.hpp"
 
 #include "boost/actor/detail/raw_access.hpp"
 #include "boost/actor/detail/safe_equal.hpp"
@@ -891,7 +892,7 @@ class utim_impl : public uniform_type_info_map {
     }
 
     pointer by_rtti(const std::type_info& ti) const {
-        util::shared_lock_guard<util::shared_spinlock> guard(m_lock);
+        shared_lock<util::shared_spinlock> guard(m_lock);
         auto res = find_rtti(m_builtin_types, ti);
         return (res) ? res : find_rtti(m_user_types, ti);
     }
@@ -899,7 +900,7 @@ class utim_impl : public uniform_type_info_map {
     pointer by_uniform_name(const std::string& name) {
         pointer result = nullptr;
         /* lifetime scope of guard */ {
-            util::shared_lock_guard<util::shared_spinlock> guard(m_lock);
+            shared_lock<util::shared_spinlock> guard(m_lock);
             result = find_name(m_builtin_types, name);
             result = (result) ? result : find_name(m_user_types, name);
         }
@@ -911,7 +912,7 @@ class utim_impl : public uniform_type_info_map {
     }
 
     std::vector<pointer> get_all() const {
-        util::shared_lock_guard<util::shared_spinlock> guard(m_lock);
+        shared_lock<util::shared_spinlock> guard(m_lock);
         std::vector<pointer> res;
         res.reserve(m_builtin_types.size() + m_user_types.size());
         res.insert(res.end(), m_builtin_types.begin(), m_builtin_types.end());
@@ -920,7 +921,7 @@ class utim_impl : public uniform_type_info_map {
     }
 
     pointer insert(uniform_type_info_ptr uti) {
-        std::unique_lock<util::shared_spinlock> guard(m_lock);
+        unique_lock<util::shared_spinlock> guard(m_lock);
         auto e = m_user_types.end();
         auto i = std::lower_bound(m_user_types.begin(), e, uti.get(),
                                   [](uniform_type_info* lhs, pointer rhs) {

@@ -32,12 +32,14 @@
 #include <limits>
 #include <stdexcept>
 
+#include "boost/thread/locks.hpp"
+
 #include "boost/actor/logging.hpp"
 #include "boost/actor/attachable.hpp"
 #include "boost/actor/exit_reason.hpp"
 #include "boost/actor/detail/actor_registry.hpp"
-#include "boost/actor/util/shared_lock_guard.hpp"
-#include "boost/actor/util/upgrade_lock_guard.hpp"
+
+#include "boost/actor/util/shared_spinlock.hpp"
 
 namespace boost {
 namespace actor {
@@ -45,9 +47,10 @@ namespace detail {
 
 namespace {
 
-typedef std::lock_guard<util::shared_spinlock> exclusive_guard;
-typedef util::shared_lock_guard<util::shared_spinlock> shared_guard;
-typedef util::upgrade_lock_guard<util::shared_spinlock> upgrade_guard;
+typedef lock_guard<util::shared_spinlock> exclusive_guard;
+typedef shared_lock<util::shared_spinlock> shared_guard;
+typedef upgrade_lock<util::shared_spinlock> upgrade_guard;
+typedef upgrade_to_unique_lock<util::shared_spinlock> upgrade_to_unique_guard;
 
 } // namespace <anonymous>
 
@@ -68,13 +71,13 @@ actor_registry::value_type actor_registry::get_entry(actor_id key) const {
 void actor_registry::put(actor_id key, const abstract_actor_ptr& value) {
     bool add_attachable = false;
     if (value != nullptr) {
-        shared_guard guard(m_instances_mtx);
+        upgrade_guard guard(m_instances_mtx);
         auto i = m_entries.find(key);
         if (i == m_entries.end()) {
             auto entry = std::make_pair(key,
                                         value_type(value,
                                                    exit_reason::not_exited));
-            upgrade_guard uguard(guard);
+            upgrade_to_unique_guard uguard(guard);
             add_attachable = m_entries.insert(entry).second;
         }
     }

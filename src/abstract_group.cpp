@@ -33,8 +33,6 @@
 #include "boost/actor/any_tuple.hpp"
 #include "boost/actor/singletons.hpp"
 #include "boost/actor/util/shared_spinlock.hpp"
-#include "boost/actor/util/shared_lock_guard.hpp"
-#include "boost/actor/util/upgrade_lock_guard.hpp"
 
 #include "boost/actor/detail/group_manager.hpp"
 #include "boost/actor/detail/singleton_manager.hpp"
