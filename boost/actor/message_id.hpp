@@ -34,7 +34,7 @@
 #include <cstdint>
 
 #include "boost/actor/config.hpp"
-#include "boost/actor/util/comparable.hpp"
+#include "boost/actor/detail/comparable.hpp"
 
 namespace boost {
 namespace actor {
@@ -45,7 +45,7 @@ struct invalid_message_id { constexpr invalid_message_id() { } };
  * @brief Denotes whether a message is asynchronous or synchronous
  * @note Asynchronous messages always have an invalid message id.
  */
-class message_id : util::comparable<message_id> {
+class message_id : detail::comparable<message_id> {
 
     static constexpr std::uint64_t response_flag_mask     = 0x8000000000000000;
     static constexpr std::uint64_t answered_flag_mask     = 0x4000000000000000;

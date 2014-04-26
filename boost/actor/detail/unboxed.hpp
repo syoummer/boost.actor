@@ -33,7 +33,7 @@
 
 #include <memory>
 
-#include "boost/actor/util/wrapped.hpp"
+#include "boost/actor/detail/wrapped.hpp"
 
 namespace boost {
 namespace actor {
@@ -45,23 +45,23 @@ struct unboxed {
 };
 
 template<typename T>
-struct unboxed< util::wrapped<T> > {
-    typedef typename util::wrapped<T>::type type;
+struct unboxed< detail::wrapped<T> > {
+    typedef typename detail::wrapped<T>::type type;
 };
 
 template<typename T>
-struct unboxed<util::wrapped<T> (&)()> {
-    typedef typename util::wrapped<T>::type type;
+struct unboxed<detail::wrapped<T> (&)()> {
+    typedef typename detail::wrapped<T>::type type;
 };
 
 template<typename T>
-struct unboxed<util::wrapped<T> ()> {
-    typedef typename util::wrapped<T>::type type;
+struct unboxed<detail::wrapped<T> ()> {
+    typedef typename detail::wrapped<T>::type type;
 };
 
 template<typename T>
-struct unboxed<util::wrapped<T> (*)()> {
-    typedef typename util::wrapped<T>::type type;
+struct unboxed<detail::wrapped<T> (*)()> {
+    typedef typename detail::wrapped<T>::type type;
 };
 
 } // namespace detail

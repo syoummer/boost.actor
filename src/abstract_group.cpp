@@ -32,7 +32,7 @@
 #include "boost/actor/abstract_group.hpp"
 #include "boost/actor/message.hpp"
 #include "boost/actor/singletons.hpp"
-#include "boost/actor/util/shared_spinlock.hpp"
+#include "boost/actor/detail/shared_spinlock.hpp"
 
 #include "boost/actor/detail/group_manager.hpp"
 #include "boost/actor/detail/singleton_manager.hpp"

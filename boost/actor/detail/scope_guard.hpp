@@ -28,60 +28,65 @@
 \******************************************************************************/
 
 
-/******************************************************************************\
- * Based on http://homes.esat.kuleuven.be/~cosicart/ps/AB-9601/rmd160.h;
- * original header:
- *
- *      AUTHOR:   Antoon Bosselaers, ESAT-COSIC
- *      DATE:     1 March 1996
- *      VERSION:  1.0
- *
- *      Copyright (c) Katholieke Universiteit Leuven
- *      1996, All Rights Reserved
- *
- *  Conditions for use of the RIPEMD-160 Software
- *
- *  The RIPEMD-160 software is freely available for use under the terms and
- *  conditions described hereunder, which shall be deemed to be accepted by
- *  any user of the software and applicable on any use of the software:
- *
- *  1. K.U.Leuven Department of Electrical Engineering-ESAT/COSIC shall for
- *     all purposes be considered the owner of the RIPEMD-160 software and of
- *     all copyright, trade secret, patent or other intellectual property
- *     rights therein.
- *  2. The RIPEMD-160 software is provided on an "as is" basis without
- *     warranty of any sort, express or implied. K.U.Leuven makes no
- *     representation that the use of the software will not infringe any
- *     patent or proprietary right of third parties. User will indemnify
- *     K.U.Leuven and hold K.U.Leuven harmless from any claims or liabilities
- *     which may arise as a result of its use of the software. In no
- *     circumstances K.U.Leuven R&D will be held liable for any deficiency,
- *     fault or other mishappening with regard to the use or performance of
- *     the software.
- *  3. User agrees to give due credit to K.U.Leuven in scientific publications
- *     or communications in relation with the use of the RIPEMD-160 software
- *     as follows: RIPEMD-160 software written by Antoon Bosselaers,
- *     available at http://www.esat.kuleuven.be/~cosicart/ps/AB-9601/.
- *
-\******************************************************************************/
+#ifndef BOOST_ACTOR_SCOPE_GUARD_HPP
+#define BOOST_ACTOR_SCOPE_GUARD_HPP
 
-#ifndef BOOST_ACTOR_RIPEMD_160_HPP
-#define BOOST_ACTOR_RIPEMD_160_HPP
-
-#include <array>
-#include <string>
+#include <utility>
 
 namespace boost {
 namespace actor {
-namespace util {
+namespace detail {
 
 /**
- * @brief Creates a hash from @p data using the RIPEMD-160 algorithm.
+ * @brief A lightweight scope guard implementation.
  */
-void ripemd_160(std::array<std::uint8_t, 20>& storage, const std::string& data);
+template<typename Fun>
+class scope_guard {
 
-} // namespace util
+    scope_guard() = delete;
+    scope_guard(const scope_guard&) = delete;
+    scope_guard& operator=(const scope_guard&) = delete;
+
+ public:
+
+    scope_guard(Fun f) : m_fun(std::move(f)), m_enabled(true) { }
+
+    scope_guard(scope_guard&& other)
+    : m_fun(std::move(other.m_fun)), m_enabled(other.m_enabled) {
+        other.m_enabled = false;
+    }
+
+    ~scope_guard() {
+        if (m_enabled) m_fun();
+    }
+
+    /**
+     * @brief Disables this guard, i.e., the guard does not
+     *        run its cleanup code as it goes out of scope.
+     */
+    inline void disable() {
+        m_enabled = false;
+    }
+
+ private:
+
+    Fun m_fun;
+    bool m_enabled;
+
+};
+
+/**
+ * @brief Creates a guard that executes @p f as soon as it
+ *        goes out of scope.
+ * @relates scope_guard
+ */
+template<typename Fun>
+scope_guard<Fun> make_scope_guard(Fun f) {
+    return {std::move(f)};
+}
+
+} // namespace detail
 } // namespace actor
 } // namespace boost
 
-#endif // BOOST_ACTOR_RIPEMD_160_HPP
+#endif // BOOST_ACTOR_SCOPE_GUARD_HPP

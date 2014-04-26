@@ -39,16 +39,16 @@
 #include "boost/actor/atom.hpp"
 #include "boost/actor/anything.hpp"
 #include "boost/actor/message.hpp"
+#include "boost/actor/duration.hpp"
 #include "boost/actor/guard_expr.hpp"
 #include "boost/actor/match_expr.hpp"
 #include "boost/actor/skip_message.hpp"
 #include "boost/actor/may_have_timeout.hpp"
 #include "boost/actor/timeout_definition.hpp"
 
-#include "boost/actor/util/duration.hpp"
-#include "boost/actor/util/type_list.hpp"
-#include "boost/actor/util/arg_match_t.hpp"
-#include "boost/actor/util/type_traits.hpp"
+#include "boost/actor/detail/type_list.hpp"
+#include "boost/actor/detail/arg_match_t.hpp"
+#include "boost/actor/detail/type_traits.hpp"
 
 #include "boost/actor/detail/boxed.hpp"
 #include "boost/actor/detail/unboxed.hpp"
@@ -76,17 +76,17 @@ struct to_void_impl<false, T> { typedef typename add_ptr_to_fun<T>::type type; }
 
 template<typename T>
 struct boxed_and_not_callable_to_void
-: to_void_impl<is_boxed<T>::value || !util::is_callable<T>::value, T> { };
+: to_void_impl<is_boxed<T>::value || !detail::is_callable<T>::value, T> { };
 
 template<typename T>
 struct boxed_and_callable_to_void
-: to_void_impl<is_boxed<T>::value || util::is_callable<T>::value, T> { };
+: to_void_impl<is_boxed<T>::value || detail::is_callable<T>::value, T> { };
 
 class behavior_rvalue_builder {
 
  public:
 
-    constexpr behavior_rvalue_builder(const util::duration& d) : m_tout(d) { }
+    constexpr behavior_rvalue_builder(const duration& d) : m_tout(d) { }
 
     template<typename F>
     timeout_definition<F> operator>>(F&& f) const {
@@ -95,7 +95,7 @@ class behavior_rvalue_builder {
 
  private:
 
-    util::duration m_tout;
+    duration m_tout;
 
 };
 
@@ -126,12 +126,12 @@ struct disjunct_rvalue_builders {
 template<class Guard, class Transformers, class Pattern>
 struct rvalue_builder {
 
-    typedef typename util::tl_back<Pattern>::type back_type;
+    typedef typename detail::tl_back<Pattern>::type back_type;
 
     static constexpr bool is_complete =
-            !std::is_same<util::arg_match_t, back_type>::value;
+            !std::is_same<detail::arg_match_t, back_type>::value;
 
-    typedef typename util::tl_apply<Transformers, std::tuple>::type fun_container;
+    typedef typename detail::tl_apply<Transformers, std::tuple>::type fun_container;
 
     Guard m_guard;
     fun_container m_funs;
@@ -199,16 +199,16 @@ struct rvalue_builder {
 
 template<bool IsCallable, typename T>
 struct pattern_type_ {
-    typedef util::get_callable_trait<T> ctrait;
+    typedef detail::get_callable_trait<T> ctrait;
     typedef typename ctrait::arg_types args;
-    static_assert(util::tl_size<args>::value == 1, "only unary functions allowed");
-    typedef typename util::rm_const_and_ref<typename util::tl_head<args>::type>::type type;
+    static_assert(detail::tl_size<args>::value == 1, "only unary functions allowed");
+    typedef typename detail::rm_const_and_ref<typename detail::tl_head<args>::type>::type type;
 };
 
 template<typename T>
 struct pattern_type_<false, T> {
     typedef typename implicit_conversions<
-                typename util::rm_const_and_ref<
+                typename detail::rm_const_and_ref<
                     typename detail::unboxed<T>::type
                 >::type
             >::type
@@ -216,7 +216,7 @@ struct pattern_type_<false, T> {
 };
 
 template<typename T>
-struct pattern_type : pattern_type_<util::is_callable<T>::value && !detail::is_boxed<T>::value, T> {
+struct pattern_type : pattern_type_<detail::is_callable<T>::value && !detail::is_boxed<T>::value, T> {
 };
 
 } // namespace detail
@@ -297,17 +297,17 @@ constexpr typename detail::boxed<T>::type val() {
     return typename detail::boxed<T>::type();
 }
 
-typedef typename detail::boxed<util::arg_match_t>::type boxed_arg_match_t;
+typedef typename detail::boxed<detail::arg_match_t>::type boxed_arg_match_t;
 
 constexpr boxed_arg_match_t arg_match = boxed_arg_match_t();
 
 template<typename T, typename... Ts>
 detail::rvalue_builder<
     detail::value_guard<
-        typename util::tl_filter_not<
-            typename util::tl_trim<
-                typename util::tl_map<
-                    util::type_list<T, Ts...>,
+        typename detail::tl_filter_not<
+            typename detail::tl_trim<
+                typename detail::tl_map<
+                    detail::type_list<T, Ts...>,
                     detail::boxed_and_callable_to_void,
                     detail::implicit_conversions
                 >::type
@@ -315,26 +315,26 @@ detail::rvalue_builder<
             is_anything
         >::type
     >,
-    typename util::tl_map<
-        util::type_list<T, Ts...>,
+    typename detail::tl_map<
+        detail::type_list<T, Ts...>,
         detail::boxed_and_not_callable_to_void
     >::type,
-    util::type_list<typename detail::pattern_type<T>::type,
+    detail::type_list<typename detail::pattern_type<T>::type,
                     typename detail::pattern_type<Ts>::type...> >
 on(const T& arg, const Ts&... args) {
     return {detail::rvalue_builder_args_ctor{}, arg, args...};
 }
 
 inline detail::rvalue_builder<detail::empty_value_guard,
-                              util::empty_type_list,
-                              util::empty_type_list     > on() {
+                              detail::empty_type_list,
+                              detail::empty_type_list     > on() {
     return {};
 }
 
 template<typename T0, typename... Ts>
 detail::rvalue_builder<detail::empty_value_guard,
-                       util::empty_type_list,
-                       util::type_list<T0, Ts...> >
+                       detail::empty_type_list,
+                       detail::type_list<T0, Ts...> >
 on() {
     return {};
 }
@@ -363,7 +363,7 @@ decltype(on(A0, A1, A2, A3, val<Ts>()...)) on() {
 template<class Rep, class Period>
 constexpr detail::behavior_rvalue_builder
 after(const std::chrono::duration<Rep, Period>& d) {
-    return { util::duration(d) };
+    return { duration(d) };
 }
 
 inline decltype(on<anything>()) others() {
@@ -391,16 +391,16 @@ class on_the_fly_rvalue_builder {
             false,
             Expr,
             empty_value_guard,
-            util::empty_type_list,
-            util::empty_type_list
+            detail::empty_type_list,
+            detail::empty_type_list
         >::type>
     operator>>(Expr expr) const {
         typedef typename get_case<
                     false,
                     Expr,
                     empty_value_guard,
-                    util::empty_type_list,
-                    util::empty_type_list
+                    detail::empty_type_list,
+                    detail::empty_type_list
                 >::type
                 result_type;
         return result_type{typename result_type::first_type{},

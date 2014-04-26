@@ -45,14 +45,14 @@
 #include "boost/actor/logging.hpp"
 #include "boost/actor/announce.hpp"
 #include "boost/actor/message.hpp"
+#include "boost/actor/duration.hpp"
 #include "boost/actor/message_header.hpp"
 #include "boost/actor/abstract_group.hpp"
 #include "boost/actor/actor_namespace.hpp"
 #include "boost/actor/message_builder.hpp"
 
-#include "boost/actor/util/duration.hpp"
-#include "boost/actor/util/scope_guard.hpp"
-#include "boost/actor/util/shared_spinlock.hpp"
+#include "boost/actor/detail/scope_guard.hpp"
+#include "boost/actor/detail/shared_spinlock.hpp"
 
 #include "boost/actor/detail/raw_access.hpp"
 #include "boost/actor/detail/safe_equal.hpp"
@@ -70,7 +70,7 @@ namespace detail {
     { "boost::actor::acceptor_closed_msg",              "@acceptor_closed"    },
     { "boost::actor::actor",                            "@actor"              },
     { "boost::actor::actor_addr",                       "@addr"               },
-    { "boost::actor::message",                        "@tuple"              },
+    { "boost::actor::message",                          "@tuple"              },
     { "boost::actor::atom_value",                       "@atom"               },
     { "boost::actor::channel",                          "@channel"            },
     { "boost::actor::connection_closed_msg",            "@conn_closed"        },
@@ -88,7 +88,7 @@ namespace detail {
     { "boost::actor::sync_timeout_msg",                 "@sync_timeout"       },
     { "boost::actor::timeout_msg",                      "@timeout"            },
     { "boost::actor::unit_t",                           "@0"                  },
-    { "boost::actor::util::duration",                   "@duration"           },
+    { "boost::actor::duration",                   "@duration"           },
     { "boost::intrusive_ptr<boost::actor::node_id>",    "@proc"               },
     { "double",                                         "double"              },
     { "float",                                          "float"               },
@@ -157,13 +157,13 @@ inline bool operator==(const unit_t&, const unit_t&) {
 template<typename T> struct type_token { };
 
 template<typename T>
-inline typename std::enable_if<util::is_primitive<T>::value>::type
+inline typename std::enable_if<detail::is_primitive<T>::value>::type
 serialize_impl(const T& val, serializer* sink) {
     sink->write_value(val);
 }
 
 template<typename T>
-inline typename std::enable_if<util::is_primitive<T>::value>::type
+inline typename std::enable_if<detail::is_primitive<T>::value>::type
 deserialize_impl(T& val, deserializer* source) {
     val = source->read<T>();
 }
@@ -362,29 +362,29 @@ inline void deserialize_impl(atom_value& val, deserializer* source) {
     val = source->read<atom_value>();
 }
 
-inline void serialize_impl(const util::duration& val, serializer* sink) {
+inline void serialize_impl(const duration& val, serializer* sink) {
     sink->write_value(static_cast<uint32_t>(val.unit));
     sink->write_value(val.count);
 }
 
-inline void deserialize_impl(util::duration& val, deserializer* source) {
+inline void deserialize_impl(duration& val, deserializer* source) {
     auto unit_val = source->read<uint32_t>();
     auto count_val = source->read<uint32_t>();
     switch (unit_val) {
         case 1:
-            val.unit = util::time_unit::seconds;
+            val.unit = time_unit::seconds;
             break;
 
         case 1000:
-            val.unit = util::time_unit::milliseconds;
+            val.unit = time_unit::milliseconds;
             break;
 
         case 1000000:
-            val.unit = util::time_unit::microseconds;
+            val.unit = time_unit::microseconds;
             break;
 
         default:
-            val.unit = util::time_unit::invalid;
+            val.unit = time_unit::invalid;
             break;
     }
     val.count = count_val;
@@ -892,7 +892,7 @@ class utim_impl : public uniform_type_info_map {
     }
 
     pointer by_rtti(const std::type_info& ti) const {
-        shared_lock<util::shared_spinlock> guard(m_lock);
+        shared_lock<detail::shared_spinlock> guard(m_lock);
         auto res = find_rtti(m_builtin_types, ti);
         return (res) ? res : find_rtti(m_user_types, ti);
     }
@@ -900,7 +900,7 @@ class utim_impl : public uniform_type_info_map {
     pointer by_uniform_name(const std::string& name) {
         pointer result = nullptr;
         /* lifetime scope of guard */ {
-            shared_lock<util::shared_spinlock> guard(m_lock);
+            shared_lock<detail::shared_spinlock> guard(m_lock);
             result = find_name(m_builtin_types, name);
             result = (result) ? result : find_name(m_user_types, name);
         }
@@ -912,7 +912,7 @@ class utim_impl : public uniform_type_info_map {
     }
 
     std::vector<pointer> get_all() const {
-        shared_lock<util::shared_spinlock> guard(m_lock);
+        shared_lock<detail::shared_spinlock> guard(m_lock);
         std::vector<pointer> res;
         res.reserve(m_builtin_types.size() + m_user_types.size());
         res.insert(res.end(), m_builtin_types.begin(), m_builtin_types.end());
@@ -921,7 +921,7 @@ class utim_impl : public uniform_type_info_map {
     }
 
     pointer insert(uniform_type_info_ptr uti) {
-        unique_lock<util::shared_spinlock> guard(m_lock);
+        unique_lock<detail::shared_spinlock> guard(m_lock);
         auto e = m_user_types.end();
         auto i = std::lower_bound(m_user_types.begin(), e, uti.get(),
                                   [](uniform_type_info* lhs, pointer rhs) {
@@ -967,7 +967,7 @@ class utim_impl : public uniform_type_info_map {
     // 10-19
     uti_impl<group_down_msg>                m_type_group_down;
     uti_impl<message>                     m_type_tuple;
-    uti_impl<util::duration>                m_type_duration;
+    uti_impl<duration>                m_type_duration;
     uti_impl<sync_exited_msg>               m_type_sync_exited;
     uti_impl<sync_timeout_msg>              m_type_sync_timeout;
     uti_impl<timeout_msg>                   m_type_timeout;
@@ -1002,7 +1002,7 @@ class utim_impl : public uniform_type_info_map {
     // both containers are sorted by uniform name
     std::array<pointer, 39> m_builtin_types;
     std::vector<uniform_type_info*> m_user_types;
-    mutable util::shared_spinlock m_lock;
+    mutable detail::shared_spinlock m_lock;
 
     template<typename Container>
     pointer find_rtti(const Container& c, const std::type_info& ti) const {

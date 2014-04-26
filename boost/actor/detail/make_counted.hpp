@@ -34,7 +34,8 @@
 #include "boost/intrusive_ptr.hpp"
 
 #include "boost/actor/ref_counted.hpp"
-#include "boost/actor/memory_cached.hpp"
+
+#include "boost/actor/mixin/memory_cached.hpp"
 
 #include "boost/actor/detail/memory.hpp"
 
@@ -43,13 +44,19 @@ namespace actor {
 namespace detail {
 
 template<typename T, typename... Ts>
-typename std::enable_if<is_memory_cached<T>::value, intrusive_ptr<T>>::type
+typename std::enable_if<
+    mixin::is_memory_cached<T>::value,
+    intrusive_ptr<T>
+>::type
 make_counted(Ts&&... args) {
     return {detail::memory::create<T>(std::forward<Ts>(args)...)};
 }
 
 template<typename T, typename... Ts>
-typename std::enable_if<not is_memory_cached<T>::value, intrusive_ptr<T>>::type
+typename std::enable_if<
+    not mixin::is_memory_cached<T>::value,
+    intrusive_ptr<T>
+>::type
 make_counted(Ts&&... args) {
     return {new T(std::forward<Ts>(args)...)};
 }

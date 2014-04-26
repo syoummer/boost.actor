@@ -33,7 +33,8 @@
 
 #include "boost/actor/extend.hpp"
 #include "boost/actor/actor_proxy.hpp"
-#include "boost/actor/memory_cached.hpp"
+
+#include "boost/actor/mixin/memory_cached.hpp"
 
 #include "boost/actor/detail/single_reader_queue.hpp"
 
@@ -55,7 +56,8 @@ namespace io {
 
 class middleman;
 
-class sync_request_info : public extend<memory_managed>::with<memory_cached> {
+class sync_request_info : public extend<memory_managed>::
+                                 with<mixin::memory_cached> {
 
     friend class detail::memory;
 

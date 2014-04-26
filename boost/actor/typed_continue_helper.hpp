@@ -33,7 +33,7 @@
 
 #include "boost/actor/continue_helper.hpp"
 
-#include "boost/actor/util/type_traits.hpp"
+#include "boost/actor/detail/type_traits.hpp"
 
 #include "boost/actor/detail/typed_actor_util.hpp"
 
@@ -50,7 +50,7 @@ class typed_continue_helper {
     typed_continue_helper(message_id mid, local_actor* self) : m_ch(mid, self) { }
 
     template<typename F>
-    typed_continue_helper<typename util::get_callable_trait<F>::result_type>
+    typed_continue_helper<typename detail::get_callable_trait<F>::result_type>
     continue_with(F fun) {
         detail::assert_types<OutputList, F>();
         m_ch.continue_with(std::move(fun));

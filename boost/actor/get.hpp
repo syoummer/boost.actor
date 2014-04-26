@@ -34,8 +34,8 @@
 #include <tuple>
 #include <cstddef>
 
-#include "boost/actor/util/type_traits.hpp"
-#include "boost/actor/util/rebindable_reference.hpp"
+#include "boost/actor/detail/type_traits.hpp"
+#include "boost/actor/detail/rebindable_reference.hpp"
 
 namespace boost {
 namespace actor {
@@ -45,21 +45,21 @@ namespace detail {
 template<typename...> struct pseudo_tuple;
 } // namespace detail
 
-namespace util {
+namespace detail {
 template<typename...> struct type_list;
-} // namespace util
+} // namespace detail
 
 // forward declarations of get(detail::pseudo_tuple<...>&)
 template<size_t N, typename... Ts>
-const typename util::type_at<N, Ts...>::type& get(const detail::pseudo_tuple<Ts...>& tv);
+const typename detail::type_at<N, Ts...>::type& get(const detail::pseudo_tuple<Ts...>& tv);
 
-// forward declarations of get(util::type_list<...>&)
+// forward declarations of get(detail::type_list<...>&)
 template<size_t N, typename... Ts>
-typename util::type_at<N, Ts...>::type get(const util::type_list<Ts...>&);
+typename detail::type_at<N, Ts...>::type get(const detail::type_list<Ts...>&);
 
 // forward declarations of get_ref(detail::pseudo_tuple<...>&)
 template<size_t N, typename... Ts>
-typename util::type_at<N, Ts...>::type& get_ref(detail::pseudo_tuple<Ts...>& tv);
+typename detail::type_at<N, Ts...>::type& get_ref(detail::pseudo_tuple<Ts...>& tv);
 
 // support get_ref access to std::tuple
 template<size_t Pos, typename... Ts>
@@ -73,8 +73,8 @@ inline auto get_ref(std::tuple<Ts...>& tup) -> decltype(std::get<Pos>(tup)) {
  */
 template<size_t Pos, class Tuple>
 inline auto get_cv_aware(Tuple& tup)
--> decltype(util::unwrap_ref(get_ref<Pos>(tup))) {
-    return util::unwrap_ref(get_ref<Pos>(tup));
+-> decltype(detail::unwrap_ref(get_ref<Pos>(tup))) {
+    return detail::unwrap_ref(get_ref<Pos>(tup));
 }
 
 /**
@@ -83,8 +83,8 @@ inline auto get_cv_aware(Tuple& tup)
  */
 template<size_t Pos, class Tuple>
 inline auto get_cv_aware(const Tuple& tup)
--> decltype(util::unwrap_ref(get<Pos>(tup))) {
-    return util::unwrap_ref(get<Pos>(tup));
+-> decltype(detail::unwrap_ref(get<Pos>(tup))) {
+    return detail::unwrap_ref(get<Pos>(tup));
 }
 
 } // namespace actor

@@ -71,7 +71,7 @@ inline void sleep_for(const chrono::duration<Rep, Period>& rt) {
 
 namespace boost {
 namespace actor {
-namespace util {
+namespace detail {
 
 /**
  * @brief A producer-consumer list.
@@ -201,7 +201,7 @@ class producer_consumer_list {
 
 };
 
-} // namespace util
+} // namespace detail
 } // namespace actor
 } // namespace boost
 

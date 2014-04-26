@@ -40,7 +40,8 @@ namespace boost {
 namespace actor {
 
 class execution_unit;
-namespace util { class duration; }
+class duration;
+
 namespace detail { struct cs_thread; }
 
 namespace policy {

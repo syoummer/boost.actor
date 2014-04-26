@@ -32,7 +32,7 @@
 
 #include "boost/actor/cppa_fwd.hpp"
 
-#include "boost/actor/util/type_list.hpp"
+#include "boost/actor/detail/type_list.hpp"
 
 #include "boost/actor/detail/message_iterator.hpp"
 
@@ -41,7 +41,7 @@ namespace actor {
 namespace detail {
 
 struct tuple_dummy {
-    typedef util::empty_type_list types;
+    typedef detail::empty_type_list types;
     typedef message_iterator<tuple_dummy> const_iterator;
     inline size_t size() const {
         return 0;
@@ -56,7 +56,7 @@ struct tuple_dummy {
         return nullptr;
     }
     inline const std::type_info* type_token() const {
-        return &typeid(util::empty_type_list);
+        return &typeid(detail::empty_type_list);
     }
     inline bool dynamically_typed() const {
         return false;

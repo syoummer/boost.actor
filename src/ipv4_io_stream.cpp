@@ -36,7 +36,8 @@
 #include "boost/actor/config.hpp"
 #include "boost/actor/logging.hpp"
 #include "boost/actor/exception.hpp"
-#include "boost/actor/detail/fd_util.hpp"
+
+#include "boost/actor/io/fd_util.hpp"
 #include "boost/actor/io/ipv4_io_stream.hpp"
 
 #ifdef BOOST_ACTOR_WINDOWS
@@ -55,7 +56,7 @@ namespace boost {
 namespace actor {
 namespace io {
 
-using namespace ::boost::actor::detail::fd_util;
+using namespace ::boost::actor::io::fd_util;
 
 ipv4_io_stream::ipv4_io_stream(native_socket_type fd) : m_fd(fd) { }
 

@@ -14,7 +14,7 @@
 #include "boost/actor/config.hpp"
 #include "boost/actor/logging.hpp"
 #include "boost/actor/to_string.hpp"
-#include "boost/actor/util/scope_guard.hpp"
+#include "boost/actor/detail/scope_guard.hpp"
 
 #ifndef BOOST_ACTOR_WINDOWS
 constexpr char to_dev_null[] = " &>/dev/null";
@@ -125,7 +125,7 @@ inline void cppa_check_value(V1 v1,
     BOOST_ACTOR_PRINT(#LineOfCode << " = " << (LineOfCode));
 
 #define BOOST_ACTOR_TEST(testname)                                             \
-    auto cppa_test_scope_guard = ::boost::actor::util::make_scope_guard([] {   \
+    auto cppa_test_scope_guard = ::boost::actor::detail::make_scope_guard([] {   \
         std::cout << cppa_error_count() << " error(s) detected" << std::endl;  \
     });                                                                        \
     set_default_test_settings();                                               \

@@ -37,7 +37,7 @@
 #include "boost/actor/logging.hpp"
 #include "boost/actor/singletons.hpp"
 
-#include "boost/actor/util/scope_guard.hpp"
+#include "boost/actor/detail/scope_guard.hpp"
 
 #include "boost/actor/io/broker.hpp"
 #include "boost/actor/io/broker.hpp"
@@ -193,7 +193,7 @@ class broker::scribe : public extend<broker::servant>::with<buffered_writing> {
     continue_reading_result continue_reading() override {
         BOOST_ACTOR_LOG_TRACE("");
         m_is_continue_reading = true;
-        auto sg = util::make_scope_guard([=] {
+        auto sg = detail::make_scope_guard([=] {
             m_is_continue_reading = false;
         });
         for (;;) {

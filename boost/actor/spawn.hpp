@@ -41,7 +41,7 @@
 #include "boost/actor/spawn_options.hpp"
 #include "boost/actor/typed_event_based_actor.hpp"
 
-#include "boost/actor/util/type_traits.hpp"
+#include "boost/actor/detail/type_traits.hpp"
 
 #include "boost/actor/detail/cs_thread.hpp"
 #include "boost/actor/detail/make_counted.hpp"
@@ -144,7 +144,7 @@ intrusive_ptr<C> spawn_class(execution_unit* host,
                              Ts&&... args) {
     return detail::spawn_impl<C, Os>(host,
                                      before_launch_fun,
-            detail::spawn_fwd<typename util::rm_const_and_ref<Ts>::type>::fwd(
+            detail::spawn_fwd<typename detail::rm_const_and_ref<Ts>::type>::fwd(
                     std::forward<Ts>(args))...);
 }
 
@@ -153,9 +153,9 @@ actor spawn_functor(execution_unit* eu,
                     BeforeLaunch cb,
                     F fun,
                     Ts&&... args) {
-    typedef typename util::get_callable_trait<F>::type trait;
+    typedef typename detail::get_callable_trait<F>::type trait;
     typedef typename trait::arg_types arg_types;
-    typedef typename util::tl_head<arg_types>::type first_arg;
+    typedef typename detail::tl_head<arg_types>::type first_arg;
     constexpr bool is_blocking = has_blocking_api_flag(Os);
     constexpr bool has_ptr_arg = std::is_pointer<first_arg>::value;
     constexpr bool has_blocking_self = std::is_same<
@@ -258,7 +258,7 @@ class functor_based_typed_actor : public typed_event_based_actor<Rs...> {
 
     template<typename F, typename... Ts>
     functor_based_typed_actor(F fun, Ts&&... args) {
-        typedef typename util::get_callable_trait<F>::type trait;
+        typedef typename detail::get_callable_trait<F>::type trait;
         typedef typename trait::arg_types arg_types;
         typedef typename trait::result_type result_type;
         constexpr bool returns_behavior = std::is_same<
@@ -266,7 +266,7 @@ class functor_based_typed_actor : public typed_event_based_actor<Rs...> {
                                               behavior_type
                                           >::value;
         constexpr bool uses_first_arg = std::is_same<
-                                            typename util::tl_head<
+                                            typename detail::tl_head<
                                                 arg_types
                                             >::type,
                                             pointer
@@ -357,16 +357,16 @@ spawn_typed(Ts&&... args) {
 
 template<spawn_options Os, typename BeforeLaunch, typename F, typename... Ts>
 typename detail::infer_typed_actor_handle<
-    typename util::get_callable_trait<F>::result_type,
-    typename util::tl_head<
-        typename util::get_callable_trait<F>::arg_types
+    typename detail::get_callable_trait<F>::result_type,
+    typename detail::tl_head<
+        typename detail::get_callable_trait<F>::arg_types
     >::type
 >::type
 spawn_typed_functor(execution_unit* eu, BeforeLaunch bl, F fun, Ts&&... args) {
     typedef typename detail::infer_typed_actor_base<
-                typename util::get_callable_trait<F>::result_type,
-                typename util::tl_head<
-                    typename util::get_callable_trait<F>::arg_types
+                typename detail::get_callable_trait<F>::result_type,
+                typename detail::tl_head<
+                    typename detail::get_callable_trait<F>::arg_types
                 >::type
             >::type
             impl;
@@ -381,9 +381,9 @@ spawn_typed_functor(execution_unit* eu, BeforeLaunch bl, F fun, Ts&&... args) {
  */
 template<spawn_options Os = no_spawn_options, typename F, typename... Ts>
 typename detail::infer_typed_actor_handle<
-    typename util::get_callable_trait<F>::result_type,
-    typename util::tl_head<
-        typename util::get_callable_trait<F>::arg_types
+    typename detail::get_callable_trait<F>::result_type,
+    typename detail::tl_head<
+        typename detail::get_callable_trait<F>::arg_types
     >::type
 >::type
 spawn_typed(F fun, Ts&&... args) {

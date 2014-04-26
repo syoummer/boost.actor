@@ -39,7 +39,7 @@
 #include <algorithm>
 #include <type_traits>
 
-#include "boost/actor/util/type_traits.hpp"
+#include "boost/actor/detail/type_traits.hpp"
 
 namespace boost {
 namespace actor {

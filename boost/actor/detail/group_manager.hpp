@@ -36,7 +36,7 @@
 #include <thread>
 
 #include "boost/actor/abstract_group.hpp"
-#include "boost/actor/util/shared_spinlock.hpp"
+#include "boost/actor/detail/shared_spinlock.hpp"
 
 #include "boost/actor/detail/singleton_mixin.hpp"
 

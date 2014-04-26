@@ -7,8 +7,8 @@
 
 #include "boost/actor/uniform_type_info.hpp"
 
-#include "boost/actor/util/int_list.hpp"
-#include "boost/actor/util/type_list.hpp"
+#include "boost/actor/detail/int_list.hpp"
+#include "boost/actor/detail/type_list.hpp"
 
 #include "boost/actor/detail/demangle.hpp"
 
@@ -17,7 +17,7 @@ using std::endl;
 using std::is_same;
 
 using namespace boost::actor;
-using namespace boost::actor::util;
+using namespace boost::actor::detail;
 
 template<typename T>
 struct is_int : std::false_type { };
@@ -47,8 +47,8 @@ int main() {
     BOOST_ACTOR_CHECK((is_same<int, tl_head<l2>::type>::value));
     BOOST_ACTOR_CHECK((is_same<l1, tl_tail<l2>::type>::value));
 
-    BOOST_ACTOR_CHECK_EQUAL((util::tl_count<l1, is_int>::value), 1);
-    BOOST_ACTOR_CHECK_EQUAL((util::tl_count<l2, is_int>::value), 2);
+    BOOST_ACTOR_CHECK_EQUAL((detail::tl_count<l1, is_int>::value), 1);
+    BOOST_ACTOR_CHECK_EQUAL((detail::tl_count<l2, is_int>::value), 2);
 
     typedef int_list<0, 1, 2, 3, 4, 5> il0;
     typedef int_list<4, 5> il1;

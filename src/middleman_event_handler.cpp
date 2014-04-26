@@ -28,6 +28,10 @@
 \******************************************************************************/
 
 
+#include <string>
+
+#include "boost/actor/logging.hpp"
+
 #include "boost/actor/io/middleman_event_handler.hpp"
 
 namespace boost {

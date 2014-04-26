@@ -32,7 +32,7 @@
 #define BOOST_ACTOR_BOXED_HPP
 
 #include "boost/actor/anything.hpp"
-#include "boost/actor/util/wrapped.hpp"
+#include "boost/actor/detail/wrapped.hpp"
 
 namespace boost {
 namespace actor {
@@ -40,12 +40,12 @@ namespace detail {
 
 template<typename T>
 struct boxed {
-    typedef util::wrapped<T> type;
+    typedef detail::wrapped<T> type;
 };
 
 template<typename T>
-struct boxed< util::wrapped<T> > {
-    typedef util::wrapped<T> type;
+struct boxed< detail::wrapped<T> > {
+    typedef detail::wrapped<T> type;
 };
 
 template<>
@@ -59,22 +59,22 @@ struct is_boxed {
 };
 
 template<typename T>
-struct is_boxed< util::wrapped<T> > {
+struct is_boxed< detail::wrapped<T> > {
     static constexpr bool value = true;
 };
 
 template<typename T>
-struct is_boxed<util::wrapped<T>()> {
+struct is_boxed<detail::wrapped<T>()> {
     static constexpr bool value = true;
 };
 
 template<typename T>
-struct is_boxed<util::wrapped<T>(&)()> {
+struct is_boxed<detail::wrapped<T>(&)()> {
     static constexpr bool value = true;
 };
 
 template<typename T>
-struct is_boxed<util::wrapped<T>(*)()> {
+struct is_boxed<detail::wrapped<T>(*)()> {
     static constexpr bool value = true;
 };
 

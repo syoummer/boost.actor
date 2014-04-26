@@ -59,9 +59,9 @@ class raw_access;
  * @tparam Rs Interface as @p replies_to<...>::with<...> parameter pack.
  */
 template<typename... Rs>
-class typed_actor : util::comparable<typed_actor<Rs...>>
-                  , util::comparable<typed_actor<Rs...>, actor_addr>
-                  , util::comparable<typed_actor<Rs...>, invalid_actor_addr_t> {
+class typed_actor : detail::comparable<typed_actor<Rs...>>
+                  , detail::comparable<typed_actor<Rs...>, actor_addr>
+                  , detail::comparable<typed_actor<Rs...>, invalid_actor_addr_t> {
 
     friend class local_actor;
 
@@ -92,7 +92,7 @@ class typed_actor : util::comparable<typed_actor<Rs...>>
     /**
      * @brief Stores the interface of the actor as type list.
      */
-    typedef util::type_list<Rs...> interface;
+    typedef detail::type_list<Rs...> interface;
 
     typed_actor() = default;
     typed_actor(typed_actor&&) = default;
@@ -161,13 +161,13 @@ class typed_actor : util::comparable<typed_actor<Rs...>>
 
     template<class ListA, class ListB>
     inline void check_signatures() {
-        static_assert(util::tl_is_strict_subset<ListA, ListB>::value,
+        static_assert(detail::tl_is_strict_subset<ListA, ListB>::value,
                       "'this' must be a strict subset of 'other'");
     }
 
     template<typename... OtherRs>
     inline void set(const typed_actor<OtherRs...>& other) {
-        check_signatures<interface, util::type_list<OtherRs...>>();
+        check_signatures<interface, detail::type_list<OtherRs...>>();
         m_ptr = other.m_ptr;
     }
 

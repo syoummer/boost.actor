@@ -27,113 +27,58 @@
  * along with libcppa. If not, see <http://www.gnu.org/licenses/>.            *
 \******************************************************************************/
 
+#ifndef BOOST_ACTOR_IO_PLATFORM_HPP
+#define BOOST_ACTOR_IO_PLATFORM_HPP
 
-#ifndef BOOST_ACTOR_REBINDABLE_REFERENCE_HPP
-#define BOOST_ACTOR_REBINDABLE_REFERENCE_HPP
+#include "boost/config.hpp"
 
-#include "boost/actor/config.hpp"
-
-#include "boost/actor/util/type_traits.hpp"
+#ifdef BOOST_WINDOWS
+#   include <w32api.h>
+#   undef _WIN32_WINNT
+#   undef WINVER
+#   define _WIN32_WINNT WindowsVista
+#   define WINVER WindowsVista
+#   include <ws2tcpip.h>
+#   include <winsock2.h>
+    // remove interface which is defined in rpc.h in files included by
+    // windows.h as it clashes with name used in own code
+#   undef interface
+#else
+#   include <unistd.h>
+#   include <errno.h>
+#endif
 
 namespace boost {
 namespace actor {
-namespace util {
+namespace io {
 
-template<typename T>
-struct call_helper {
-    typedef typename map_to_result_type<T>::type result_type;
-    template<typename... Ts>
-    result_type operator()(T& f, const Ts&... args) const {
-        return f(std::forward<Ts>(args)...);
+// platform-dependent types for sockets and some utility functions
+#ifdef BOOST_WINDOWS
+    typedef SOCKET native_socket_type;
+    typedef const char* setsockopt_ptr;
+    typedef const char* socket_send_ptr;
+    typedef char* socket_recv_ptr;
+    typedef int socklen_t;
+    constexpr SOCKET invalid_socket = INVALID_SOCKET;
+    inline int last_socket_error() { return WSAGetLastError(); }
+    inline bool would_block_or_temporarily_unavailable(int errcode) {
+        return errcode == WSAEWOULDBLOCK || errcode == WSATRY_AGAIN;
     }
-};
-
-template<>
-struct call_helper<bool> {
-    typedef bool result_type;
-    bool operator()(const bool& value) const {
-        return value;
+#else
+    typedef int native_socket_type;
+    typedef const void* setsockopt_ptr;
+    typedef const void* socket_send_ptr;
+    typedef void* socket_recv_ptr;
+    constexpr int invalid_socket = -1;
+    inline void closesocket(native_socket_type fd) { close(fd); }
+    inline int last_socket_error() { return errno; }
+    inline bool would_block_or_temporarily_unavailable(int errcode) {
+        return errcode == EAGAIN || errcode == EWOULDBLOCK;
     }
-};
+#endif
 
-template<>
-struct call_helper<const bool> : call_helper<bool> { };
-
-/**
- * @brief A reference wrapper similar to std::reference_wrapper, but
- *        allows rebinding the reference. Note that this wrapper can
- *        be 'dangling', because it provides a default constructor.
- */
-template<typename T>
-class rebindable_reference {
-
- public:
-
-    rebindable_reference() : m_ptr(nullptr) { }
-
-    rebindable_reference(T& value) : m_ptr(&value) { }
-
-    template<typename U>
-    rebindable_reference(const rebindable_reference<U>& other) : m_ptr(other.ptr()) { }
-
-    inline bool bound() const {
-        return m_ptr != nullptr;
-    }
-
-    inline void rebind(T& value) {
-        m_ptr  = &value;
-    }
-
-    template<typename U>
-    inline void rebind(const rebindable_reference<U>& other) {
-        m_ptr  = other.ptr();
-    }
-
-    inline T* ptr() const {
-        BOOST_ACTOR_REQUIRE(bound());
-        return m_ptr;
-    }
-
-    inline T& get() const {
-        BOOST_ACTOR_REQUIRE(bound());
-        return *m_ptr;
-    }
-
-    inline operator T&() const {
-        BOOST_ACTOR_REQUIRE(bound());
-        return *m_ptr;
-    }
-
-    template<typename... Ts>
-    typename call_helper<T>::result_type operator()(Ts&&... args) {
-        call_helper<T> f;
-        return f(get(), std::forward<Ts>(args)...);
-    }
-
- private:
-
-    T* m_ptr;
-
-};
-
-template<typename T>
-T& unwrap_ref(T& ref) {
-    return ref;
-}
-
-template<typename T>
-T& unwrap_ref(util::rebindable_reference<T>& ref) {
-    return ref.get();
-}
-
-template<typename T>
-typename std::add_const<T>::type&
-unwrap_ref(const util::rebindable_reference<T>& ref) {
-    return ref.get();
-}
-
-} // namespace util
-} // namespace actor
 } // namespace boost
+} // namespace actor
+} // namespace io
 
-#endif // BOOST_ACTOR_REBINDABLE_REFERENCE_HPP
+#endif // BOOST_ACTOR_IO_PLATFORM_HPP

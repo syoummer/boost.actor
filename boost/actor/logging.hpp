@@ -41,7 +41,7 @@
 #include "boost/actor/singletons.hpp"
 #include "boost/actor/abstract_actor.hpp"
 
-#include "boost/actor/util/scope_guard.hpp"
+#include "boost/actor/detail/scope_guard.hpp"
 
 #include "boost/actor/detail/demangle.hpp"
 
@@ -187,7 +187,7 @@ oss_wr operator<<(oss_wr&& lhs, T rhs) {
             __LINE__, (::boost::actor::oss_wr{} << message).str())
 #   define BOOST_ACTOR_PUSH_AID(aid_arg)                                       \
         auto prev_aid_in_scope = ::boost::actor::get_logger()->set_aid(aid_arg);       \
-        auto aid_pop_guard = ::boost::actor::util::make_scope_guard([=] {              \
+        auto aid_pop_guard = ::boost::actor::detail::make_scope_guard([=] {              \
             ::boost::actor::get_logger()->set_aid(prev_aid_in_scope);                  \
         })
 #   define BOOST_ACTOR_PUSH_AID_FROM_PTR(some_ptr)                             \

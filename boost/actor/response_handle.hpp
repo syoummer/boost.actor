@@ -38,7 +38,7 @@
 #include "boost/actor/continue_helper.hpp"
 #include "boost/actor/typed_continue_helper.hpp"
 
-#include "boost/actor/util/type_list.hpp"
+#include "boost/actor/detail/type_list.hpp"
 
 #include "boost/actor/detail/typed_actor_util.hpp"
 #include "boost/actor/detail/response_handle_util.hpp"
@@ -98,7 +98,7 @@ class response_handle<Self, message, nonblocking_response_handle_tag> {
 
     template<typename... Fs>
     typename std::enable_if<
-        util::all_callable<Fs...>::value,
+        detail::all_callable<Fs...>::value,
         continue_helper
     >::type
     then(Fs... fs) const {
@@ -120,7 +120,7 @@ class response_handle<Self, message, nonblocking_response_handle_tag> {
  *                            nonblocking + typed                             *
  ******************************************************************************/
 template<class Self, typename... Ts>
-class response_handle<Self, util::type_list<Ts...>, nonblocking_response_handle_tag> {
+class response_handle<Self, detail::type_list<Ts...>, nonblocking_response_handle_tag> {
 
  public:
 
@@ -132,16 +132,16 @@ class response_handle<Self, util::type_list<Ts...>, nonblocking_response_handle_
 
     template<typename F,
              typename Enable = typename std::enable_if<
-                                      util::is_callable<F>::value
+                                      detail::is_callable<F>::value
                                    && !is_match_expr<F>::value
                                >::type>
     typed_continue_helper<
         typename detail::lifted_result_type<
-            typename util::get_callable_trait<F>::result_type
+            typename detail::get_callable_trait<F>::result_type
         >::type
     >
     then(F fun) {
-        detail::assert_types<util::type_list<Ts...>, F>();
+        detail::assert_types<detail::type_list<Ts...>, F>();
         m_self->bhvr_stack().push_back(behavior{on_arg_match >> fun}, m_mid);
         return {m_mid, m_self};
     }
@@ -187,7 +187,7 @@ class response_handle<Self, message, blocking_response_handle_tag> {
     }
 
     template<typename... Fs>
-    typename std::enable_if<util::all_callable<Fs...>::value>::type
+    typename std::enable_if<detail::all_callable<Fs...>::value>::type
     await(Fs... fs) {
         await(detail::fs2bhvr(m_self, fs...));
     }
@@ -207,11 +207,11 @@ class response_handle<Self, message, blocking_response_handle_tag> {
  *                              blocking + typed                              *
  ******************************************************************************/
 template<class Self, typename... Ts>
-class response_handle<Self, util::type_list<Ts...>, blocking_response_handle_tag> {
+class response_handle<Self, detail::type_list<Ts...>, blocking_response_handle_tag> {
 
  public:
 
-    typedef util::type_list<Ts...> result_types;
+    typedef detail::type_list<Ts...> result_types;
 
     response_handle() = delete;
 
@@ -221,15 +221,15 @@ class response_handle<Self, util::type_list<Ts...>, blocking_response_handle_tag
 
     template<typename F>
     void await(F fun) {
-        typedef typename util::tl_map<
-                    typename util::get_callable_trait<F>::arg_types,
-                    util::rm_const_and_ref
+        typedef typename detail::tl_map<
+                    typename detail::get_callable_trait<F>::arg_types,
+                    detail::rm_const_and_ref
                 >::type
                 arg_types;
-        static constexpr size_t fun_args = util::tl_size<arg_types>::value;
-        static_assert(fun_args <= util::tl_size<result_types>::value,
+        static constexpr size_t fun_args = detail::tl_size<arg_types>::value;
+        static_assert(fun_args <= detail::tl_size<result_types>::value,
                       "functor takes too much arguments");
-        typedef typename util::tl_right<result_types, fun_args>::type recv_types;
+        typedef typename detail::tl_right<result_types, fun_args>::type recv_types;
         static_assert(std::is_same<arg_types, recv_types>::value,
                       "wrong functor signature");
         behavior tmp = detail::fs2bhvr(m_self, fun);

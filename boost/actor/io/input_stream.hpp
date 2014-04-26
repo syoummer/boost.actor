@@ -31,9 +31,11 @@
 #ifndef BOOST_ACTOR_INPUT_STREAM_HPP
 #define BOOST_ACTOR_INPUT_STREAM_HPP
 
-#include "boost/actor/config.hpp"
-#include "boost/actor/ref_counted.hpp"
 #include "boost/intrusive_ptr.hpp"
+
+#include "boost/actor/ref_counted.hpp"
+
+#include "boost/actor/io/platform.hpp"
 
 namespace boost {
 namespace actor {

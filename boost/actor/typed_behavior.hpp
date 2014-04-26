@@ -51,11 +51,11 @@ template<typename List>
 struct input_only;
 
 template<typename... Ts>
-struct input_only<util::type_list<Ts...>> {
-    typedef util::type_list<typename Ts::input_types...> type;
+struct input_only<detail::type_list<Ts...>> {
+    typedef detail::type_list<typename Ts::input_types...> type;
 };
 
-typedef util::type_list<skip_message_t> skip_list;
+typedef detail::type_list<skip_message_t> skip_list;
 
 template<class List>
 struct unbox_typed_continue_helper {
@@ -64,7 +64,7 @@ struct unbox_typed_continue_helper {
 };
 
 template<class List>
-struct unbox_typed_continue_helper<util::type_list<typed_continue_helper<List>>> {
+struct unbox_typed_continue_helper<detail::type_list<typed_continue_helper<List>>> {
     typedef List type;
 };
 
@@ -78,13 +78,13 @@ struct valid_input_predicate {
                     typename Expr::output_types
                 >::type
                 output_types;
-        static constexpr int pos = util::tl_find<s_inputs, input_types>::value;
+        static constexpr int pos = detail::tl_find<s_inputs, input_types>::value;
         static_assert(pos != -1, "cannot assign given match expression to "
                                  "typed behavior, because the expression "
                                  "contains at least one pattern that is "
                                  "not defined in the actor's type");
-        typedef typename util::tl_at<SList, pos>::type s_element;
-        typedef typename util::tl_map<
+        typedef typename detail::tl_at<SList, pos>::type s_element;
+        typedef typename detail::tl_map<
                     typename s_element::output_types,
                     lift_void
                 >::type
@@ -104,11 +104,11 @@ struct valid_input {
     // (1) has an identical input type list
     // (2)    has an identical output type list
     //     OR the output of the element in IList is skip_message_t
-    static_assert(util::tl_is_distinct<IList>::value,
+    static_assert(detail::tl_is_distinct<IList>::value,
                   "given pattern is not distinct");
     static constexpr bool value =
-           util::tl_size<SList>::value == util::tl_size<IList>::value
-        && util::tl_forall<
+           detail::tl_size<SList>::value == detail::tl_size<IList>::value
+        && detail::tl_forall<
                IList,
                valid_input_predicate<SList>::template inner
            >::value;
@@ -133,8 +133,7 @@ void static_check_typed_behavior_input() {
 template<typename... Rs>
 class typed_actor;
 
-template<class Base, class Subtype, class BehaviorType>
-class behavior_stack_based_impl;
+namespace mixin { template<class,class,class> class behavior_stack_based_impl; }
 
 template<typename... Rs>
 class typed_behavior {
@@ -142,8 +141,8 @@ class typed_behavior {
     template<typename... OtherRs>
     friend class typed_actor;
 
-    template<class Base, class Subtype, class BehaviorType>
-    friend class behavior_stack_based_impl;
+    template<class, class, class>
+    friend class mixin::behavior_stack_based_impl;
 
     template<typename...>
     friend class detail::functor_based_typed_actor;
@@ -155,7 +154,7 @@ class typed_behavior {
     typed_behavior& operator=(typed_behavior&&) = default;
     typed_behavior& operator=(const typed_behavior&) = default;
 
-    typedef util::type_list<Rs...> signatures;
+    typedef detail::type_list<Rs...> signatures;
 
     template<typename T, typename... Ts>
     typed_behavior(T arg, Ts&&... args) {
@@ -184,7 +183,7 @@ class typed_behavior {
      * @brief Returns the duration after which receives using
      *        this behavior should time out.
      */
-    inline const util::duration& timeout() const {
+    inline const duration& timeout() const {
         return m_bhvr.timeout();
     }
 
@@ -197,13 +196,13 @@ class typed_behavior {
     template<typename... Cs>
     void set(match_expr<Cs...>&& expr) {
         // check for (the lack of) guards
-        static_assert(util::conjunction<
+        static_assert(detail::conjunction<
                           detail::match_expr_has_no_guard<Cs>::value...
                       >::value,
                       "typed actors are not allowed to use guard expressions");
         // do some transformation before type-checking the input signatures
-        typedef typename util::tl_map<
-                    util::type_list<
+        typedef typename detail::tl_map<
+                    detail::type_list<
                         typename detail::deduce_signature<Cs>::type...
                     >
                 >::type

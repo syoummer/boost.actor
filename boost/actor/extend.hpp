@@ -31,21 +31,21 @@
 #ifndef BOOST_ACTOR_MIXED_HPP
 #define BOOST_ACTOR_MIXED_HPP
 
-// saves some typing
-#define BOOST_ACTOR_MIXIN template<class, class> class
-
 namespace boost {
 namespace actor {
 
 namespace detail {
 
-template<class D, class B, BOOST_ACTOR_MIXIN... Ms>
+template<class D, class B, template<class, class> class... Ms>
 struct extend_helper;
 
 template<class D, class B>
 struct extend_helper<D, B> { typedef B type; };
 
-template<class D, class B, BOOST_ACTOR_MIXIN M, BOOST_ACTOR_MIXIN... Ms>
+template<class D,
+         class B,
+         template<class, class> class M,
+         template<class, class> class... Ms>
 struct extend_helper<D, B, M, Ms...> : extend_helper<D, M<B, D>, Ms...> { };
 
 } // namespace detail
@@ -65,7 +65,7 @@ struct extend {
     /**
      * @brief Identifies the combined type.
      */
-    template<BOOST_ACTOR_MIXIN... Mixins>
+    template<template<class, class> class... Mixins>
     using with = typename detail::extend_helper<Derived, Base, Mixins...>::type;
 };
 

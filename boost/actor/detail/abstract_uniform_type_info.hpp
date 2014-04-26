@@ -35,14 +35,14 @@
 #include "boost/actor/deserializer.hpp"
 #include "boost/actor/uniform_type_info.hpp"
 
-#include "boost/actor/util/type_traits.hpp"
+#include "boost/actor/detail/type_traits.hpp"
 
 #include "boost/actor/detail/to_uniform_name.hpp"
 #include "boost/actor/detail/uniform_type_info_map.hpp"
 
 namespace boost {
 namespace actor {
-namespace util {
+namespace detail {
 
 /**
  * @brief Implements all pure virtual functions of {@link uniform_type_info}
@@ -108,7 +108,7 @@ class abstract_uniform_type_info : public uniform_type_info {
 
     template<class C>
     typename std::enable_if<
-        !std::is_empty<C>::value && util::is_comparable<C, C>::value,
+        !std::is_empty<C>::value && detail::is_comparable<C, C>::value,
         bool
     >::type
     eq(const C& lhs, const C& rhs) const {
@@ -119,7 +119,7 @@ class abstract_uniform_type_info : public uniform_type_info {
     typename std::enable_if<
         !std::is_empty<C>::value
             && std::is_pod<C>::value
-            && !util::is_comparable<C, C>::value,
+            && !detail::is_comparable<C, C>::value,
         bool
     >::type
     eq(const C& lhs, const C& rhs) const {
@@ -128,7 +128,7 @@ class abstract_uniform_type_info : public uniform_type_info {
 
 };
 
-} // namespace util
+} // namespace detail
 } // namespace actor
 } // namespace boost
 

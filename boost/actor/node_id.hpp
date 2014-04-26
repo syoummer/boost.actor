@@ -35,9 +35,11 @@
 #include <string>
 #include <cstdint>
 
-#include "boost/actor/ref_counted.hpp"
 #include "boost/intrusive_ptr.hpp"
-#include "boost/actor/util/comparable.hpp"
+
+#include "boost/actor/ref_counted.hpp"
+
+#include "boost/actor/detail/comparable.hpp"
 
 namespace boost {
 namespace actor {
@@ -47,7 +49,7 @@ class serializer;
 /**
  * @brief Identifies a process.
  */
-class node_id : public ref_counted, util::comparable<node_id> {
+class node_id : public ref_counted, detail::comparable<node_id> {
 
     typedef ref_counted super;
 

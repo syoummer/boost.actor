@@ -1,5 +1,5 @@
 #include "boost/actor/config.hpp"
-#include "boost/actor/util/get_mac_addresses.hpp"
+#include "boost/actor/detail/get_mac_addresses.hpp"
 
 #ifdef BOOST_ACTOR_MACOS
 
@@ -20,7 +20,7 @@
 #include <iostream>
 
 namespace boost {
-namespace actor { namespace util {
+namespace actor { namespace detail {
 
 std::vector<std::string> get_mac_addresses() {
     int mib[6];
@@ -108,7 +108,7 @@ std::vector<std::string> get_mac_addresses() {
 using namespace std;
 
 namespace boost {
-namespace actor { namespace util {
+namespace actor { namespace detail {
 
 std::vector<std::string> get_mac_addresses() {
     // get a socket handle
@@ -204,7 +204,7 @@ struct c_free {
 using namespace std;
 
 namespace boost {
-namespace actor { namespace util {
+namespace actor { namespace detail {
 
 std::vector<std::string> get_mac_addresses() {
     // result vector

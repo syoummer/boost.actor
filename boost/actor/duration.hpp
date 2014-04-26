@@ -38,7 +38,6 @@
 
 namespace boost {
 namespace actor {
-namespace util {
 
 /**
  * @brief SI time units to specify timeouts.
@@ -74,7 +73,7 @@ template<> struct ratio_to_time_unit_helper<60, 1> {
 
 /**
  * @brief Converts an STL time period to a
- *        {@link boost::actor::util::time_unit time_unit}.
+ *        {@link boost::actor::detail::time_unit time_unit}.
  */
 template<typename Period>
 constexpr time_unit get_time_unit_from_period() {
@@ -82,7 +81,7 @@ constexpr time_unit get_time_unit_from_period() {
 }
 
 /**
- * @brief Time duration consisting of a {@link boost::actor::util::time_unit time_unit}
+ * @brief Time duration consisting of a {@link boost::actor::detail::time_unit time_unit}
  *        and a 64 bit unsigned integer.
  */
 class duration {
@@ -163,31 +162,30 @@ inline bool operator!=(const duration& lhs, const duration& rhs) {
     return !(lhs == rhs);
 }
 
-} // namespace util
 } // namespace actor
 } // namespace boost
 
 /**
- * @relates boost::actor::util::duration
+ * @relates boost::actor::duration
  */
 template<class Clock, class Duration>
 std::chrono::time_point<Clock, Duration>&
 operator+=(std::chrono::time_point<Clock, Duration>& lhs,
-           const boost::actor::util::duration& rhs) {
+           const boost::actor::duration& rhs) {
     switch (rhs.unit) {
-        case boost::actor::util::time_unit::seconds:
+        case boost::actor::time_unit::seconds:
             lhs += std::chrono::seconds(rhs.count);
             break;
 
-        case boost::actor::util::time_unit::milliseconds:
+        case boost::actor::time_unit::milliseconds:
             lhs += std::chrono::milliseconds(rhs.count);
             break;
 
-        case boost::actor::util::time_unit::microseconds:
+        case boost::actor::time_unit::microseconds:
             lhs += std::chrono::microseconds(rhs.count);
             break;
 
-        case boost::actor::util::time_unit::invalid:
+        case boost::actor::time_unit::invalid:
             break;
     }
     return lhs;

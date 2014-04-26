@@ -31,11 +31,8 @@
 #ifndef CONTINUABLE_WRITER_HPP
 #define CONTINUABLE_WRITER_HPP
 
-#include "boost/actor/config.hpp"
-#include "boost/actor/ref_counted.hpp"
-#include "boost/intrusive_ptr.hpp"
-
 #include "boost/actor/io/event.hpp"
+#include "boost/actor/io/platform.hpp"
 
 namespace boost {
 namespace actor {

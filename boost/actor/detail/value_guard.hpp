@@ -35,9 +35,9 @@
 
 #include "boost/actor/unit.hpp"
 
-#include "boost/actor/util/type_list.hpp"
-#include "boost/actor/util/type_traits.hpp"
-#include "boost/actor/util/arg_match_t.hpp"
+#include "boost/actor/detail/type_list.hpp"
+#include "boost/actor/detail/type_traits.hpp"
+#include "boost/actor/detail/arg_match_t.hpp"
 
 #include "boost/actor/detail/boxed.hpp"
 #include "boost/actor/detail/safe_equal.hpp"
@@ -68,7 +68,7 @@ struct vg_cmp<unit_t> {
 
 template<typename T>
 struct is_match_helper {
-    static constexpr bool value =    util::is_callable<T>::value
+    static constexpr bool value =    detail::is_callable<T>::value
                                   || detail::is_boxed<T>::value;
 };
 
@@ -76,7 +76,7 @@ template<>
 struct is_match_helper<anything> : std::true_type { };
 
 template<>
-struct is_match_helper<util::arg_match_t> : std::true_type { };
+struct is_match_helper<detail::arg_match_t> : std::true_type { };
 
 struct filtered_construct_tuple_recursion_end { };
 
@@ -140,16 +140,16 @@ class value_guard {
     inline bool operator()(const Ts&... args) const {
         value_guard_zipper vgz;
         auto targs = std::forward_as_tuple(args...);
-        return detail::tuple_zip(vgz, util::get_indices(m_args), m_args, targs);
+        return detail::tuple_zip(vgz, detail::get_indices(m_args), m_args, targs);
     }
 
  private:
 
-    typename util::tl_apply<FilteredPattern, std::tuple>::type m_args;
+    typename detail::tl_apply<FilteredPattern, std::tuple>::type m_args;
 
 };
 
-typedef value_guard<util::empty_type_list> empty_value_guard;
+typedef value_guard<detail::empty_type_list> empty_value_guard;
 
 } // namespace detail
 } // namespace actor

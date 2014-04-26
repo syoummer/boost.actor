@@ -35,10 +35,11 @@
 #include "boost/actor/extend.hpp"
 #include "boost/actor/logging.hpp"
 #include "boost/actor/local_actor.hpp"
-#include "boost/actor/sync_sender.hpp"
-#include "boost/actor/mailbox_based.hpp"
 #include "boost/actor/response_handle.hpp"
-#include "boost/actor/behavior_stack_based.hpp"
+
+#include "boost/actor/mixin/sync_sender.hpp"
+#include "boost/actor/mixin/mailbox_based.hpp"
+#include "boost/actor/mixin/behavior_stack_based.hpp"
 
 #include "boost/actor/detail/response_handle_util.hpp"
 
@@ -54,10 +55,11 @@ namespace actor {
  *
  * @extends local_actor
  */
-class event_based_actor : public extend<local_actor, event_based_actor>::
-                                 with<mailbox_based,
-                                      behavior_stack_based<behavior>::impl,
-                                      sync_sender<nonblocking_response_handle_tag>::impl> {
+class event_based_actor
+        : public extend<local_actor, event_based_actor>::
+                 with<mixin::mailbox_based,
+                      mixin::behavior_stack_based<behavior>::impl,
+                      mixin::sync_sender<nonblocking_response_handle_tag>::impl> {
 
  public:
 

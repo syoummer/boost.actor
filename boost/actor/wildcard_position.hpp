@@ -34,7 +34,7 @@
 #include <type_traits>
 
 #include "boost/actor/anything.hpp"
-#include "boost/actor/util/type_list.hpp"
+#include "boost/actor/detail/type_list.hpp"
 
 namespace boost {
 namespace actor {
@@ -54,16 +54,16 @@ enum class wildcard_position {
 /**
  * @brief Gets the position of {@link cppa::anything anything} from the
  *        type list @p Types.
- * @tparam A template parameter pack as {@link cppa::util::type_list type_list}.
+ * @tparam A template parameter pack as {@link cppa::detail::type_list type_list}.
  */
 template<typename Types>
 constexpr wildcard_position get_wildcard_position() {
-    return util::tl_count<Types, is_anything>::value > 1
+    return detail::tl_count<Types, is_anything>::value > 1
            ? wildcard_position::multiple
-           : (util::tl_count<Types, is_anything>::value == 1
-              ? (std::is_same<typename util::tl_head<Types>::type, anything>::value
+           : (detail::tl_count<Types, is_anything>::value == 1
+              ? (std::is_same<typename detail::tl_head<Types>::type, anything>::value
                  ? wildcard_position::leading
-                 : (std::is_same<typename util::tl_back<Types>::type, anything>::value
+                 : (std::is_same<typename detail::tl_back<Types>::type, anything>::value
                     ? wildcard_position::trailing
                     : wildcard_position::in_between))
               : wildcard_position::nil);

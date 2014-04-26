@@ -34,8 +34,8 @@
 #include "boost/intrusive_ptr.hpp"
 #include "boost/actor/abstract_group.hpp"
 
-#include "boost/actor/util/comparable.hpp"
-#include "boost/actor/util/type_traits.hpp"
+#include "boost/actor/detail/comparable.hpp"
+#include "boost/actor/detail/type_traits.hpp"
 
 namespace boost {
 namespace actor {
@@ -56,8 +56,8 @@ class raw_access;
  */
 constexpr invalid_group_t invalid_group = invalid_group_t{};
 
-class group : util::comparable<group>
-            , util::comparable<group, invalid_group_t> {
+class group : detail::comparable<group>
+            , detail::comparable<group, invalid_group_t> {
 
     friend class detail::raw_access;
 

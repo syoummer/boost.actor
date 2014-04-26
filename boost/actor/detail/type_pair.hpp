@@ -28,71 +28,40 @@
 \******************************************************************************/
 
 
-#ifndef BOOST_ACTOR_MEMORY_CACHED_HPP
-#define BOOST_ACTOR_MEMORY_CACHED_HPP
-
-#include <utility>
-#include <type_traits>
-
-#include "boost/actor/detail/memory.hpp"
+#ifndef BOOST_ACTOR_TYPE_PAIR_HPP
+#define BOOST_ACTOR_TYPE_PAIR_HPP
 
 namespace boost {
 namespace actor {
+namespace detail {
 
 /**
- * @brief This mixin adds all member functions and member variables needed
- *        by the memory management subsystem.
+ * @ingroup MetaProgramming
+ * @brief A pair of two types.
  */
-template<class Base, class Subtype>
-class memory_cached : public Base {
-
-    friend class detail::memory;
-
-    template<typename>
-    friend class detail::basic_memory_cache;
-
- public:
-
-    static constexpr bool is_memory_cached_type = true;
-
- protected:
-
-    typedef memory_cached combined_type;
-
-    template<typename... Ts>
-    memory_cached(Ts&&... args) : Base(std::forward<Ts>(args)...)
-                                , outer_memory(nullptr) { }
-
-    virtual void request_deletion() {
-        auto mc = detail::memory::get_cache_map_entry(&typeid(*this));
-        if (!mc) {
-            auto om = outer_memory;
-            if (om) {
-                om->destroy();
-                om->deallocate();
-            }
-            else delete this;
-        }
-        else mc->release_instance(mc->downcast(this));
-    }
-
- private:
-
-    detail::instance_wrapper* outer_memory;
-
+template<typename First, typename Second>
+struct type_pair {
+    typedef First first;
+    typedef Second second;
 };
 
-template<typename T>
-struct is_memory_cached {
-    template<class U, bool = U::is_memory_cached_type>
-    static std::true_type check(int);
-    template<class>
-    static std::false_type check(...);
-public:
-    static constexpr bool value = decltype(check<T>(0))::value;
+template<typename First, typename Second>
+struct to_type_pair {
+    typedef type_pair<First, Second> type;
 };
 
+template<class What>
+struct is_type_pair {
+    static constexpr bool value = false;
+};
+
+template<typename First, typename Second>
+struct is_type_pair<type_pair<First, Second> > {
+    static constexpr bool value = true;
+};
+
+} // namespace detail
 } // namespace actor
 } // namespace boost
 
-#endif // BOOST_ACTOR_MEMORY_CACHED_HPP
+#endif // BOOST_ACTOR_TYPE_PAIR_HPP

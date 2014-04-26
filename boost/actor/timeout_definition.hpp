@@ -33,7 +33,7 @@
 
 #include <functional>
 
-#include "boost/actor/util/duration.hpp"
+#include "boost/actor/duration.hpp"
 
 namespace boost {
 namespace actor {
@@ -43,7 +43,7 @@ namespace detail { class behavior_impl; }
 template<typename F>
 struct timeout_definition {
     static constexpr bool may_have_timeout = true;
-    util::duration timeout;
+    duration timeout;
     F handler;
     detail::behavior_impl* as_behavior_impl() const;
 };

@@ -57,10 +57,10 @@ namespace detail {
 
 namespace {
 
-typedef lock_guard<util::shared_spinlock> exclusive_guard;
-typedef shared_lock<util::shared_spinlock> shared_guard;
-typedef upgrade_lock<util::shared_spinlock> upgrade_guard;
-typedef upgrade_to_unique_lock<util::shared_spinlock> upgrade_to_unique_guard;
+typedef lock_guard<detail::shared_spinlock> exclusive_guard;
+typedef shared_lock<detail::shared_spinlock> shared_guard;
+typedef upgrade_lock<detail::shared_spinlock> upgrade_guard;
+typedef upgrade_to_unique_lock<detail::shared_spinlock> upgrade_to_unique_guard;
 
 class local_broker;
 class local_group_module;
@@ -125,7 +125,7 @@ class local_group : public abstract_group {
 
  protected:
 
-    util::shared_spinlock m_mtx;
+    detail::shared_spinlock m_mtx;
     std::set<channel> m_subscribers;
     actor m_broker;
 
@@ -352,9 +352,9 @@ class local_group_module : public abstract_group::module {
 
     node_id_ptr m_process;
     const uniform_type_info* m_actor_utype;
-    util::shared_spinlock m_instances_mtx;
+    detail::shared_spinlock m_instances_mtx;
     std::map<std::string, local_group_ptr> m_instances;
-    util::shared_spinlock m_proxies_mtx;
+    detail::shared_spinlock m_proxies_mtx;
     std::map<actor, local_group_ptr> m_proxies;
 
 };

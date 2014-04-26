@@ -35,7 +35,7 @@
 #include "boost/actor/skip_message.hpp"
 #include "boost/actor/system_messages.hpp"
 
-#include "boost/actor/util/type_traits.hpp"
+#include "boost/actor/detail/type_traits.hpp"
 
 namespace boost {
 namespace actor {

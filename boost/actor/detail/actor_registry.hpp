@@ -40,7 +40,7 @@
 
 #include "boost/actor/attachable.hpp"
 #include "boost/actor/abstract_actor.hpp"
-#include "boost/actor/util/shared_spinlock.hpp"
+#include "boost/actor/detail/shared_spinlock.hpp"
 
 #include "boost/actor/detail/singleton_mixin.hpp"
 
@@ -103,7 +103,7 @@ class actor_registry : public singleton_mixin<actor_registry> {
     std::mutex m_running_mtx;
     std::condition_variable m_running_cv;
 
-    mutable util::shared_spinlock m_instances_mtx;
+    mutable detail::shared_spinlock m_instances_mtx;
     entries m_entries;
 
     actor_registry();

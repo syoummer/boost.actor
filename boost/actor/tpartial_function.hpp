@@ -39,11 +39,11 @@
 
 #include "boost/actor/unit.hpp"
 
-#include "boost/actor/util/call.hpp"
-#include "boost/actor/util/int_list.hpp"
-#include "boost/actor/util/type_list.hpp"
-#include "boost/actor/util/type_traits.hpp"
-#include "boost/actor/util/left_or_right.hpp"
+#include "boost/actor/detail/call.hpp"
+#include "boost/actor/detail/int_list.hpp"
+#include "boost/actor/detail/type_list.hpp"
+#include "boost/actor/detail/type_traits.hpp"
+#include "boost/actor/detail/left_or_right.hpp"
 
 namespace boost {
 namespace actor {
@@ -57,7 +57,7 @@ struct tpartial_function_helper {
     }
     template<class Expr, class Tuple, class Indices>
     inline Result lifted_result(Expr& expr, Tuple& tup, Indices& indices) {
-        return util::apply_args(expr, tup, indices);
+        return detail::apply_args(expr, tup, indices);
     }
 };
 
@@ -73,7 +73,7 @@ struct tpartial_function_helper<unit_t, Ts...> {
     }
     template<class Expr, class Tuple, class Indices>
     inline unit_t lifted_result(Expr& expr, Tuple& tup, Indices& indices) {
-        util::apply_args(expr, tup, indices);
+        detail::apply_args(expr, tup, indices);
         return unit;
     }
 };
@@ -81,26 +81,26 @@ struct tpartial_function_helper<unit_t, Ts...> {
 template<class Expr, class Guard, typename Result, typename... Ts>
 class tpartial_function {
 
-    typedef typename util::get_callable_trait<Expr>::type ctrait;
+    typedef typename detail::get_callable_trait<Expr>::type ctrait;
 
     typedef typename ctrait::arg_types ctrait_args;
 
-    static constexpr size_t num_expr_args = util::tl_size<ctrait_args>::value;
+    static constexpr size_t num_expr_args = detail::tl_size<ctrait_args>::value;
 
-    static_assert(util::tl_exists<util::type_list<Ts...>,
+    static_assert(detail::tl_exists<detail::type_list<Ts...>,
                                   std::is_rvalue_reference >::value == false,
                   "partial functions using rvalue arguments are not supported");
 
  public:
 
-    typedef util::type_list<Ts...> arg_types;
+    typedef detail::type_list<Ts...> arg_types;
 
     typedef Guard guard_type;
 
     static constexpr size_t num_arguments = sizeof...(Ts);
 
     static constexpr bool manipulates_args =
-            util::tl_exists<arg_types, util::is_mutable_ref>::value;
+            detail::tl_exists<arg_types, detail::is_mutable_ref>::value;
 
     typedef typename lift_void<Result>::type result_type;
 
@@ -126,7 +126,7 @@ class tpartial_function {
      */
     result_type invoke(Ts... args) const {
         auto targs = std::forward_as_tuple(args...);
-        auto indices = util::get_right_indices<num_expr_args>(targs);
+        auto indices = detail::get_right_indices<num_expr_args>(targs);
         tpartial_function_helper<result_type, Ts...> helper;
         return helper.lifted_result(m_expr, targs, indices);
     }
@@ -148,30 +148,30 @@ template<class Expr, class Guard, typename Ts,
 struct get_tpartial_function;
 
 template<class Expr, class Guard, typename... Ts, typename Result>
-struct get_tpartial_function<Expr, Guard, util::type_list<Ts...>, Result, 1> {
+struct get_tpartial_function<Expr, Guard, detail::type_list<Ts...>, Result, 1> {
     typedef tpartial_function<Expr, Guard, Result, Ts...> type;
 };
 
 template<class Expr, class Guard, typename... Ts>
 struct get_tpartial_function<Expr, Guard,
-                             util::type_list<Ts...>, unit_t, 0> {
-    typedef typename util::get_callable_trait<Expr>::type ctrait;
+                             detail::type_list<Ts...>, unit_t, 0> {
+    typedef typename detail::get_callable_trait<Expr>::type ctrait;
     typedef typename ctrait::arg_types arg_types;
 
-    static_assert(util::tl_size<arg_types>::value <= sizeof...(Ts),
+    static_assert(detail::tl_size<arg_types>::value <= sizeof...(Ts),
                   "Functor takes too much arguments");
 
     typedef typename get_tpartial_function<
                 Expr,
                 Guard,
                 // fill arg_types of Expr from left with const Ts&
-                typename util::tl_zip<
-                    typename util::tl_pad_left<
+                typename detail::tl_zip<
+                    typename detail::tl_pad_left<
                         typename ctrait::arg_types,
                         sizeof...(Ts)
                     >::type,
-                    util::type_list<const Ts&...>,
-                    util::left_or_right
+                    detail::type_list<const Ts&...>,
+                    detail::left_or_right
                 >::type,
                 typename ctrait::result_type,
                 1

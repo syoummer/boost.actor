@@ -35,10 +35,10 @@
 
 #include "boost/actor/config.hpp"
 
-#include "boost/actor/util/call.hpp"
-#include "boost/actor/util/int_list.hpp"
-#include "boost/actor/util/comparable.hpp"
-#include "boost/actor/util/type_traits.hpp"
+#include "boost/actor/detail/call.hpp"
+#include "boost/actor/detail/int_list.hpp"
+#include "boost/actor/detail/comparable.hpp"
+#include "boost/actor/detail/type_traits.hpp"
 
 #include "boost/actor/detail/tuple_vals.hpp"
 #include "boost/actor/detail/message_data.hpp"
@@ -190,7 +190,7 @@ class message {
     inline const data_ptr& cvals() const;
 
     /**
-     * @brief Returns either <tt>&typeid(util::type_list<Ts...>)</tt>, where
+     * @brief Returns either <tt>&typeid(detail::type_list<Ts...>)</tt>, where
      *        <tt>Ts...</tt> are the element types, or <tt>&typeid(void)</tt>.
      *
      * The type token @p &typeid(void) indicates that this tuple is dynamically
@@ -331,7 +331,7 @@ struct move_from_tuple_helper {
 template<typename... Ts>
 inline message message::move_from_tuple(std::tuple<Ts...>&& tup) {
     move_from_tuple_helper f;
-    return util::apply_args(f, tup, util::get_indices(tup));
+    return detail::apply_args(f, tup, detail::get_indices(tup));
 }
 
 template<typename... Ts>

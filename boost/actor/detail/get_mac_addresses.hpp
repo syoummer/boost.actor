@@ -28,44 +28,20 @@
 \******************************************************************************/
 
 
-#ifndef BOOST_ACTOR_SHARED_SPINLOCK_HPP
-#define BOOST_ACTOR_SHARED_SPINLOCK_HPP
+#ifndef BOOST_ACTOR_UTIL_GET_MAC_ADDRESSES_HPP
+#define BOOST_ACTOR_UTIL_GET_MAC_ADDRESSES_HPP
 
-#include <atomic>
-#include <cstddef>
+#include <string>
+#include <vector>
 
 namespace boost {
 namespace actor {
-namespace util {
+namespace detail {
 
-/**
- * @brief A spinlock implementation providing shared and exclusive locking.
- */
-class shared_spinlock {
+std::vector<std::string> get_mac_addresses();
 
-    std::atomic<long> m_flag;
-
- public:
-
-    shared_spinlock();
-
-    void lock();
-    void unlock();
-    bool try_lock();
-
-    void lock_shared();
-    void unlock_shared();
-    bool try_lock_shared();
-
-    void lock_upgrade();
-    void unlock_upgrade();
-    void unlock_upgrade_and_lock();
-    void unlock_and_lock_upgrade();
-
-};
-
-} // namespace util
+} // namespace detail
 } // namespace actor
 } // namespace boost
 
-#endif // BOOST_ACTOR_SHARED_SPINLOCK_HPP
+#endif // BOOST_ACTOR_UTIL_GET_MAC_ADDRESSES_HPP

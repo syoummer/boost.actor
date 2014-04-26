@@ -155,7 +155,7 @@ void local_actor::send_exit(const actor_addr& whom, std::uint32_t reason) {
 
 void local_actor::delayed_send_tuple(message_priority prio,
                                      const channel& dest,
-                                     const util::duration& rel_time,
+                                     const duration& rel_time,
                                      message msg) {
     message_id mid;
     if (prio == message_priority::high) mid = mid.with_high_priority();
@@ -196,7 +196,7 @@ void local_actor::quit(std::uint32_t reason) {
 
 message_id local_actor::timed_sync_send_tuple_impl(message_priority mp,
                                                    const actor& dest,
-                                                   const util::duration& rtime,
+                                                   const duration& rtime,
                                                    message&& what) {
     auto nri = new_request_id();
     if (mp == message_priority::high) nri = nri.with_high_priority();

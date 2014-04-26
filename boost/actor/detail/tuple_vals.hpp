@@ -34,7 +34,7 @@
 #include <tuple>
 #include <stdexcept>
 
-#include "boost/actor/util/type_list.hpp"
+#include "boost/actor/detail/type_list.hpp"
 
 #include "boost/actor/detail/types_array.hpp"
 #include "boost/actor/detail/message_data.hpp"

@@ -36,12 +36,12 @@
 
 #include "boost/none.hpp"
 
+#include "boost/actor/duration.hpp"
 #include "boost/actor/match_expr.hpp"
 #include "boost/actor/timeout_definition.hpp"
 
-#include "boost/actor/util/duration.hpp"
-#include "boost/actor/util/type_list.hpp"
-#include "boost/actor/util/type_traits.hpp"
+#include "boost/actor/detail/type_list.hpp"
+#include "boost/actor/detail/type_traits.hpp"
 
 namespace boost {
 namespace actor {
@@ -81,7 +81,7 @@ class behavior {
     behavior(const timeout_definition<F>& arg);
 
     template<typename F>
-    behavior(const util::duration& d, F f);
+    behavior(const duration& d, F f);
 
     template<typename T, typename... Ts>
     behavior(const T& arg, Ts&&... args);
@@ -95,7 +95,7 @@ class behavior {
      * @brief Returns the duration after which receives using
      *        this behavior should time out.
      */
-    inline const util::duration& timeout() const;
+    inline const duration& timeout() const;
 
     /**
      * @brief Returns a value if @p arg was matched by one of the
@@ -151,7 +151,7 @@ behavior::behavior(const timeout_definition<F>& arg)
 : m_impl(detail::new_default_behavior(arg.timeout, arg.handler)) { }
 
 template<typename F>
-behavior::behavior(const util::duration& d, F f)
+behavior::behavior(const duration& d, F f)
 : m_impl(detail::new_default_behavior(d, f)) { }
 
 inline behavior::behavior(impl_ptr ptr) : m_impl(std::move(ptr)) { }
@@ -160,7 +160,7 @@ inline void behavior::handle_timeout() {
     m_impl->handle_timeout();
 }
 
-inline const util::duration& behavior::timeout() const {
+inline const duration& behavior::timeout() const {
     return m_impl->timeout();
 }
 

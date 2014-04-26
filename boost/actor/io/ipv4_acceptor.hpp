@@ -34,7 +34,7 @@
 #include <memory>
 #include <cstdint>
 
-#include "boost/actor/config.hpp"
+#include "boost/actor/io/platform.hpp"
 #include "boost/actor/io/acceptor.hpp"
 
 namespace boost {
@@ -65,7 +65,8 @@ class ipv4_acceptor : public acceptor {
 
 };
 
-} } // namespace actor
-} // namespace boost::detail
+} // namespace io
+} // namespace actor
+} // namespace boost
 
 #endif // BOOST_ACTOR_IPV4_ACCEPTOR_HPP

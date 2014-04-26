@@ -49,12 +49,13 @@
 #include "boost/actor/uniform_type_info.hpp"
 #include "boost/actor/binary_deserializer.hpp"
 
-#include "boost/actor/util/ripemd_160.hpp"
-#include "boost/actor/util/get_root_uuid.hpp"
-#include "boost/actor/util/get_mac_addresses.hpp"
+#include "boost/actor/detail/ripemd_160.hpp"
+#include "boost/actor/detail/get_root_uuid.hpp"
+#include "boost/actor/detail/get_mac_addresses.hpp"
 
 #include "boost/actor/io/peer.hpp"
 #include "boost/actor/io/buffer.hpp"
+#include "boost/actor/io/fd_util.hpp"
 #include "boost/actor/io/acceptor.hpp"
 #include "boost/actor/io/middleman.hpp"
 #include "boost/actor/io/input_stream.hpp"
@@ -64,7 +65,6 @@
 #include "boost/actor/io/default_message_queue.hpp"
 #include "boost/actor/io/middleman_event_handler.hpp"
 
-#include "boost/actor/detail/fd_util.hpp"
 #include "boost/actor/detail/safe_equal.hpp"
 #include "boost/actor/detail/make_counted.hpp"
 #include "boost/actor/detail/actor_registry.hpp"
@@ -320,10 +320,10 @@ class middleman_impl : public middleman {
                                    m_node,
                                    aid));
         });
-        auto pipefds = detail::fd_util::create_pipe();
+        auto pipefds = fd_util::create_pipe();
         m_pipe_out = pipefds.first;
         m_pipe_in = pipefds.second;
-        detail::fd_util::nonblocking(m_pipe_out, true);
+        fd_util::nonblocking(m_pipe_out, true);
         // start threads
         m_thread = std::thread([this] { middleman_loop(this); });
     }
@@ -345,11 +345,11 @@ class middleman_impl : public middleman {
  private:
 
     static node_id_ptr compute_node_id() {
-        auto macs = util::get_mac_addresses();
+        auto macs = detail::get_mac_addresses();
         auto hd_serial_and_mac_addr = join(macs, "")
-                                    + util::get_root_uuid();
+                                    + detail::get_root_uuid();
         node_id::host_id_type nid;
-        util::ripemd_160(nid, hd_serial_and_mac_addr);
+        detail::ripemd_160(nid, hd_serial_and_mac_addr);
         return new node_id(static_cast<uint32_t>(getpid()), nid);
     }
 

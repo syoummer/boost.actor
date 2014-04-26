@@ -28,65 +28,44 @@
 \******************************************************************************/
 
 
-#ifndef BOOST_ACTOR_SCOPE_GUARD_HPP
-#define BOOST_ACTOR_SCOPE_GUARD_HPP
+#ifndef BOOST_ACTOR_SHARED_SPINLOCK_HPP
+#define BOOST_ACTOR_SHARED_SPINLOCK_HPP
 
-#include <utility>
+#include <atomic>
+#include <cstddef>
 
 namespace boost {
 namespace actor {
-namespace util {
+namespace detail {
 
 /**
- * @brief A lightweight scope guard implementation.
+ * @brief A spinlock implementation providing shared and exclusive locking.
  */
-template<typename Fun>
-class scope_guard {
+class shared_spinlock {
 
-    scope_guard() = delete;
-    scope_guard(const scope_guard&) = delete;
-    scope_guard& operator=(const scope_guard&) = delete;
+    std::atomic<long> m_flag;
 
  public:
 
-    scope_guard(Fun f) : m_fun(std::move(f)), m_enabled(true) { }
+    shared_spinlock();
 
-    scope_guard(scope_guard&& other)
-    : m_fun(std::move(other.m_fun)), m_enabled(other.m_enabled) {
-        other.m_enabled = false;
-    }
+    void lock();
+    void unlock();
+    bool try_lock();
 
-    ~scope_guard() {
-        if (m_enabled) m_fun();
-    }
+    void lock_shared();
+    void unlock_shared();
+    bool try_lock_shared();
 
-    /**
-     * @brief Disables this guard, i.e., the guard does not
-     *        run its cleanup code as it goes out of scope.
-     */
-    inline void disable() {
-        m_enabled = false;
-    }
-
- private:
-
-    Fun m_fun;
-    bool m_enabled;
+    void lock_upgrade();
+    void unlock_upgrade();
+    void unlock_upgrade_and_lock();
+    void unlock_and_lock_upgrade();
 
 };
 
-/**
- * @brief Creates a guard that executes @p f as soon as it
- *        goes out of scope.
- * @relates scope_guard
- */
-template<typename Fun>
-scope_guard<Fun> make_scope_guard(Fun f) {
-    return {std::move(f)};
-}
-
-} // namespace util
+} // namespace detail
 } // namespace actor
 } // namespace boost
 
-#endif // BOOST_ACTOR_SCOPE_GUARD_HPP
+#endif // BOOST_ACTOR_SHARED_SPINLOCK_HPP

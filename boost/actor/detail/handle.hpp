@@ -31,14 +31,14 @@
 #ifndef BOOST_ACTOR_DETAIL_HANDLE_HPP
 #define BOOST_ACTOR_DETAIL_HANDLE_HPP
 
-#include "boost/actor/util/comparable.hpp"
+#include "boost/actor/detail/comparable.hpp"
 
 namespace boost {
 namespace actor {
 namespace detail {
 
 template<typename Subtype>
-class handle : util::comparable<Subtype> {
+class handle : detail::comparable<Subtype> {
 
  public:
 

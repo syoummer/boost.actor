@@ -28,58 +28,27 @@
 \******************************************************************************/
 
 
-#ifndef BOOST_ACTOR_MAILBOX_BASED_HPP
-#define BOOST_ACTOR_MAILBOX_BASED_HPP
-
-#include <type_traits>
-
-#include "boost/actor/mailbox_element.hpp"
-
-#include "boost/actor/detail/sync_request_bouncer.hpp"
-#include "boost/actor/detail/single_reader_queue.hpp"
+#ifndef BOOST_ACTOR_TBIND_HPP
+#define BOOST_ACTOR_TBIND_HPP
 
 namespace boost {
 namespace actor {
+namespace detail {
 
-template<class Base, class Subtype>
-class mailbox_based : public Base {
-
-    typedef detail::disposer del;
-
- public:
-
-    ~mailbox_based() {
-        if (!m_mailbox.closed()) {
-            detail::sync_request_bouncer f{this->exit_reason()};
-            m_mailbox.close(f);
-        }
-    }
-
-    template<typename... Ts>
-    inline mailbox_element* new_mailbox_element(Ts&&... args) {
-        return mailbox_element::create(std::forward<Ts>(args)...);
-    }
-
-    void cleanup(std::uint32_t reason) override {
-        detail::sync_request_bouncer f{reason};
-        m_mailbox.close(f);
-        Base::cleanup(reason);
-    }
-
- protected:
-
-    typedef mailbox_based combined_type;
-
-    typedef detail::single_reader_queue<mailbox_element, del> mailbox_type;
-
-    template<typename... Ts>
-    mailbox_based(Ts&&... args) : Base(std::forward<Ts>(args)...) { }
-
-    mailbox_type m_mailbox;
-
+/**
+ * @ingroup MetaProgramming
+ * @brief Predefines the first template parameter of @p Tp1.
+ */
+template<template<typename, typename> class Tpl, typename Arg1>
+struct tbind {
+    template<typename Arg2>
+    struct type {
+        static constexpr bool value = Tpl<Arg1, Arg2>::value;
+    };
 };
 
+} // namespace detail
 } // namespace actor
 } // namespace boost
 
-#endif //BOOST_ACTOR_MAILBOX_BASED_HPP
+#endif // BOOST_ACTOR_TBIND_HPP

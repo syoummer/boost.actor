@@ -20,7 +20,6 @@ using std::endl;
 using std::string;
 
 using namespace boost::actor;
-using namespace boost::actor::util;
 
 namespace { constexpr auto s_foo = atom("FooBar"); }
 

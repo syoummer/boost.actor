@@ -29,7 +29,7 @@
 
 
 #include "boost/actor/config.hpp"
-#include "boost/actor/util/get_root_uuid.hpp"
+#include "boost/actor/detail/get_root_uuid.hpp"
 
 namespace {
 constexpr char uuid_format[] = "FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF";
@@ -51,7 +51,7 @@ constexpr const char* s_get_uuid = "/usr/sbin/diskutil info / | "
 } // namespace <anonymous>
 
 namespace boost {
-namespace actor { namespace util {
+namespace actor { namespace detail {
 
 std::string get_root_uuid() {
     char cbuf[100];
@@ -88,7 +88,7 @@ std::string get_root_uuid() {
 #include <unistd.h>
 #include <iostream>
 
-#include "boost/actor/util/algorithm.hpp"
+#include "boost/actor/detail/algorithm.hpp"
 
 using namespace std;
 
@@ -101,7 +101,7 @@ struct columns_iterator : iterator<forward_iterator_tag, vector<string>> {
     columns_iterator& operator++() {
         string line;
         if (!getline(*fs, line)) fs = nullptr;
-        else cols = cppa::util::split(line);
+        else cols = cppa::detail::split(line);
         return *this;
     }
 
@@ -119,7 +119,7 @@ bool operator!=(const columns_iterator& lhs, const columns_iterator& rhs) {
 }
 
 namespace boost {
-namespace actor { namespace util {
+namespace actor { namespace detail {
 
 std::string get_root_uuid() {
     int sck = socket(AF_INET, SOCK_DGRAM, 0);
@@ -203,7 +203,7 @@ std::string get_root_uuid() {
 using namespace std;
 
 namespace boost {
-namespace actor { namespace util {
+namespace actor { namespace detail {
 
 namespace { constexpr size_t max_drive_name = MAX_PATH; }
 

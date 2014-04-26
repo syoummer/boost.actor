@@ -34,7 +34,7 @@
 #include <cstddef>
 
 #include "boost/actor/uniform_type_info.hpp"
-#include "boost/actor/util/type_list.hpp"
+#include "boost/actor/detail/type_list.hpp"
 
 namespace boost { namespace actor { class serializer; } }
 
@@ -53,7 +53,7 @@ struct serialize_tuple {
 };
 
 template<size_t Pos>
-struct serialize_tuple<util::empty_type_list, Pos> {
+struct serialize_tuple<detail::empty_type_list, Pos> {
     template<typename T>
     inline static void _(serializer&, const T*) { }
 };

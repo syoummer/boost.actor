@@ -28,19 +28,21 @@
 \******************************************************************************/
 
 
-#ifndef BOOST_ACTOR_BEHAVIOR_STACK_BASED_HPP
-#define BOOST_ACTOR_BEHAVIOR_STACK_BASED_HPP
+#ifndef BOOST_ACTOR_MIXIN_BEHAVIOR_STACK_BASED_HPP
+#define BOOST_ACTOR_MIXIN_BEHAVIOR_STACK_BASED_HPP
 
 #include "boost/actor/message_id.hpp"
-#include "boost/actor/single_timeout.hpp"
 #include "boost/actor/typed_behavior.hpp"
 #include "boost/actor/behavior_policy.hpp"
 #include "boost/actor/response_handle.hpp"
+
+#include "boost/actor/mixin/single_timeout.hpp"
 
 #include "boost/actor/detail/behavior_stack.hpp"
 
 namespace boost {
 namespace actor {
+namespace mixin {
 
 template<class Base, class Subtype, class BehaviorType>
 class behavior_stack_based_impl : public single_timeout<Base, Subtype> {
@@ -80,7 +82,7 @@ class behavior_stack_based_impl : public single_timeout<Base, Subtype> {
 
     template<typename T, typename... Ts>
     inline typename std::enable_if<
-        !is_behavior_policy<typename util::rm_const_and_ref<T>::type>::value,
+        !is_behavior_policy<typename detail::rm_const_and_ref<T>::type>::value,
         void
     >::type
     become(T&& arg, Ts&&... args) {
@@ -200,7 +202,8 @@ class behavior_stack_based {
 
 };
 
+} // namespace mixin
 } // namespace actor
 } // namespace boost
 
-#endif // BOOST_ACTOR_BEHAVIOR_STACK_BASED_HPP
+#endif // BOOST_ACTOR_MIXIN_BEHAVIOR_STACK_BASED_HPP

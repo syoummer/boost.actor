@@ -94,7 +94,7 @@ class delayed_msg {
 };
 
 template<class Map>
-inline void insert_dmsg(Map& storage, const util::duration& d,
+inline void insert_dmsg(Map& storage, const duration& d,
                         message_header&& hdr, message&& tup) {
     auto tout = hrc::now();
     tout += d;
@@ -127,7 +127,7 @@ class timer_actor final : public detail::proper_actor<blocking_actor,
         std::multimap<decltype(tout), delayed_msg> messages;
         // message handling rules
         auto mfun = (
-            on(atom("SEND"), arg_match) >> [&](const util::duration& d,
+            on(atom("SEND"), arg_match) >> [&](const duration& d,
                                                message_header& hdr,
                                                message& tup) {
                 insert_dmsg(messages, d, move(hdr), move(tup));

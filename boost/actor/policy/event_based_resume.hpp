@@ -179,7 +179,7 @@ class event_based_resume {
     }
 
     template<class Actor>
-    bool await_data(Actor*, const util::duration&) {
+    bool await_data(Actor*, const duration&) {
         static_assert(std::is_same<Actor, Actor>::value == false,
                       "The event-based resume policy cannot be used "
                       "to implement blocking actors");

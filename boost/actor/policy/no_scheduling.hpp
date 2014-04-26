@@ -37,12 +37,12 @@
 #include <condition_variable>
 
 #include "boost/actor/logging.hpp"
+#include "boost/actor/duration.hpp"
 #include "boost/actor/singletons.hpp"
 #include "boost/actor/exit_reason.hpp"
 
 #include "boost/actor/detail/cs_thread.hpp"
-#include "boost/actor/util/duration.hpp"
-#include "boost/actor/util/scope_guard.hpp"
+#include "boost/actor/detail/scope_guard.hpp"
 
 #include "boost/actor/policy/scheduling_policy.hpp"
 

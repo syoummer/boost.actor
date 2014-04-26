@@ -68,7 +68,7 @@
 
 
 #include <cstring>
-#include "boost/actor/util/ripemd_160.hpp"
+#include "boost/actor/detail/ripemd_160.hpp"
 
 namespace {
 
@@ -384,7 +384,7 @@ void MDfinish(dword *MDbuf, const byte *strptr, dword lswlen, dword mswlen) {
 } // namespace <anonmyous>
 
 namespace boost {
-namespace actor { namespace util {
+namespace actor { namespace detail {
 
 void ripemd_160(std::array<std::uint8_t, 20>& storage, const std::string& data) {
     dword MDbuf[5]; // contains (A, B, C, D(, E))

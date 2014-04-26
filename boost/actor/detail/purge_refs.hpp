@@ -28,40 +28,54 @@
 \******************************************************************************/
 
 
-#ifndef BOOST_ACTOR_TYPE_PAIR_HPP
-#define BOOST_ACTOR_TYPE_PAIR_HPP
+#ifndef BOOST_ACTOR_PURGE_REFS_HPP
+#define BOOST_ACTOR_PURGE_REFS_HPP
+
+#include <functional>
+
+#include "boost/actor/guard_expr.hpp"
+#include "boost/actor/detail/type_traits.hpp"
+#include "boost/actor/detail/rebindable_reference.hpp"
 
 namespace boost {
 namespace actor {
-namespace util {
+namespace detail {
+
+template<typename T>
+struct purge_refs_impl {
+    typedef T type;
+};
+
+template<typename T>
+struct purge_refs_impl<detail::rebindable_reference<T> > {
+    typedef T type;
+};
+
+template<typename T>
+struct purge_refs_impl<detail::rebindable_reference<const T> > {
+    typedef T type;
+};
+
+template<typename T>
+struct purge_refs_impl<std::reference_wrapper<T> > {
+    typedef T type;
+};
+
+template<typename T>
+struct purge_refs_impl<std::reference_wrapper<const T> > {
+    typedef T type;
+};
 
 /**
- * @ingroup MetaProgramming
- * @brief A pair of two types.
+ * @brief Removes references and reference wrappers.
  */
-template<typename First, typename Second>
-struct type_pair {
-    typedef First first;
-    typedef Second second;
+template<typename T>
+struct purge_refs {
+    typedef typename purge_refs_impl<typename detail::rm_const_and_ref<T>::type>::type type;
 };
 
-template<typename First, typename Second>
-struct to_type_pair {
-    typedef type_pair<First, Second> type;
-};
-
-template<class What>
-struct is_type_pair {
-    static constexpr bool value = false;
-};
-
-template<typename First, typename Second>
-struct is_type_pair<type_pair<First, Second> > {
-    static constexpr bool value = true;
-};
-
-} // namespace util
+} // namespace detail
 } // namespace actor
 } // namespace boost
 
-#endif // BOOST_ACTOR_TYPE_PAIR_HPP
+#endif // BOOST_ACTOR_PURGE_REFS_HPP

@@ -28,53 +28,36 @@
 \******************************************************************************/
 
 
-#ifndef BOOST_ACTOR_LEFT_OR_RIGHT_HPP
-#define BOOST_ACTOR_LEFT_OR_RIGHT_HPP
+#ifndef CALL_HPP
+#define CALL_HPP
 
-#include "boost/actor/unit.hpp"
+#include "boost/actor/get.hpp"
+#include "boost/actor/detail/int_list.hpp"
 
 namespace boost {
 namespace actor {
-namespace util {
+namespace detail {
 
-/**
- * @brief Evaluates to @p Right if @p Left == unit_t, @p Left otherwise.
- */
-template<typename Left, typename Right>
-struct left_or_right {
-    typedef Left type;
-};
+template<typename F, class Tuple, long... Is>
+inline auto apply_args(F& f, Tuple& tup, detail::int_list<Is...>)
+-> decltype(f(get_cv_aware<Is>(tup)...)) {
+    return f(get_cv_aware<Is>(tup)...);
+}
 
-template<typename Right>
-struct left_or_right<unit_t, Right> {
-    typedef Right type;
-};
+template<typename F, class Tuple, long... Is, typename... Ts>
+inline auto apply_args_prefixed(F& f, Tuple& tup, detail::int_list<Is...>, Ts&&... args)
+-> decltype(f(std::forward<Ts>(args)..., get_cv_aware<Is>(tup)...)) {
+    return f(std::forward<Ts>(args)..., get_cv_aware<Is>(tup)...);
+}
 
-template<typename Right>
-struct left_or_right<unit_t&, Right> {
-    typedef Right type;
-};
+template<typename F, class Tuple, long... Is, typename... Ts>
+inline auto apply_args_suffxied(F& f, Tuple& tup, detail::int_list<Is...>, Ts&&... args)
+-> decltype(f(get_cv_aware<Is>(tup)..., std::forward<Ts>(args)...)) {
+    return f(get_cv_aware<Is>(tup)..., std::forward<Ts>(args)...);
+}
 
-template<typename Right>
-struct left_or_right<const unit_t&, Right> {
-    typedef Right type;
-};
-
-/**
- * @brief Evaluates to @p Right if @p Left != unit_t, @p unit_t otherwise.
- */
-template<typename Left, typename Right>
-struct if_not_left {
-    typedef unit_t type;
-};
-
-template<typename Right>
-struct if_not_left<unit_t, Right> {
-    typedef Right type;
-};
-
-} // namespace util
+} // namespace detail
 } // namespace actor
 } // namespace boost
 
-#endif // BOOST_ACTOR_LEFT_OR_RIGHT_HPP
+#endif // CALL_HPP

@@ -33,7 +33,7 @@
 
 #include <cstddef>
 
-#include "boost/actor/util/type_traits.hpp"
+#include "boost/actor/detail/type_traits.hpp"
 
 namespace boost {
 namespace actor {
@@ -68,15 +68,15 @@ namespace boost {
 namespace actor {
 
 template<size_t N, typename... Ts>
-const typename util::type_at<N, Ts...>::type& get(const detail::pseudo_tuple<Ts...>& tv) {
+const typename detail::type_at<N, Ts...>::type& get(const detail::pseudo_tuple<Ts...>& tv) {
     static_assert(N < sizeof...(Ts), "N >= tv.size()");
-    return *reinterpret_cast<const typename util::type_at<N, Ts...>::type*>(tv.at(N));
+    return *reinterpret_cast<const typename detail::type_at<N, Ts...>::type*>(tv.at(N));
 }
 
 template<size_t N, typename... Ts>
-typename util::type_at<N, Ts...>::type& get_ref(detail::pseudo_tuple<Ts...>& tv) {
+typename detail::type_at<N, Ts...>::type& get_ref(detail::pseudo_tuple<Ts...>& tv) {
     static_assert(N < sizeof...(Ts), "N >= tv.size()");
-    return *reinterpret_cast<typename util::type_at<N, Ts...>::type*>(tv.mutable_at(N));
+    return *reinterpret_cast<typename detail::type_at<N, Ts...>::type*>(tv.mutable_at(N));
 }
 
 } // namespace actor

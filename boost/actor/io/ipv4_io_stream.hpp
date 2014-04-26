@@ -31,8 +31,8 @@
 #ifndef BOOST_ACTOR_IPV4_IO_STREAM_HPP
 #define BOOST_ACTOR_IPV4_IO_STREAM_HPP
 
-#include "boost/actor/config.hpp"
 #include "boost/actor/io/stream.hpp"
+#include "boost/actor/io/platform.hpp"
 
 namespace boost {
 namespace actor {

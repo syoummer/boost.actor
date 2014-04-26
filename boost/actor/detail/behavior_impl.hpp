@@ -41,14 +41,14 @@
 
 #include "boost/actor/atom.hpp"
 #include "boost/actor/message.hpp"
+#include "boost/actor/duration.hpp"
 #include "boost/actor/ref_counted.hpp"
 #include "boost/actor/skip_message.hpp"
 #include "boost/actor/timeout_definition.hpp"
 
-#include "boost/actor/util/call.hpp"
-#include "boost/actor/util/int_list.hpp"
-#include "boost/actor/util/duration.hpp"
-#include "boost/actor/util/type_traits.hpp"
+#include "boost/actor/detail/call.hpp"
+#include "boost/actor/detail/int_list.hpp"
+#include "boost/actor/detail/type_traits.hpp"
 
 namespace boost {
 namespace actor {
@@ -92,13 +92,13 @@ struct optional_message_visitor : static_visitor<bhvr_invoke_result> {
     }
     template<typename... Ts>
     inline bhvr_invoke_result operator()(std::tuple<Ts...>& value) const {
-        return util::apply_args(*this, value, util::get_indices(value));
+        return detail::apply_args(*this, value, detail::get_indices(value));
     }
 };
 
 template<typename... Ts>
 struct has_skip_message {
-    static constexpr bool value = util::disjunction<
+    static constexpr bool value = detail::disjunction<
                                       std::is_same<Ts, skip_message_t>::value...
                                   >::value;
 };
@@ -109,7 +109,7 @@ class behavior_impl : public ref_counted {
 
     behavior_impl() = default;
 
-    inline behavior_impl(util::duration tout) : m_timeout(tout) { }
+    inline behavior_impl(duration tout) : m_timeout(tout) { }
 
     virtual bhvr_invoke_result invoke(message&) = 0;
     virtual bhvr_invoke_result invoke(const message&) = 0;
@@ -119,7 +119,7 @@ class behavior_impl : public ref_counted {
     }
     virtual bool defined_at(const message&) = 0;
     virtual void handle_timeout();
-    inline const util::duration& timeout() const {
+    inline const duration& timeout() const {
         return m_timeout;
     }
 
@@ -161,7 +161,7 @@ class behavior_impl : public ref_counted {
 
  private:
 
-    util::duration m_timeout;
+    duration m_timeout;
 
 };
 
@@ -183,7 +183,7 @@ class default_behavior_impl : public behavior_impl {
     : super(d.timeout), m_expr(std::forward<Expr>(expr)), m_fun(d.handler) { }
 
     template<typename Expr>
-    default_behavior_impl(Expr&& expr, util::duration tout, F f)
+    default_behavior_impl(Expr&& expr, duration tout, F f)
     : super(tout), m_expr(std::forward<Expr>(expr)), m_fun(f) { }
 
     bhvr_invoke_result invoke(message& tup) {
@@ -214,12 +214,12 @@ class default_behavior_impl : public behavior_impl {
 };
 
 template<class MatchExpr, typename F>
-default_behavior_impl<MatchExpr, F>* new_default_behavior(const MatchExpr& mexpr, util::duration d, F f) {
+default_behavior_impl<MatchExpr, F>* new_default_behavior(const MatchExpr& mexpr, duration d, F f) {
     return new default_behavior_impl<MatchExpr, F>(mexpr, d, f);
 }
 
 template<typename F>
-default_behavior_impl<dummy_match_expr, F>* new_default_behavior(util::duration d, F f) {
+default_behavior_impl<dummy_match_expr, F>* new_default_behavior(duration d, F f) {
     return new default_behavior_impl<dummy_match_expr, F>(dummy_match_expr{}, d, f);
 }
 

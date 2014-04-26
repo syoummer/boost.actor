@@ -39,7 +39,7 @@
 #include "boost/actor/exit_reason.hpp"
 #include "boost/actor/detail/actor_registry.hpp"
 
-#include "boost/actor/util/shared_spinlock.hpp"
+#include "boost/actor/detail/shared_spinlock.hpp"
 
 namespace boost {
 namespace actor {
@@ -47,10 +47,10 @@ namespace detail {
 
 namespace {
 
-typedef lock_guard<util::shared_spinlock> exclusive_guard;
-typedef shared_lock<util::shared_spinlock> shared_guard;
-typedef upgrade_lock<util::shared_spinlock> upgrade_guard;
-typedef upgrade_to_unique_lock<util::shared_spinlock> upgrade_to_unique_guard;
+typedef lock_guard<detail::shared_spinlock> exclusive_guard;
+typedef shared_lock<detail::shared_spinlock> shared_guard;
+typedef upgrade_lock<detail::shared_spinlock> upgrade_guard;
+typedef upgrade_to_unique_lock<detail::shared_spinlock> upgrade_to_unique_guard;
 
 } // namespace <anonymous>
 

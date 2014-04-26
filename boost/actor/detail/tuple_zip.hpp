@@ -33,20 +33,20 @@
 
 #include <tuple>
 
-#include "boost/actor/util/int_list.hpp"
+#include "boost/actor/detail/int_list.hpp"
 
 namespace boost {
 namespace actor {
 namespace detail {
 
 template<typename F, long... Is, class Tup0, class Tup1>
-typename F::result_type tuple_zip(F& f, util::int_list<Is...>,
+typename F::result_type tuple_zip(F& f, detail::int_list<Is...>,
                                   Tup0& tup0, Tup1& tup1) {
     return f(std::forward_as_tuple(std::get<Is>(tup0), std::get<Is>(tup1))...);
 }
 
 template<typename F, long... Is, class Tup0, class Tup1, class Tup2>
-typename F::result_type tuple_zip(F& f, util::int_list<Is...>,
+typename F::result_type tuple_zip(F& f, detail::int_list<Is...>,
                                   Tup0& tup0, Tup1& tup1, Tup2& tup2) {
     return f(std::forward_as_tuple(std::get<Is>(tup0),
                                    std::get<Is>(tup1),

@@ -503,14 +503,11 @@ class string_deserializer : public deserializer {
 } // namespace <anonymous>
 
 uniform_value from_string(const string& what) {
-    /*
     string_deserializer strd(what);
     auto utype = strd.begin_object();
     auto result = utype->deserialize(&strd);
     strd.end_object();
     return result;
-    */
-    //TODO FIXME
     return {};
 }
 

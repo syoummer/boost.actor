@@ -48,7 +48,7 @@
 #include "boost/intrusive_ptr.hpp"
 #include "boost/actor/abstract_channel.hpp"
 
-#include "boost/actor/util/type_traits.hpp"
+#include "boost/actor/detail/type_traits.hpp"
 
 namespace boost {
 namespace actor {
@@ -295,7 +295,7 @@ struct functor_attachable : attachable {
 
 template<typename F>
 bool abstract_actor::attach_functor(F&& f) {
-    typedef typename util::rm_const_and_ref<F>::type f_type;
+    typedef typename detail::rm_const_and_ref<F>::type f_type;
     typedef functor_attachable<f_type> impl;
     return attach(attachable_ptr{new impl(std::forward<F>(f))});
 }

@@ -4,12 +4,11 @@
 #include <type_traits>
 
 #include "boost/actor/logging.hpp"
+#include "boost/actor/duration.hpp"
 #include "boost/actor/blocking_actor.hpp"
 #include "boost/actor/mailbox_element.hpp"
 
 #include "boost/actor/policy/scheduling_policy.hpp"
-
-#include "boost/actor/util/duration.hpp"
 
 namespace boost {
 namespace actor {
@@ -279,7 +278,7 @@ class proper_actor<Base, Policies, true> : public proper_actor_base<Base,
         }
         // workaround for GCC 4.7 bug (const this when capturing refs)
         auto& pending_timeouts = m_pending_timeouts;
-        auto guard = util::make_scope_guard([&] {
+        auto guard = detail::make_scope_guard([&] {
             if (has_timeout) {
                 auto e = pending_timeouts.end();
                 auto i = std::find(pending_timeouts.begin(), e, timeout_id);
@@ -302,7 +301,7 @@ class proper_actor<Base, Policies, true> : public proper_actor_base<Base,
 
     // timeout handling
 
-    std::uint32_t request_timeout(const util::duration& d) {
+    std::uint32_t request_timeout(const duration& d) {
         BOOST_ACTOR_REQUIRE(d.valid());
         auto tid = ++m_next_timeout_id;
         auto msg = make_message(timeout_msg{tid});

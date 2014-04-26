@@ -41,8 +41,7 @@
 
 #include "boost/actor/config.hpp"
 
-#include "boost/actor/util/comparable.hpp"
-#include "boost/actor/util/type_traits.hpp"
+#include "boost/actor/detail/type_traits.hpp"
 
 #include "boost/actor/detail/demangle.hpp"
 #include "boost/actor/detail/to_uniform_name.hpp"

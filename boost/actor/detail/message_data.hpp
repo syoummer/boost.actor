@@ -41,7 +41,7 @@
 #include "boost/actor/ref_counted.hpp"
 #include "boost/actor/uniform_type_info.hpp"
 
-#include "boost/actor/util/type_list.hpp"
+#include "boost/actor/detail/type_list.hpp"
 
 #include "boost/actor/detail/message_iterator.hpp"
 

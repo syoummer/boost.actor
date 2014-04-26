@@ -42,14 +42,14 @@
 #include "boost/actor/actor.hpp"
 #include "boost/actor/channel.hpp"
 #include "boost/actor/message.hpp"
+#include "boost/actor/duration.hpp"
 #include "boost/actor/attachable.hpp"
 #include "boost/actor/scoped_actor.hpp"
 #include "boost/actor/spawn_options.hpp"
 #include "boost/actor/execution_unit.hpp"
 #include "boost/actor/message_header.hpp"
 
-#include "boost/actor/util/duration.hpp"
-#include "boost/actor/util/producer_consumer_list.hpp"
+#include "boost/actor/detail/producer_consumer_list.hpp"
 
 namespace boost {
 namespace actor {
@@ -97,7 +97,7 @@ class worker : public execution_unit {
 
     typedef resumable* job_ptr;
 
-    typedef util::producer_consumer_list<resumable> job_queue;
+    typedef detail::producer_consumer_list<resumable> job_queue;
 
     /**
      * @brief Attempt to steal an element from the exposed job queue.
@@ -173,7 +173,7 @@ class coordinator {
                       const Duration& rel_time,
                       message data           ) {
         auto tup = make_message(atom("SEND"),
-                                  util::duration{rel_time},
+                                  duration{rel_time},
                                   std::move(hdr),
                                   std::move(data));
         m_timer->enqueue(message_header{}, std::move(tup), nullptr);
@@ -185,7 +185,7 @@ class coordinator {
                        message data           ) {
         BOOST_ACTOR_REQUIRE(hdr.id.valid() && hdr.id.is_response());
         auto tup = make_message(atom("SEND"),
-                                  util::duration{rel_time},
+                                  duration{rel_time},
                                   std::move(hdr),
                                   std::move(data));
         m_timer->enqueue(message_header{}, std::move(tup), nullptr);

@@ -23,7 +23,7 @@
 #include "boost/actor/message_header.hpp"
 #include "boost/actor/uniform_type_info.hpp"
 
-#include "boost/actor/util/type_traits.hpp"
+#include "boost/actor/detail/type_traits.hpp"
 
 using std::cout;
 using std::endl;
@@ -81,7 +81,7 @@ int main() {
         "@str", "@u16str", "@u32str",     // strings
         "@strmap",                        // string containers
         "float", "double", "@ldouble",    // floating points
-        "@0",                             // cppa::util::unit_t
+        "@0",                             // cppa::detail::unit_t
         // default announced cppa types
         "@ac_hdl",                   // io::accept_handle
         "@cn_hdl",                   // io::connection_handle
@@ -94,7 +94,7 @@ int main() {
         "@group_down",               // group_down_msg
         "@channel",                  // channel
         "@proc",                     // intrusive_ptr<node_id>
-        "@duration",                 // util::duration
+        "@duration",                 // duration
         "@buffer",                   // io::buffer
         "@down",                     // down_msg
         "@exit",                     // exit_msg

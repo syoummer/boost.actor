@@ -36,8 +36,8 @@
 
 #include "boost/actor/unit.hpp"
 
-#include "boost/actor/util/tbind.hpp"
-#include "boost/actor/util/type_pair.hpp"
+#include "boost/actor/detail/tbind.hpp"
+#include "boost/actor/detail/type_pair.hpp"
 
 namespace boost {
 namespace actor {
@@ -51,7 +51,7 @@ const uniform_type_info* uniform_typeid(const std::type_info&);
 
 namespace boost {
 namespace actor {
-namespace util {
+namespace detail {
 
 /**
  * @addtogroup MetaProgramming
@@ -261,7 +261,7 @@ struct tl_zip_impl<type_list<LhsElements...>, type_list<RhsElements...>, Fun> {
 };
 
 template<class ListA, class ListB,
-         template<typename, typename> class Fun = to_type_pair>
+         template<typename, typename> class Fun>
 struct tl_zip {
 
     static constexpr size_t sizea = tl_size<ListA>::value;
@@ -1071,14 +1071,14 @@ struct tl_equal {
  * @}
  */
 
-} // namespace util
+} // namespace detail
 } // namespace actor
 } // namespace boost
 
 namespace boost {
 namespace actor {
 template<size_t N, typename... Ts>
-typename util::tl_at<util::type_list<Ts...>, N>::type get(const util::type_list<Ts...>&) {
+typename detail::tl_at<detail::type_list<Ts...>, N>::type get(const detail::type_list<Ts...>&) {
     return {};
 }
 } // namespace actor

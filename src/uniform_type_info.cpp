@@ -40,16 +40,16 @@
 #include <cstdint>
 #include <type_traits>
 
+#include "boost/intrusive_ptr.hpp"
+
 #include "boost/actor/atom.hpp"
 #include "boost/actor/actor.hpp"
 #include "boost/actor/logging.hpp"
 #include "boost/actor/message.hpp"
-#include "boost/actor/announce.hpp"
 #include "boost/actor/message.hpp"
-#include "boost/intrusive_ptr.hpp"
+#include "boost/actor/announce.hpp"
+#include "boost/actor/duration.hpp"
 #include "boost/actor/uniform_type_info.hpp"
-
-#include "boost/actor/util/duration.hpp"
 
 #include "boost/actor/detail/demangle.hpp"
 #include "boost/actor/detail/actor_registry.hpp"

@@ -28,27 +28,53 @@
 \******************************************************************************/
 
 
-#ifndef BOOST_ACTOR_TBIND_HPP
-#define BOOST_ACTOR_TBIND_HPP
+#ifndef BOOST_ACTOR_LEFT_OR_RIGHT_HPP
+#define BOOST_ACTOR_LEFT_OR_RIGHT_HPP
+
+#include "boost/actor/unit.hpp"
 
 namespace boost {
 namespace actor {
-namespace util {
+namespace detail {
 
 /**
- * @ingroup MetaProgramming
- * @brief Predefines the first template parameter of @p Tp1.
+ * @brief Evaluates to @p Right if @p Left == unit_t, @p Left otherwise.
  */
-template<template<typename, typename> class Tpl, typename Arg1>
-struct tbind {
-    template<typename Arg2>
-    struct type {
-        static constexpr bool value = Tpl<Arg1, Arg2>::value;
-    };
+template<typename Left, typename Right>
+struct left_or_right {
+    typedef Left type;
 };
 
-} // namespace util
+template<typename Right>
+struct left_or_right<unit_t, Right> {
+    typedef Right type;
+};
+
+template<typename Right>
+struct left_or_right<unit_t&, Right> {
+    typedef Right type;
+};
+
+template<typename Right>
+struct left_or_right<const unit_t&, Right> {
+    typedef Right type;
+};
+
+/**
+ * @brief Evaluates to @p Right if @p Left != unit_t, @p unit_t otherwise.
+ */
+template<typename Left, typename Right>
+struct if_not_left {
+    typedef unit_t type;
+};
+
+template<typename Right>
+struct if_not_left<unit_t, Right> {
+    typedef Right type;
+};
+
+} // namespace detail
 } // namespace actor
 } // namespace boost
 
-#endif // BOOST_ACTOR_TBIND_HPP
+#endif // BOOST_ACTOR_LEFT_OR_RIGHT_HPP

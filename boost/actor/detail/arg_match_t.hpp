@@ -28,54 +28,17 @@
 \******************************************************************************/
 
 
-#ifndef BOOST_ACTOR_PURGE_REFS_HPP
-#define BOOST_ACTOR_PURGE_REFS_HPP
-
-#include <functional>
-
-#include "boost/actor/guard_expr.hpp"
-#include "boost/actor/util/type_traits.hpp"
-#include "boost/actor/util/rebindable_reference.hpp"
+#ifndef BOOST_ACTOR_ARG_MATCH_T_HPP
+#define BOOST_ACTOR_ARG_MATCH_T_HPP
 
 namespace boost {
 namespace actor {
-namespace util {
+namespace detail {
 
-template<typename T>
-struct purge_refs_impl {
-    typedef T type;
-};
+struct arg_match_t { };
 
-template<typename T>
-struct purge_refs_impl<util::rebindable_reference<T> > {
-    typedef T type;
-};
-
-template<typename T>
-struct purge_refs_impl<util::rebindable_reference<const T> > {
-    typedef T type;
-};
-
-template<typename T>
-struct purge_refs_impl<std::reference_wrapper<T> > {
-    typedef T type;
-};
-
-template<typename T>
-struct purge_refs_impl<std::reference_wrapper<const T> > {
-    typedef T type;
-};
-
-/**
- * @brief Removes references and reference wrappers.
- */
-template<typename T>
-struct purge_refs {
-    typedef typename purge_refs_impl<typename util::rm_const_and_ref<T>::type>::type type;
-};
-
-} // namespace util
+} // namespace detail
 } // namespace actor
 } // namespace boost
 
-#endif // BOOST_ACTOR_PURGE_REFS_HPP
+#endif // BOOST_ACTOR_ARG_MATCH_T_HPP

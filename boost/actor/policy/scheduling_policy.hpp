@@ -35,10 +35,9 @@ namespace boost {
 namespace actor {
 
 class message;
+class duration;
 class execution_unit;
 class message_header;
-
-namespace util { class duration; }
 
 namespace policy {
 

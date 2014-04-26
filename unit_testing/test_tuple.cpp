@@ -22,7 +22,7 @@
 #include "boost/actor/tpartial_function.hpp"
 #include "boost/actor/uniform_type_info.hpp"
 
-#include "boost/actor/util/type_traits.hpp"
+#include "boost/actor/detail/type_traits.hpp"
 
 #include "boost/actor/detail/matches.hpp"
 #include "boost/actor/detail/projection.hpp"

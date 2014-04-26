@@ -30,11 +30,10 @@
 
 #include <sstream>
 
-#include "boost/actor/util/duration.hpp"
+#include "boost/actor/duration.hpp"
 
 namespace boost {
 namespace actor {
-namespace util {
 
 namespace {
 
@@ -62,6 +61,5 @@ std::string duration::to_string() const {
     return oss.str();
 }
 
-} // namespace util
 } // namespace actor
 } // namespace boost

@@ -36,7 +36,7 @@
 #include "boost/actor/message.hpp"
 #include "boost/actor/wildcard_position.hpp"
 
-#include "boost/actor/util/type_list.hpp"
+#include "boost/actor/detail/type_list.hpp"
 
 namespace boost {
 namespace actor {
@@ -51,7 +51,7 @@ struct matcher<wildcard_position::nil, Tuple, T...> {
         if (not tup.dynamically_typed()) {
             // statically typed tuples return &typeid(type_list<T...>)
             // as type token
-            return typeid(util::type_list<T...>) == *(tup.type_token());
+            return typeid(detail::type_list<T...>) == *(tup.type_token());
         }
         // always use a full dynamic match for dynamic typed tuples
         else if (tup.size() == sizeof...(T)) {
@@ -130,7 +130,7 @@ struct matcher<wildcard_position::leading, Tuple, T...> {
 template<class Tuple, typename... T>
 struct matcher<wildcard_position::in_between, Tuple, T...> {
     static constexpr int signed_wc_pos =
-            util::tl_find<util::type_list<T...>, anything>::value;
+            detail::tl_find<detail::type_list<T...>, anything>::value;
     static constexpr size_t size = sizeof...(T);
     static constexpr size_t wc_pos = static_cast<size_t>(signed_wc_pos);
 
@@ -174,7 +174,7 @@ struct matcher<wildcard_position::in_between, Tuple, T...> {
 template<class Tuple, typename... T>
 struct matcher<wildcard_position::multiple, Tuple, T...> {
     static constexpr size_t wc_count =
-            util::tl_count<util::type_list<T...>, is_anything>::value;
+            detail::tl_count<detail::type_list<T...>, is_anything>::value;
 
     static_assert(sizeof...(T) > wc_count, "only wildcards given");
 
@@ -255,8 +255,8 @@ template<class Tuple, class List>
 struct select_matcher;
 
 template<class Tuple, typename... Ts>
-struct select_matcher<Tuple, util::type_list<Ts...> > {
-    typedef matcher<get_wildcard_position<util::type_list<Ts...>>(),
+struct select_matcher<Tuple, detail::type_list<Ts...> > {
+    typedef matcher<get_wildcard_position<detail::type_list<Ts...>>(),
                     Tuple,
                     Ts...>
             type;

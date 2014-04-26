@@ -33,8 +33,7 @@
 
 #include "boost/actor/atom.hpp"
 #include "boost/actor/behavior.hpp"
-
-#include "boost/actor/util/duration.hpp"
+#include "boost/actor/duration.hpp"
 
 #include "boost/actor/policy/invoke_policy.hpp"
 

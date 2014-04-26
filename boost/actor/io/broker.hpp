@@ -35,7 +35,6 @@
 
 #include "boost/actor/extend.hpp"
 #include "boost/actor/local_actor.hpp"
-#include "boost/actor/behavior_stack_based.hpp"
 
 #include "boost/actor/io/buffer.hpp"
 #include "boost/actor/io/acceptor.hpp"
@@ -43,6 +42,8 @@
 #include "boost/actor/io/output_stream.hpp"
 #include "boost/actor/io/accept_handle.hpp"
 #include "boost/actor/io/connection_handle.hpp"
+
+#include "boost/actor/mixin/behavior_stack_based.hpp"
 
 #include "boost/actor/policy/not_prioritizing.hpp"
 #include "boost/actor/policy/sequential_invoke.hpp"
@@ -63,7 +64,7 @@ broker_ptr init_and_launch(broker_ptr);
  * @extends local_actor
  */
 class broker : public extend<local_actor>::
-                      with<behavior_stack_based<behavior>::impl> {
+                      with<mixin::behavior_stack_based<behavior>::impl> {
 
     friend class policy::sequential_invoke;
 

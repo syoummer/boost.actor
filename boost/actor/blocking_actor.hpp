@@ -37,11 +37,12 @@
 #include "boost/actor/extend.hpp"
 #include "boost/actor/behavior.hpp"
 #include "boost/actor/local_actor.hpp"
-#include "boost/actor/sync_sender.hpp"
 #include "boost/actor/typed_actor.hpp"
-#include "boost/actor/mailbox_based.hpp"
 #include "boost/actor/mailbox_element.hpp"
 #include "boost/actor/response_handle.hpp"
+
+#include "boost/actor/mixin/sync_sender.hpp"
+#include "boost/actor/mixin/mailbox_based.hpp"
 
 namespace boost {
 namespace actor {
@@ -53,8 +54,8 @@ namespace actor {
  */
 class blocking_actor
         : public extend<local_actor, blocking_actor>::
-                        with<mailbox_based,
-                             sync_sender<blocking_response_handle_tag>::impl> {
+                        with<mixin::mailbox_based,
+                             mixin::sync_sender<blocking_response_handle_tag>::impl> {
 
  public:
 

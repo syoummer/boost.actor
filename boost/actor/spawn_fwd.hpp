@@ -38,7 +38,7 @@
 #include "boost/actor/typed_actor.hpp"
 #include "boost/actor/spawn_options.hpp"
 
-#include "boost/actor/util/type_list.hpp"
+#include "boost/actor/detail/type_list.hpp"
 
 namespace boost {
 namespace actor {
@@ -105,7 +105,7 @@ template<typename SignatureList>
 struct actor_handle_from_signature_list;
 
 template<typename... Rs>
-struct actor_handle_from_signature_list<util::type_list<Rs...>> {
+struct actor_handle_from_signature_list<detail::type_list<Rs...>> {
     typedef typed_actor<Rs...> type;
 };
 
@@ -113,9 +113,9 @@ struct actor_handle_from_signature_list<util::type_list<Rs...>> {
 
 template<spawn_options Os, typename BeforeLaunch, typename F, typename... Ts>
 typename detail::infer_typed_actor_handle<
-    typename util::get_callable_trait<F>::result_type,
-    typename util::tl_head<
-        typename util::get_callable_trait<F>::arg_types
+    typename detail::get_callable_trait<F>::result_type,
+    typename detail::tl_head<
+        typename detail::get_callable_trait<F>::arg_types
     >::type
 >::type
 spawn_typed_functor(execution_unit*, BeforeLaunch bl, F fun, Ts&&... args);

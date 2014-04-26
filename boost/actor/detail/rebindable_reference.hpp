@@ -28,45 +28,112 @@
 \******************************************************************************/
 
 
-#ifndef FD_UTIL_HPP
-#define FD_UTIL_HPP
-
-#include <string>
-#include <utility>  // std::pair
-#include <unistd.h> // ssize_t
+#ifndef BOOST_ACTOR_REBINDABLE_REFERENCE_HPP
+#define BOOST_ACTOR_REBINDABLE_REFERENCE_HPP
 
 #include "boost/actor/config.hpp"
+
+#include "boost/actor/detail/type_traits.hpp"
 
 namespace boost {
 namespace actor {
 namespace detail {
-namespace fd_util {
 
-std::string last_socket_error_as_string();
+template<typename T>
+struct call_helper {
+    typedef typename map_to_result_type<T>::type result_type;
+    template<typename... Ts>
+    result_type operator()(T& f, const Ts&... args) const {
+        return f(std::forward<Ts>(args)...);
+    }
+};
 
-// throws ios_base::failure and adds errno failure if @p add_errno_failure
-void throw_io_failure [[noreturn]] (const char* what, bool add_errno = true);
+template<>
+struct call_helper<bool> {
+    typedef bool result_type;
+    bool operator()(const bool& value) const {
+        return value;
+    }
+};
 
-// sets fd to nonblocking if <tt>set_nonblocking == true</tt>
-// or to blocking if <tt>set_nonblocking == false</tt>
-// throws @p ios_base::failure on error
-void nonblocking(native_socket_type fd, bool new_value);
+template<>
+struct call_helper<const bool> : call_helper<bool> { };
 
-// returns true if fd is nodelay socket
-// throws @p ios_base::failure on error
-void tcp_nodelay(native_socket_type fd, bool new_value);
+/**
+ * @brief A reference wrapper similar to std::reference_wrapper, but
+ *        allows rebinding the reference. Note that this wrapper can
+ *        be 'dangling', because it provides a default constructor.
+ */
+template<typename T>
+class rebindable_reference {
 
-// reads @p result and @p errno and throws @p ios_base::failure on error
-void handle_write_result(ssize_t result, bool is_nonblocking_io);
+ public:
 
-// reads @p result and @p errno and throws @p ios_base::failure on error
-void handle_read_result(ssize_t result, bool is_nonblocking_io);
+    rebindable_reference() : m_ptr(nullptr) { }
 
-std::pair<native_socket_type, native_socket_type> create_pipe();
+    rebindable_reference(T& value) : m_ptr(&value) { }
 
-} // namespace fd_util
+    template<typename U>
+    rebindable_reference(const rebindable_reference<U>& other) : m_ptr(other.ptr()) { }
+
+    inline bool bound() const {
+        return m_ptr != nullptr;
+    }
+
+    inline void rebind(T& value) {
+        m_ptr  = &value;
+    }
+
+    template<typename U>
+    inline void rebind(const rebindable_reference<U>& other) {
+        m_ptr  = other.ptr();
+    }
+
+    inline T* ptr() const {
+        BOOST_ACTOR_REQUIRE(bound());
+        return m_ptr;
+    }
+
+    inline T& get() const {
+        BOOST_ACTOR_REQUIRE(bound());
+        return *m_ptr;
+    }
+
+    inline operator T&() const {
+        BOOST_ACTOR_REQUIRE(bound());
+        return *m_ptr;
+    }
+
+    template<typename... Ts>
+    typename call_helper<T>::result_type operator()(Ts&&... args) {
+        call_helper<T> f;
+        return f(get(), std::forward<Ts>(args)...);
+    }
+
+ private:
+
+    T* m_ptr;
+
+};
+
+template<typename T>
+T& unwrap_ref(T& ref) {
+    return ref;
+}
+
+template<typename T>
+T& unwrap_ref(detail::rebindable_reference<T>& ref) {
+    return ref.get();
+}
+
+template<typename T>
+typename std::add_const<T>::type&
+unwrap_ref(const detail::rebindable_reference<T>& ref) {
+    return ref.get();
+}
+
 } // namespace detail
 } // namespace actor
 } // namespace boost
 
-#endif // FD_UTIL_HPP
+#endif // BOOST_ACTOR_REBINDABLE_REFERENCE_HPP

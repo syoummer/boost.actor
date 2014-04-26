@@ -37,16 +37,16 @@
 
 #include "boost/actor/actor.hpp"
 #include "boost/actor/extend.hpp"
-#include "boost/actor/channel.hpp"
-#include "boost/actor/behavior.hpp"
 #include "boost/actor/message.hpp"
+#include "boost/actor/channel.hpp"
+#include "boost/actor/duration.hpp"
+#include "boost/actor/behavior.hpp"
 #include "boost/actor/spawn_fwd.hpp"
 #include "boost/actor/message_id.hpp"
 #include "boost/actor/match_expr.hpp"
 #include "boost/actor/exit_reason.hpp"
 #include "boost/actor/typed_actor.hpp"
 #include "boost/actor/spawn_options.hpp"
-#include "boost/actor/memory_cached.hpp"
 #include "boost/actor/message_header.hpp"
 #include "boost/actor/abstract_actor.hpp"
 #include "boost/actor/abstract_group.hpp"
@@ -55,7 +55,7 @@
 #include "boost/actor/message_priority.hpp"
 #include "boost/actor/partial_function.hpp"
 
-#include "boost/actor/util/duration.hpp"
+#include "boost/actor/mixin/memory_cached.hpp"
 
 #include "boost/actor/detail/behavior_stack.hpp"
 #include "boost/actor/detail/typed_actor_util.hpp"
@@ -71,7 +71,7 @@ class sync_handle_helper;
  * @brief Base class for local running Actors.
  * @extends abstract_actor
  */
-class local_actor : public extend<abstract_actor>::with<memory_cached> {
+class local_actor : public extend<abstract_actor>::with<mixin::memory_cached> {
 
     typedef combined_type super;
 
@@ -136,9 +136,9 @@ class local_actor : public extend<abstract_actor>::with<memory_cached> {
 
     template<spawn_options Os = no_spawn_options, typename F, typename... Ts>
     typename detail::infer_typed_actor_handle<
-        typename util::get_callable_trait<F>::result_type,
-        typename util::tl_head<
-            typename util::get_callable_trait<F>::arg_types
+        typename detail::get_callable_trait<F>::result_type,
+        typename detail::tl_head<
+            typename detail::get_callable_trait<F>::arg_types
         >::type
     >::type
     spawn_typed(F fun, Ts&&... args) {
@@ -201,9 +201,9 @@ class local_actor : public extend<abstract_actor>::with<memory_cached> {
     template<typename... Rs, typename... Ts>
     void send(const typed_actor<Rs...>& whom, Ts... what) {
         check_typed_input(whom,
-                          util::type_list<
+                          detail::type_list<
                               typename detail::implicit_conversions<
-                                  typename util::rm_const_and_ref<
+                                  typename detail::rm_const_and_ref<
                                       Ts
                                   >::type
                               >::type...
@@ -242,7 +242,7 @@ class local_actor : public extend<abstract_actor>::with<memory_cached> {
      */
     void delayed_send_tuple(message_priority prio,
                             const channel& whom,
-                            const util::duration& rtime,
+                            const duration& rtime,
                             message data);
 
     /**
@@ -253,7 +253,7 @@ class local_actor : public extend<abstract_actor>::with<memory_cached> {
      * @param data Message content as a tuple.
      */
     inline void delayed_send_tuple(const channel& whom,
-                                   const util::duration& rtime,
+                                   const duration& rtime,
                                    message data) {
         delayed_send_tuple(message_priority::normal, whom,
                            rtime, std::move(data));
@@ -269,7 +269,7 @@ class local_actor : public extend<abstract_actor>::with<memory_cached> {
      */
     template<typename... Ts>
     void delayed_send(message_priority prio, const channel& whom,
-                      const util::duration& rtime, Ts&&... args) {
+                      const duration& rtime, Ts&&... args) {
         delayed_send_tuple(prio, whom, rtime,
                            make_message(std::forward<Ts>(args)...));
     }
@@ -282,7 +282,7 @@ class local_actor : public extend<abstract_actor>::with<memory_cached> {
      * @param args Message content as a tuple.
      */
     template<typename... Ts>
-    void delayed_send(const channel& whom, const util::duration& rtime,
+    void delayed_send(const channel& whom, const duration& rtime,
                       Ts&&... args) {
         delayed_send_tuple(message_priority::normal, whom, rtime,
                            make_message(std::forward<Ts>(args)...));
@@ -479,7 +479,7 @@ class local_actor : public extend<abstract_actor>::with<memory_cached> {
     // returns the response ID
     message_id timed_sync_send_tuple_impl(message_priority mp,
                                           const actor& whom,
-                                          const util::duration& rel_time,
+                                          const duration& rel_time,
                                           message&& what);
 
     // returns the response ID
@@ -523,10 +523,10 @@ class local_actor : public extend<abstract_actor>::with<memory_cached> {
 
     template<typename... Rs, template<typename...> class T, typename... Ts>
     static void check_typed_input(const typed_actor<Rs...>&, const T<Ts...>&) {
-        static constexpr int input_pos = util::tl_find_if<
-                                             util::type_list<Rs...>,
+        static constexpr int input_pos = detail::tl_find_if<
+                                             detail::type_list<Rs...>,
                                              detail::input_is<
-                                                 util::type_list<Ts...>
+                                                 detail::type_list<Ts...>
                                              >::template eval
                                          >::value;
         static_assert(input_pos >= 0,

@@ -31,7 +31,7 @@
 #ifndef BOOST_ACTOR_REPLIES_TO_HPP
 #define BOOST_ACTOR_REPLIES_TO_HPP
 
-#include "boost/actor/util/type_list.hpp"
+#include "boost/actor/detail/type_list.hpp"
 
 namespace boost {
 namespace actor {
@@ -40,8 +40,8 @@ template<typename... Is>
 struct replies_to {
     template<typename... Os>
     struct with {
-        typedef util::type_list<Is...> input_types;
-        typedef util::type_list<Os...> output_types;
+        typedef detail::type_list<Is...> input_types;
+        typedef detail::type_list<Os...> output_types;
     };
 };
 

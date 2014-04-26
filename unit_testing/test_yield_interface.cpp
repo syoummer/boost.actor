@@ -9,7 +9,6 @@
 #include "boost/actor/detail/yield_interface.hpp"
 
 using namespace boost::actor;
-using namespace boost::actor::util;
 using namespace boost::actor::detail;
 
 struct pseudo_worker {

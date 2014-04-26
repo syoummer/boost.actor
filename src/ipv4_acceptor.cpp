@@ -39,10 +39,9 @@
 #include "boost/actor/exception.hpp"
 
 #include "boost/actor/io/stream.hpp"
+#include "boost/actor/io/fd_util.hpp"
 #include "boost/actor/io/ipv4_acceptor.hpp"
 #include "boost/actor/io/ipv4_io_stream.hpp"
-
-#include "boost/actor/detail/fd_util.hpp"
 
 #ifdef BOOST_ACTOR_WINDOWS
 #   include <winsock2.h>
@@ -61,7 +60,7 @@ namespace boost {
 namespace actor {
 namespace io {
 
-using namespace ::boost::actor::detail::fd_util;
+using namespace ::boost::actor::io::fd_util;
 
 namespace {
 

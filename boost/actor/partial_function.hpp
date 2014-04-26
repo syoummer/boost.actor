@@ -38,16 +38,15 @@
 #include <type_traits>
 
 #include "boost/none.hpp"
+#include "boost/intrusive_ptr.hpp"
 
 #include "boost/actor/on.hpp"
-#include "boost/actor/behavior.hpp"
 #include "boost/actor/message.hpp"
+#include "boost/actor/duration.hpp"
+#include "boost/actor/behavior.hpp"
 #include "boost/actor/ref_counted.hpp"
-#include "boost/intrusive_ptr.hpp"
 #include "boost/actor/may_have_timeout.hpp"
 #include "boost/actor/timeout_definition.hpp"
-
-#include "boost/actor/util/duration.hpp"
 
 #include "boost/actor/detail/behavior_impl.hpp"
 
@@ -107,8 +106,8 @@ class partial_function {
      */
     template<typename... Ts>
     typename std::conditional<
-        util::disjunction<
-            may_have_timeout<typename util::rm_const_and_ref<Ts>::type>::value...
+        detail::disjunction<
+            may_have_timeout<typename detail::rm_const_and_ref<Ts>::type>::value...
         >::value,
         behavior,
         partial_function
@@ -154,8 +153,8 @@ inline optional<message> partial_function::operator()(T&& arg) {
 
 template<typename... Ts>
 typename std::conditional<
-    util::disjunction<
-        may_have_timeout<typename util::rm_const_and_ref<Ts>::type>::value...
+    detail::disjunction<
+        may_have_timeout<typename detail::rm_const_and_ref<Ts>::type>::value...
     >::value,
     behavior,
     partial_function

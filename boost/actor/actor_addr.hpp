@@ -38,7 +38,7 @@
 #include "boost/intrusive_ptr.hpp"
 #include "boost/actor/abstract_actor.hpp"
 
-#include "boost/actor/util/comparable.hpp"
+#include "boost/actor/detail/comparable.hpp"
 
 namespace boost {
 namespace actor {
@@ -60,9 +60,9 @@ constexpr invalid_actor_addr_t invalid_actor_addr = invalid_actor_addr_t{};
 /**
  * @brief Stores the address of typed as well as untyped actors.
  */
-class actor_addr : util::comparable<actor_addr>
-                 , util::comparable<actor_addr, abstract_actor*>
-                 , util::comparable<actor_addr, abstract_actor_ptr> {
+class actor_addr : detail::comparable<actor_addr>
+                 , detail::comparable<actor_addr, abstract_actor*>
+                 , detail::comparable<actor_addr, abstract_actor_ptr> {
 
     friend class actor;
     friend class abstract_actor;

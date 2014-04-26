@@ -33,10 +33,11 @@
 
 #include "boost/actor/replies_to.hpp"
 #include "boost/actor/local_actor.hpp"
-#include "boost/actor/sync_sender.hpp"
-#include "boost/actor/mailbox_based.hpp"
 #include "boost/actor/typed_behavior.hpp"
-#include "boost/actor/behavior_stack_based.hpp"
+
+#include "boost/actor/mixin/sync_sender.hpp"
+#include "boost/actor/mixin/mailbox_based.hpp"
+#include "boost/actor/mixin/behavior_stack_based.hpp"
 
 namespace boost {
 namespace actor {
@@ -54,11 +55,11 @@ namespace actor {
 template<typename... Rs>
 class typed_event_based_actor
         : public extend<local_actor, typed_event_based_actor<Rs...>>::template
-                 with<mailbox_based,
-                      behavior_stack_based<
+                 with<mixin::mailbox_based,
+                      mixin::behavior_stack_based<
                           typed_behavior<Rs...>
                       >::template impl,
-                      sync_sender<
+                      mixin::sync_sender<
                           nonblocking_response_handle_tag
                       >::template impl> {
 
@@ -66,7 +67,7 @@ class typed_event_based_actor
 
     typed_event_based_actor() : m_initialized(false) { }
 
-    typedef util::type_list<Rs...> signatures;
+    typedef detail::type_list<Rs...> signatures;
 
     typedef typed_behavior<Rs...> behavior_type;
 

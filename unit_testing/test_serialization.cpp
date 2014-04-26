@@ -36,18 +36,17 @@
 #include "boost/actor/primitive_variant.hpp"
 #include "boost/actor/binary_serializer.hpp"
 #include "boost/actor/binary_deserializer.hpp"
-#include "boost/actor/util/get_mac_addresses.hpp"
+#include "boost/actor/detail/get_mac_addresses.hpp"
 
-#include "boost/actor/util/int_list.hpp"
-#include "boost/actor/util/type_traits.hpp"
-#include "boost/actor/util/abstract_uniform_type_info.hpp"
+#include "boost/actor/detail/int_list.hpp"
+#include "boost/actor/detail/type_traits.hpp"
+#include "boost/actor/detail/abstract_uniform_type_info.hpp"
 
 #include "boost/actor/detail/ieee_754.hpp"
 #include "boost/actor/detail/safe_equal.hpp"
 
 using namespace std;
 using namespace boost::actor;
-using namespace boost::actor::util;
 
 namespace {
 
@@ -77,7 +76,7 @@ bool operator==(const raw_struct& lhs, const raw_struct& rhs) {
     return lhs.str == rhs.str;
 }
 
-struct raw_struct_type_info : util::abstract_uniform_type_info<raw_struct> {
+struct raw_struct_type_info : detail::abstract_uniform_type_info<raw_struct> {
     void serialize(const void* ptr, serializer* sink) const override {
         auto rs = reinterpret_cast<const raw_struct*>(ptr);
         sink->write_value(static_cast<uint32_t>(rs->str.size()));
@@ -122,7 +121,7 @@ int main() {
     test_ieee_754();
 
     typedef std::integral_constant<int, detail::impl_id<strmap>()> token;
-    BOOST_ACTOR_CHECK_EQUAL(util::is_iterable<strmap>::value, true);
+    BOOST_ACTOR_CHECK_EQUAL(detail::is_iterable<strmap>::value, true);
     BOOST_ACTOR_CHECK_EQUAL(detail::is_stl_compliant_list<vector<int>>::value, true);
     BOOST_ACTOR_CHECK_EQUAL(detail::is_stl_compliant_list<strmap>::value, false);
     BOOST_ACTOR_CHECK_EQUAL(detail::is_stl_compliant_map<strmap>::value, true);

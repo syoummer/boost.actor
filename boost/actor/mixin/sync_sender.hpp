@@ -28,20 +28,20 @@
 \******************************************************************************/
 
 
-#ifndef BOOST_ACTOR_SYNC_SENDER_HPP
-#define BOOST_ACTOR_SYNC_SENDER_HPP
+#ifndef BOOST_ACTOR_MIXIN_SYNC_SENDER_HPP
+#define BOOST_ACTOR_MIXIN_SYNC_SENDER_HPP
 
 #include <tuple>
 
 #include "boost/actor/actor.hpp"
 #include "boost/actor/message.hpp"
+#include "boost/actor/duration.hpp"
 #include "boost/actor/response_handle.hpp"
 #include "boost/actor/message_priority.hpp"
 
-#include "boost/actor/util/duration.hpp"
-
 namespace boost {
 namespace actor {
+namespace mixin {
 
 template<class Base, class Subtype, class ResponseHandleTag>
 class sync_sender_impl : public Base {
@@ -109,7 +109,7 @@ class sync_sender_impl : public Base {
 
     response_handle_type timed_sync_send_tuple(message_priority prio,
                                                const actor& dest,
-                                               const util::duration& rtime,
+                                               const duration& rtime,
                                                message what) {
         return {dptr()->timed_sync_send_tuple_impl(prio, dest, rtime,
                                                    std::move(what)),
@@ -117,7 +117,7 @@ class sync_sender_impl : public Base {
     }
 
     response_handle_type timed_sync_send_tuple(const actor& dest,
-                                               const util::duration& rtime,
+                                               const duration& rtime,
                                                message what) {
         return {dptr()->timed_sync_send_tuple_impl(message_priority::normal,
                                                    dest, rtime,
@@ -128,7 +128,7 @@ class sync_sender_impl : public Base {
     template<typename... Ts>
     response_handle_type timed_sync_send(message_priority prio,
                                          const actor& dest,
-                                         const util::duration& rtime,
+                                         const duration& rtime,
                                          Ts&&... what) {
         static_assert(sizeof...(Ts) > 0, "no message to send");
         return timed_sync_send_tuple(prio, dest, rtime,
@@ -137,7 +137,7 @@ class sync_sender_impl : public Base {
 
     template<typename... Ts>
     response_handle_type timed_sync_send(const actor& dest,
-                                         const util::duration& rtime,
+                                         const duration& rtime,
                                          Ts&&... what) {
         static_assert(sizeof...(Ts) > 0, "no message to send");
         return timed_sync_send_tuple(message_priority::normal, dest, rtime,
@@ -152,8 +152,8 @@ class sync_sender_impl : public Base {
     response_handle<
         Subtype,
         typename detail::deduce_output_type<
-            util::type_list<Rs...>,
-            util::type_list<Ts...>
+            detail::type_list<Rs...>,
+            detail::type_list<Ts...>
         >::type,
         ResponseHandleTag
     >
@@ -161,7 +161,7 @@ class sync_sender_impl : public Base {
                     const typed_actor<Rs...>& dest,
                     std::tuple<Ts...> what) {
         return sync_send_impl(prio, dest,
-                              util::type_list<Ts...>{},
+                              detail::type_list<Ts...>{},
                               message::move_from_tuple(std::move(what)));
     }
 
@@ -169,14 +169,14 @@ class sync_sender_impl : public Base {
     response_handle<
         Subtype,
         typename detail::deduce_output_type<
-            util::type_list<Rs...>,
-            util::type_list<Ts...>
+            detail::type_list<Rs...>,
+            detail::type_list<Ts...>
         >::type,
         ResponseHandleTag
     >
     sync_send_tuple(const typed_actor<Rs...>& dest, std::tuple<Ts...> what) {
         return sync_send_impl(message_priority::normal, dest,
-                              util::type_list<Ts...>{},
+                              detail::type_list<Ts...>{},
                               message::move_from_tuple(std::move(what)));
     }
 
@@ -184,9 +184,9 @@ class sync_sender_impl : public Base {
     response_handle<
         Subtype,
         typename detail::deduce_output_type<
-            util::type_list<Rs...>,
+            detail::type_list<Rs...>,
             typename detail::implicit_conversions<
-                typename util::rm_const_and_ref<
+                typename detail::rm_const_and_ref<
                     Ts
                 >::type
             >::type...
@@ -195,9 +195,9 @@ class sync_sender_impl : public Base {
     >
     sync_send(message_priority prio, const typed_actor<Rs...>& dest, Ts&&... what) {
         return sync_send_impl(prio, dest,
-                              util::type_list<
+                              detail::type_list<
                                   typename detail::implicit_conversions<
-                                      typename util::rm_const_and_ref<
+                                      typename detail::rm_const_and_ref<
                                           Ts
                                       >::type
                                   >::type...
@@ -209,10 +209,10 @@ class sync_sender_impl : public Base {
     response_handle<
         Subtype,
         typename detail::deduce_output_type<
-            util::type_list<Rs...>,
-            util::type_list<
+            detail::type_list<Rs...>,
+            detail::type_list<
                 typename detail::implicit_conversions<
-                    typename util::rm_const_and_ref<
+                    typename detail::rm_const_and_ref<
                         Ts
                     >::type
                 >::type...
@@ -222,9 +222,9 @@ class sync_sender_impl : public Base {
     >
     sync_send(const typed_actor<Rs...>& dest, Ts&&... what) {
         return sync_send_impl(message_priority::normal, dest,
-                              util::type_list<
+                              detail::type_list<
                                   typename detail::implicit_conversions<
-                                      typename util::rm_const_and_ref<
+                                      typename detail::rm_const_and_ref<
                                           Ts
                                       >::type
                                   >::type...
@@ -241,14 +241,14 @@ class sync_sender_impl : public Base {
     response_handle<
         Subtype,
         typename detail::deduce_output_type<
-            util::type_list<Rs...>,
-            util::type_list<Ts...>
+            detail::type_list<Rs...>,
+            detail::type_list<Ts...>
         >::type,
         ResponseHandleTag
     >
     timed_sync_send_tuple(message_priority prio,
                           const typed_actor<Rs...>& dest,
-                          const util::duration& rtime,
+                          const duration& rtime,
                           cow_tuple<Ts...> what) {
         return {dptr()->timed_sync_send_tuple_impl(prio, dest, rtime,
                                                    std::move(what)),
@@ -259,13 +259,13 @@ class sync_sender_impl : public Base {
     response_handle<
         Subtype,
         typename detail::deduce_output_type<
-            util::type_list<Rs...>,
-            util::type_list<Ts...>
+            detail::type_list<Rs...>,
+            detail::type_list<Ts...>
         >::type,
         ResponseHandleTag
     >
     timed_sync_send_tuple(const typed_actor<Rs...>& dest,
-                          const util::duration& rtime,
+                          const duration& rtime,
                           cow_tuple<Ts...> what) {
         return {dptr()->timed_sync_send_tuple_impl(message_priority::normal,
                                                    dest, rtime,
@@ -278,9 +278,9 @@ class sync_sender_impl : public Base {
     response_handle<
         Subtype,
         typename detail::deduce_output_type<
-            util::type_list<Rs...>,
+            detail::type_list<Rs...>,
             typename detail::implicit_conversions<
-                typename util::rm_const_and_ref<
+                typename detail::rm_const_and_ref<
                     Ts
                 >::type
             >::type...
@@ -289,7 +289,7 @@ class sync_sender_impl : public Base {
     >
     timed_sync_send(message_priority prio,
                     const typed_actor<Rs...>& dest,
-                    const util::duration& rtime,
+                    const duration& rtime,
                     Ts&&... what) {
         static_assert(sizeof...(Ts) > 0, "no message to send");
         return timed_sync_send_tuple(prio, dest, rtime,
@@ -300,9 +300,9 @@ class sync_sender_impl : public Base {
     response_handle<
         Subtype,
         typename detail::deduce_output_type<
-            util::type_list<Rs...>,
+            detail::type_list<Rs...>,
             typename detail::implicit_conversions<
-                typename util::rm_const_and_ref<
+                typename detail::rm_const_and_ref<
                     Ts
                 >::type
             >::type...
@@ -310,7 +310,7 @@ class sync_sender_impl : public Base {
         ResponseHandleTag
     >
     timed_sync_send(const typed_actor<Rs...>& dest,
-                    const util::duration& rtime,
+                    const duration& rtime,
                     Ts&&... what) {
         static_assert(sizeof...(Ts) > 0, "no message to send");
         return timed_sync_send_tuple(message_priority::normal, dest, rtime,
@@ -323,14 +323,14 @@ class sync_sender_impl : public Base {
     response_handle<
         Subtype,
         typename detail::deduce_output_type<
-            util::type_list<Rs...>,
-            util::type_list<Ts...>
+            detail::type_list<Rs...>,
+            detail::type_list<Ts...>
         >::type,
         ResponseHandleTag
     >
     sync_send_impl(message_priority prio,
                    const typed_actor<Rs...>& dest,
-                   util::type_list<Ts...> token,
+                   detail::type_list<Ts...> token,
                    message&& what) {
         dptr()->check_typed_input(dest, token);
         return {dptr()->sync_send_tuple_impl(prio, dest, std::move(what)),
@@ -349,6 +349,10 @@ class sync_sender {
  public:
 
     template<class Base, class Subtype>
+    using impl = sync_sender_impl<Base, Subtype, ResponseHandleTag>;
+
+    /*
+    template<class Base, class Subtype>
     class impl : public sync_sender_impl<Base, Subtype, ResponseHandleTag> {
 
         typedef sync_sender_impl<Base, Subtype, ResponseHandleTag> super;
@@ -361,10 +365,12 @@ class sync_sender {
         impl(Ts&&... args) : super(std::forward<Ts>(args)...) { }
 
     };
+    */
 
 };
 
+} // namespace mixin
 } // namespace actor
 } // namespace boost
 
-#endif // BOOST_ACTOR_SYNC_SENDER_HPP
+#endif // BOOST_ACTOR_MIXIN_SYNC_SENDER_HPP

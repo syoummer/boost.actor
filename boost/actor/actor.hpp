@@ -39,8 +39,8 @@
 #include "boost/intrusive_ptr.hpp"
 #include "boost/actor/abstract_actor.hpp"
 
-#include "boost/actor/util/comparable.hpp"
-#include "boost/actor/util/type_traits.hpp"
+#include "boost/actor/detail/comparable.hpp"
+#include "boost/actor/detail/type_traits.hpp"
 
 namespace boost {
 namespace actor {
@@ -94,10 +94,10 @@ struct is_convertible_to_actor<opencl::actor_facade<T>> {
  * {@link blocking_actor}, {@link actor_proxy}, or
  * {@link io::broker}.
  */
-class actor : util::comparable<actor>
-            , util::comparable<actor, actor_addr>
-            , util::comparable<actor, invalid_actor_t>
-            , util::comparable<actor, invalid_actor_addr_t> {
+class actor : detail::comparable<actor>
+            , detail::comparable<actor, actor_addr>
+            , detail::comparable<actor, invalid_actor_t>
+            , detail::comparable<actor, invalid_actor_addr_t> {
 
     friend class local_actor;
     friend class detail::raw_access;

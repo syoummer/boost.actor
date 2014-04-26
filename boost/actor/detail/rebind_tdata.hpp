@@ -36,8 +36,8 @@
 
 #include "boost/optional.hpp"
 
-#include "boost/actor/util/int_list.hpp"
-#include "boost/actor/util/rebindable_reference.hpp"
+#include "boost/actor/detail/int_list.hpp"
+#include "boost/actor/detail/rebindable_reference.hpp"
 
 #include "boost/actor/detail/tuple_zip.hpp"
 
@@ -56,7 +56,7 @@ struct rebinder {
         (*this)(std::forward<Vs>(args)...);
     }
     template<typename T, typename U, typename... Vs>
-    inline void operator()(std::tuple<util::rebindable_reference<T>&, U> fwd, Vs&&... args) const {
+    inline void operator()(std::tuple<detail::rebindable_reference<T>&, U> fwd, Vs&&... args) const {
         std::get<0>(fwd).rebind(std::get<1>(fwd));
         (*this)(std::forward<Vs>(args)...);
     }

@@ -45,7 +45,7 @@
 #include "boost/actor/message.hpp"
 #include "boost/actor/message_header.hpp"
 
-#include "boost/actor/util/scope_guard.hpp"
+#include "boost/actor/detail/scope_guard.hpp"
 
 #include "boost/actor/detail/demangle.hpp"
 #include "boost/actor/detail/safe_equal.hpp"
@@ -61,7 +61,7 @@
         std::cout << std::string(s_indentation, ' ') << ">>> " << message      \
                   << std::endl;                                                \
         s_indentation += 2;                                                    \
-        auto ____sg = cppa::util::make_scope_guard([] { s_indentation -= 2; })
+        auto ____sg = cppa::detail::make_scope_guard([] { s_indentation -= 2; })
 #   define PARSER_OUT(condition, message)                                      \
         if (condition) {                                                       \
             std::cout << std::string(s_indentation, ' ') << "### " << message  \

@@ -39,7 +39,7 @@
 #include "boost/actor/config.hpp"
 #include "boost/actor/uniform_type_info.hpp"
 
-#include "boost/actor/util/abstract_uniform_type_info.hpp"
+#include "boost/actor/detail/abstract_uniform_type_info.hpp"
 
 #include "boost/actor/detail/safe_equal.hpp"
 #include "boost/actor/detail/default_uniform_type_info.hpp"
@@ -118,7 +118,7 @@ const uniform_type_info* announce(const std::type_info& tinfo,
  * @returns A pair of @p c_ptr and the created meta informations.
  */
 template<class C, class Parent, typename... Ts>
-std::pair<C Parent::*, util::abstract_uniform_type_info<C>*>
+std::pair<C Parent::*, detail::abstract_uniform_type_info<C>*>
 compound_member(C Parent::*c_ptr, const Ts&... args) {
     return {c_ptr, new detail::default_uniform_type_info<C>(args...)};
 }
@@ -133,7 +133,7 @@ compound_member(C Parent::*c_ptr, const Ts&... args) {
  * @returns A pair of @p c_ptr and the created meta informations.
  */
 template<class C, class Parent, typename... Ts>
-std::pair<C& (Parent::*)(), util::abstract_uniform_type_info<C>*>
+std::pair<C& (Parent::*)(), detail::abstract_uniform_type_info<C>*>
 compound_member(C& (Parent::*getter)(), const Ts&... args) {
     return {getter, new detail::default_uniform_type_info<C>(args...)};
 }
@@ -151,11 +151,11 @@ compound_member(C& (Parent::*getter)(), const Ts&... args) {
 template<class Parent, typename GRes,
          typename SRes, typename SArg, typename... Ts>
 std::pair<std::pair<GRes (Parent::*)() const, SRes (Parent::*)(SArg)>,
-          util::abstract_uniform_type_info<typename util::rm_const_and_ref<GRes>::type>*>
+          detail::abstract_uniform_type_info<typename detail::rm_const_and_ref<GRes>::type>*>
 compound_member(const std::pair<GRes (Parent::*)() const,
                                 SRes (Parent::*)(SArg)  >& gspair,
                 const Ts&... args) {
-    typedef typename util::rm_const_and_ref<GRes>::type mtype;
+    typedef typename detail::rm_const_and_ref<GRes>::type mtype;
     return {gspair, new detail::default_uniform_type_info<mtype>(args...)};
 }
 
@@ -175,58 +175,6 @@ inline const uniform_type_info* announce(const Ts&... args) {
 /**
  * @}
  */
-
-/*
-namespace detail {
-
-template<long Pos, typename Tuple, typename T>
-typename std::enable_if<util::is_primitive<T>::value>::type
-serialze_single(serializer* sink, const Tuple&, const T& value) {
-    sink->write_value(value);
-}
-
-template<long Pos, typename Tuple, typename T>
-typename std::enable_if<not util::is_primitive<T>::value>::type
-serialze_single(serializer* sink, const Tuple& tup, const T& value) {
-    tup.type_at(Pos)->serialize(&value, sink);
-}
-
-// end of recursion
-template<typename Tuple>
-void do_serialize(serializer*, const Tuple&, util::int_list<>) { }
-
-// end of recursion
-template<typename Tuple, long I, long... Is>
-void do_serialize(serializer* sink, const Tuple& tup, util::int_list<I, Is...>) {
-    serialze_single<I>(sink, tup, get<I>(tup));
-    do_serialize(sink, tup, util::int_list<Is...>{});
-}
-
-template<long Pos, typename Tuple, typename T>
-typename std::enable_if<util::is_primitive<T>::value>::type
-deserialze_single(deserializer* source, Tuple&, T& value) {
-    value = source->read<T>();
-}
-
-template<long Pos, typename Tuple, typename T>
-typename std::enable_if<not util::is_primitive<T>::value>::type
-deserialze_single(deserializer* source, Tuple& tup, T& value) {
-    tup.type_at(Pos)->deserialize(&value, source);
-}
-
-// end of recursion
-template<typename Tuple>
-void do_deserialize(deserializer*, const Tuple&, util::int_list<>) { }
-
-// end of recursion
-template<typename Tuple, long I, long... Is>
-void do_deserialize(deserializer* source, Tuple& tup, util::int_list<I, Is...>) {
-    deserialze_single<I>(source, tup, get_ref<I>(tup));
-    do_deserialize(source, tup, util::int_list<Is...>{});
-}
-
-} // namespace detail
-*/
 
 } // namespace actor
 } // namespace boost

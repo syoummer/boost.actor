@@ -18,9 +18,9 @@
 #include "boost/program_options.hpp"
 
 #include "boost/actor/cppa.hpp"
+#include "boost/actor/message_builder.hpp"
 
 #include "boost/actor/detail/make_counted.hpp"
-#include "boost/actor/detail/object_array.hpp"
 
 using std::cin;
 using std::cout;
@@ -48,13 +48,13 @@ message split_line(const line& l) {
     std::istringstream strs{l.str};
     s_last_line = move(l.str);
     string tmp;
-    auto oarr = make_counted<object_array>();
+    message_builder mb;
     while (getline(strs, tmp, ' ')) {
         if (!tmp.empty()) {
-            oarr->push_back(std::move(tmp));
+            mb.append(std::move(tmp));
         }
     }
-    return message{oarr.get()};
+    return mb.to_message();
 }
 
 void client(event_based_actor* self, const string& name) {

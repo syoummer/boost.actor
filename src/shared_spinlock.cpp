@@ -32,7 +32,7 @@
 
 #include <limits>
 #include <thread>
-#include "boost/actor/util/shared_spinlock.hpp"
+#include "boost/actor/detail/shared_spinlock.hpp"
 
 namespace {
 
@@ -42,7 +42,7 @@ inline long min_long() { return std::numeric_limits<long>::min(); }
 
 namespace boost {
 namespace actor {
-namespace util {
+namespace detail {
 
 shared_spinlock::shared_spinlock() : m_flag(0) { }
 
@@ -110,6 +110,6 @@ bool shared_spinlock::try_lock_shared() {
     return (v >= 0) ? m_flag.compare_exchange_weak(v, v + 1) : false;
 }
 
-} // namespace util
+} // namespace detail
 } // namespace actor
 } // namespace boost

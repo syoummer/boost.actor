@@ -28,7 +28,7 @@
 \******************************************************************************/
 
 
-#include "boost/actor/config.hpp"
+#include "boost/actor/logging.hpp"
 
 #if !defined(BOOST_ACTOR_LINUX) || defined(BOOST_ACTOR_POLL_IMPL)
 

@@ -34,10 +34,8 @@
 #include <vector>
 #include <utility>
 
-#include "boost/actor/config.hpp"
-#include "boost/actor/logging.hpp"
-
 #include "boost/actor/io/event.hpp"
+#include "boost/actor/io/platform.hpp"
 #include "boost/actor/io/continuable.hpp"
 
 namespace boost {

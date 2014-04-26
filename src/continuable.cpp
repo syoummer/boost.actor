@@ -28,8 +28,6 @@
 \******************************************************************************/
 
 
-#include "boost/actor/detail/demangle.hpp"
-
 #include "boost/actor/io/continuable.hpp"
 
 namespace boost {

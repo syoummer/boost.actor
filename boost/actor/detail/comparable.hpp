@@ -33,7 +33,7 @@
 
 namespace boost {
 namespace actor {
-namespace util {
+namespace detail {
 
 /**
  * @brief Barton–Nackman trick implementation.
@@ -126,7 +126,7 @@ class comparable<Subclass, Subclass> {
 
 };
 
-} // namespace util
+} // namespace details
 } // namespace actor
 } // namespace boost
 

@@ -36,35 +36,35 @@
 
 #include "boost/actor/guard_expr.hpp"
 
-#include "boost/actor/util/call.hpp"
-#include "boost/actor/util/int_list.hpp"
-#include "boost/actor/util/type_list.hpp"
-#include "boost/actor/util/type_traits.hpp"
-#include "boost/actor/util/left_or_right.hpp"
+#include "boost/actor/detail/call.hpp"
+#include "boost/actor/detail/int_list.hpp"
+#include "boost/actor/detail/type_list.hpp"
+#include "boost/actor/detail/type_traits.hpp"
+#include "boost/actor/detail/left_or_right.hpp"
 
 namespace boost {
 namespace actor {
 namespace detail {
 
 template<typename Fun, typename Tuple, long... Is>
-inline bool is_defined_at(Fun& f, Tuple& tup, util::int_list<Is...>) {
+inline bool is_defined_at(Fun& f, Tuple& tup, detail::int_list<Is...>) {
     return f.defined_at(get_cv_aware<Is>(tup)...);
 }
 
 template<typename ProjectionFuns, typename... Ts>
 struct collected_args_tuple {
-    typedef typename util::tl_apply<
-            typename util::tl_zip<
-                typename util::tl_map<
+    typedef typename detail::tl_apply<
+            typename detail::tl_zip<
+                typename detail::tl_map<
                     ProjectionFuns,
-                    util::map_to_result_type,
-                    util::rm_optional
+                    detail::map_to_result_type,
+                    detail::rm_optional
                 >::type,
-                typename util::tl_map<
-                    util::type_list<Ts...>,
+                typename detail::tl_map<
+                    detail::type_list<Ts...>,
                     mutable_gref_wrapped
                 >::type,
-                util::left_or_right
+                detail::left_or_right
             >::type,
             std::tuple
         >::type
@@ -123,9 +123,9 @@ class projection {
 
  public:
 
-    typedef typename util::tl_apply<ProjectionFuns, std::tuple>::type fun_container;
+    typedef typename detail::tl_apply<ProjectionFuns, std::tuple>::type fun_container;
 
-    typedef util::type_list<typename util::rm_const_and_ref<Ts>::type...> arg_types;
+    typedef detail::type_list<typename detail::rm_const_and_ref<Ts>::type...> arg_types;
 
     projection() = default;
 
@@ -141,12 +141,12 @@ class projection {
     template<class PartFun>
     optional<typename PartFun::result_type> operator()(PartFun& fun, Ts... args) const {
         typename collected_args_tuple<ProjectionFuns, Ts...>::type pargs;
-        auto indices = util::get_indices(pargs);
+        auto indices = detail::get_indices(pargs);
         auto args_tup = std::forward_as_tuple(args...);
         collect_visitor cv;
         if (tuple_zip(cv, indices, pargs, m_funs, args_tup)) {
             if (is_defined_at(fun, pargs, indices)) {
-                return util::apply_args(fun, pargs, indices);
+                return detail::apply_args(fun, pargs, indices);
             }
         }
         return none;
@@ -159,7 +159,7 @@ class projection {
 };
 
 template<>
-class projection<util::empty_type_list> {
+class projection<detail::empty_type_list> {
 
  public:
 
@@ -183,7 +183,7 @@ template<class ProjectionFuns, class List>
 struct projection_from_type_list;
 
 template<class ProjectionFuns, typename... Ts>
-struct projection_from_type_list<ProjectionFuns, util::type_list<Ts...> > {
+struct projection_from_type_list<ProjectionFuns, detail::type_list<Ts...> > {
     typedef projection<ProjectionFuns, Ts...> type;
 };
 

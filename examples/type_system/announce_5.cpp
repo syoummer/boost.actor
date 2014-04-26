@@ -85,7 +85,7 @@ bool operator==(const tree& lhs, const tree& rhs) {
 // - does have a default constructor
 // - does have a copy constructor
 // - does provide operator==
-class tree_type_info : public util::abstract_uniform_type_info<tree> {
+class tree_type_info : public detail::abstract_uniform_type_info<tree> {
 
  protected:
 

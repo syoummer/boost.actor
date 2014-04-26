@@ -52,7 +52,7 @@
 #include "boost/actor/detail/memory.hpp"
 #include "boost/actor/detail/matches.hpp"
 
-#include "boost/actor/util/scope_guard.hpp"
+#include "boost/actor/detail/scope_guard.hpp"
 
 namespace boost {
 namespace actor { namespace policy {

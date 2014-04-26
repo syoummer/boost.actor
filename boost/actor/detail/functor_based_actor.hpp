@@ -51,7 +51,7 @@ class functor_based_actor : public event_based_actor {
 
     template<typename F, typename... Ts>
     functor_based_actor(F f, Ts&&... vs) {
-        typedef typename util::get_callable_trait<F>::type trait;
+        typedef typename detail::get_callable_trait<F>::type trait;
         typedef typename trait::arg_types arg_types;
         typedef typename trait::result_type result_type;
         constexpr bool returns_behavior = std::is_convertible<
@@ -59,7 +59,7 @@ class functor_based_actor : public event_based_actor {
                                               behavior
                                           >::value;
         constexpr bool uses_first_arg = std::is_same<
-                                            typename util::tl_head<
+                                            typename detail::tl_head<
                                                 arg_types
                                             >::type,
                                             pointer

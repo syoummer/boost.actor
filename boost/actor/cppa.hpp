@@ -61,7 +61,7 @@
 #include "boost/actor/response_promise.hpp"
 #include "boost/actor/event_based_actor.hpp"
 
-#include "boost/actor/util/type_traits.hpp"
+#include "boost/actor/detail/type_traits.hpp"
 
 #include "boost/actor/io/broker.hpp"
 #include "boost/actor/io/acceptor.hpp"
@@ -510,7 +510,7 @@ template<class List>
 struct typed_remote_actor_helper;
 
 template<typename... Ts>
-struct typed_remote_actor_helper<util::type_list<Ts...>> {
+struct typed_remote_actor_helper<detail::type_list<Ts...>> {
     typedef typed_actor<Ts...> return_type;
     return_type operator()(io::stream_ptr_pair conn) {
         auto iface = return_type::get_interface();

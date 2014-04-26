@@ -39,12 +39,11 @@
 
 #include "boost/actor/cppa_fwd.hpp"
 
-#include "boost/actor/util/type_list.hpp"
-#include "boost/actor/util/type_traits.hpp"
+#include "boost/actor/detail/type_list.hpp"
 
 namespace boost {
 namespace actor {
-namespace util {
+namespace detail {
 
 /**
  * @addtogroup MetaProgramming
@@ -120,17 +119,17 @@ struct is_array_of {
  */
 template<typename T0, typename T1>
 struct deduce_ref_type {
-    typedef typename util::rm_const_and_ref<T1>::type type;
+    typedef typename detail::rm_const_and_ref<T1>::type type;
 };
 
 template<typename T0, typename T1>
 struct deduce_ref_type<T0&, T1> {
-    typedef typename util::rm_const_and_ref<T1>::type& type;
+    typedef typename detail::rm_const_and_ref<T1>::type& type;
 };
 
 template<typename T0, typename T1>
 struct deduce_ref_type<const T0&, T1> {
-    typedef const typename util::rm_const_and_ref<T1>::type& type;
+    typedef const typename detail::rm_const_and_ref<T1>::type& type;
 };
 
 /**
@@ -264,7 +263,7 @@ class is_iterable {
     static bool sfinae_fun (
         const C* cc,
         // check for 'C::begin()' returning a forward iterator
-        typename std::enable_if<util::is_forward_iterator<decltype(cc->begin())>::value>::type* = 0,
+        typename std::enable_if<detail::is_forward_iterator<decltype(cc->begin())>::value>::type* = 0,
         // check for 'C::end()' returning the same kind of forward iterator
         typename std::enable_if<std::is_same<decltype(cc->begin()), decltype(cc->end())>::value>::type* = 0
     ) {
@@ -278,7 +277,7 @@ class is_iterable {
 
  public:
 
-    static constexpr bool value =    util::is_primitive<T>::value == false
+    static constexpr bool value =    detail::is_primitive<T>::value == false
                                   && std::is_same<bool, result_type>::value;
 
 };
@@ -500,7 +499,7 @@ struct type_at<0, T0, Ts...> {
  * @}
  */
 
-} // namespace util
+} // namespace detail
 } // namespace actor
 } // namespace boost
 

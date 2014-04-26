@@ -3,9 +3,9 @@
 
 #include "test.hpp"
 
-#include "boost/actor/util/ripemd_160.hpp"
+#include "boost/actor/detail/ripemd_160.hpp"
 
-using boost::actor::util::ripemd_160;
+using boost::actor::detail::ripemd_160;
 
 namespace {
 

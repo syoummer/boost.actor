@@ -37,7 +37,7 @@
 #include "boost/intrusive_ptr.hpp"
 #include "boost/actor/abstract_channel.hpp"
 
-#include "boost/actor/util/comparable.hpp"
+#include "boost/actor/detail/comparable.hpp"
 
 namespace boost {
 namespace actor {
@@ -54,9 +54,9 @@ namespace detail { class raw_access; }
 /**
  * @brief A handle to instances of {@link abstract_channel}.
  */
-class channel : util::comparable<channel>
-              , util::comparable<channel, actor>
-              , util::comparable<channel, abstract_channel*> {
+class channel : detail::comparable<channel>
+              , detail::comparable<channel, actor>
+              , detail::comparable<channel, abstract_channel*> {
 
     friend class detail::raw_access;
 

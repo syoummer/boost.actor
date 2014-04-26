@@ -42,10 +42,10 @@
 #include "boost/actor/atom.hpp"
 #include "boost/actor/unit.hpp"
 #include "boost/actor/node_id.hpp"
+#include "boost/actor/duration.hpp"
 #include "boost/actor/system_messages.hpp"
 
-#include "boost/actor/util/duration.hpp"
-#include "boost/actor/util/type_list.hpp"
+#include "boost/actor/detail/type_list.hpp"
 
 #include "boost/actor/detail/singleton_mixin.hpp"
 
@@ -60,7 +60,7 @@ namespace actor {
 namespace detail {
 
 // ordered according to demangled type name (see uniform_type_info_map.cpp)
-using mapped_type_list = util::type_list<
+using mapped_type_list = detail::type_list<
     bool,
     acceptor_closed_msg,
     actor,
@@ -83,7 +83,7 @@ using mapped_type_list = util::type_list<
     sync_timeout_msg,
     timeout_msg,
     unit_t,
-    util::duration,
+    duration,
     node_id_ptr,
     double,
     float,
@@ -96,14 +96,14 @@ using mapped_type_list = util::type_list<
     std::map<std::string, std::string>
 >;
 
-using zipped_type_list = util::tl_zip_with_index<mapped_type_list>::type;
+using zipped_type_list = detail::tl_zip_with_index<mapped_type_list>::type;
 
 // lookup table for built-in types
 extern const char* mapped_type_names[][2];
 
 template<typename T>
 constexpr const char* mapped_name() {
-    return mapped_type_names[util::tl_index_of<zipped_type_list, T>::value][1];
+    return mapped_type_names[detail::tl_index_of<zipped_type_list, T>::value][1];
 }
 
 const char* mapped_name_by_decorated_name(const char* decorated_name);

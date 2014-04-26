@@ -38,8 +38,9 @@
 #include "boost/actor/actor_addr.hpp"
 #include "boost/actor/message_id.hpp"
 #include "boost/actor/ref_counted.hpp"
-#include "boost/actor/memory_cached.hpp"
 #include "boost/actor/message_header.hpp"
+
+#include "boost/actor/mixin/memory_cached.hpp"
 
 // needs access to constructor + destructor to initialize m_dummy_node
 namespace boost {
@@ -47,7 +48,8 @@ namespace actor {
 
 class local_actor;
 
-class mailbox_element : public extend<memory_managed>::with<memory_cached> {
+class mailbox_element : public extend<memory_managed>::
+                               with<mixin::memory_cached> {
 
     friend class local_actor;
     friend class detail::memory;

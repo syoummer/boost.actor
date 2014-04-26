@@ -43,9 +43,9 @@
 #include "boost/actor/unit.hpp"
 #include "boost/actor/config.hpp"
 
-#include "boost/actor/util/call.hpp"
-#include "boost/actor/util/type_traits.hpp"
-#include "boost/actor/util/rebindable_reference.hpp"
+#include "boost/actor/detail/call.hpp"
+#include "boost/actor/detail/type_traits.hpp"
+#include "boost/actor/detail/rebindable_reference.hpp"
 
 #include "boost/actor/detail/safe_equal.hpp"
 #include "boost/actor/detail/rebind_tdata.hpp"
@@ -121,7 +121,7 @@ struct guard_expr {
  *        that could be used in guard expressions or to enforce lazy evaluation.
  */
 template<typename T>
-util::rebindable_reference<const T> gref(const T& value) {
+detail::rebindable_reference<const T> gref(const T& value) {
     return {value};
 }
 
@@ -221,7 +221,7 @@ struct ge_get_front {
                            >::type* = 0) const
     -> optional<
         std::reference_wrapper<
-            const typename util::rm_const_and_ref<decltype(what.front())>::type> > {
+            const typename detail::rm_const_and_ref<decltype(what.front())>::type> > {
         if (what.empty() == false) return {what.front()};
         return none;
     }
@@ -358,7 +358,7 @@ template<typename T, class Tuple>
 struct ge_unbound { typedef T type; };
 
 template<typename T, class Tuple>
-struct ge_unbound<util::rebindable_reference<const T>, Tuple> { typedef T type; };
+struct ge_unbound<detail::rebindable_reference<const T>, Tuple> { typedef T type; };
 
 template<typename T, class Tuple>
 struct ge_unbound<std::reference_wrapper<T>, Tuple> { typedef T type; };
@@ -375,7 +375,7 @@ struct ge_unbound<guard_placeholder<X>, std::tuple<Ts...> > {
     static_assert(X < sizeof...(Ts),
                   "Cannot unbind placeholder (too few arguments)");
     typedef typename ge_unbound<
-                typename util::type_at<X, Ts...>::type,
+                typename detail::type_at<X, Ts...>::type,
                 std::tuple<std::reference_wrapper<Ts>...>
             >::type
             type;
@@ -394,7 +394,7 @@ struct is_ge_type<guard_placeholder<X> > {
 };
 
 template<typename T>
-struct is_ge_type<util::rebindable_reference<T> > {
+struct is_ge_type<detail::rebindable_reference<T> > {
     static constexpr bool value = true;
 };
 
@@ -551,7 +551,7 @@ inline const T& ge_resolve(const Tuple&, const std::reference_wrapper<const T>& 
 }
 
 template<class Tuple, typename T>
-inline const T& ge_resolve(const Tuple&, const util::rebindable_reference<const T>& value) {
+inline const T& ge_resolve(const Tuple&, const detail::rebindable_reference<const T>& value) {
     return value.get();
 }
 
@@ -600,7 +600,7 @@ struct ge_eval_<logical_or_op, Tuple, First, Second> {
 template<class Tuple, typename Fun>
 struct ge_eval_<exec_xfun_op, Tuple, Fun, unit_t> {
     static inline bool _(const Tuple& tup, const Fun& fun, const unit_t&) {
-        return util::apply_args(fun, tup, util::get_indices(tup));
+        return detail::apply_args(fun, tup, detail::get_indices(tup));
     }
 };
 
@@ -685,17 +685,17 @@ bool guard_expr<OP, First, Second>::operator()(const Ts&... args) const {
 
 template<typename T>
 struct gref_wrapped {
-    typedef util::rebindable_reference<const typename util::rm_const_and_ref<T>::type> type;
+    typedef detail::rebindable_reference<const typename detail::rm_const_and_ref<T>::type> type;
 };
 
 template<typename T>
 struct mutable_gref_wrapped {
-    typedef util::rebindable_reference<T> type;
+    typedef detail::rebindable_reference<T> type;
 };
 
 template<typename T>
 struct mutable_gref_wrapped<T&> {
-    typedef util::rebindable_reference<T> type;
+    typedef detail::rebindable_reference<T> type;
 };
 
 // finally ...

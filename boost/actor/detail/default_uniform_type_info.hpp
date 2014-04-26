@@ -39,8 +39,8 @@
 #include "boost/actor/typed_actor.hpp"
 #include "boost/actor/deserializer.hpp"
 
-#include "boost/actor/util/type_traits.hpp"
-#include "boost/actor/util/abstract_uniform_type_info.hpp"
+#include "boost/actor/detail/type_traits.hpp"
+#include "boost/actor/detail/abstract_uniform_type_info.hpp"
 
 #include "boost/actor/detail/raw_access.hpp"
 #include "boost/actor/detail/types_array.hpp"
@@ -62,7 +62,7 @@ long sfinae_has_push_back(void*); // SFNINAE default
 template<typename T>
 struct is_stl_compliant_list {
 
-    static constexpr bool value = util::is_iterable<T>::value &&
+    static constexpr bool value = detail::is_iterable<T>::value &&
         sizeof(sfinae_has_push_back(static_cast<T*>(nullptr))) == sizeof(char);
 };
 
@@ -77,7 +77,7 @@ long sfinae_has_insert(void*); // SFNINAE default
 template<typename T>
 struct is_stl_compliant_map {
 
-    static constexpr bool value = util::is_iterable<T>::value &&
+    static constexpr bool value = detail::is_iterable<T>::value &&
         sizeof(sfinae_has_insert(static_cast<T*>(nullptr))) == sizeof(char);
 
 };
@@ -96,7 +96,7 @@ typedef std::integral_constant<int, 9> recursive_impl;
 
 template<typename T>
 constexpr int impl_id() {
-    return util::is_primitive<T>::value
+    return detail::is_primitive<T>::value
            ? 0
            : (is_stl_compliant_list<T>::value
               ? 1
@@ -241,7 +241,7 @@ template<typename T,
          class SerializePolicy = default_serialize_policy,
          bool IsEnum = std::is_enum<T>::value,
          bool IsEmptyType = std::is_class<T>::value && std::is_empty<T>::value>
-class member_tinfo : public util::abstract_uniform_type_info<T> {
+class member_tinfo : public detail::abstract_uniform_type_info<T> {
 
  public:
 
@@ -280,7 +280,7 @@ class member_tinfo : public util::abstract_uniform_type_info<T> {
 
 template<typename T, class A, class S>
 class member_tinfo<T, A, S, false, true>
-        : public util::abstract_uniform_type_info<T> {
+        : public detail::abstract_uniform_type_info<T> {
 
  public:
 
@@ -299,7 +299,7 @@ class member_tinfo<T, A, S, false, true>
 
 template<typename T, class AccessPolicy, class SerializePolicy>
 class member_tinfo<T, AccessPolicy, SerializePolicy, true, false>
-        : public util::abstract_uniform_type_info<T> {
+        : public detail::abstract_uniform_type_info<T> {
 
     typedef typename std::underlying_type<T>::type value_type;
 
@@ -428,7 +428,7 @@ template<class C, typename GRes, typename SRes, typename SArg>
 uniform_type_info_ptr new_member_tinfo(GRes (C::*getter)() const,
                             SRes (C::*setter)(SArg)) {
     typedef getter_setter_access_policy<C, GRes, SRes, SArg> access_policy;
-    typedef typename util::rm_const_and_ref<GRes>::type value_type;
+    typedef typename detail::rm_const_and_ref<GRes>::type value_type;
     typedef member_tinfo<value_type, access_policy> result_type;
     return uniform_type_info_ptr(new result_type(access_policy(getter, setter)));
 }
@@ -438,7 +438,7 @@ uniform_type_info_ptr new_member_tinfo(GRes (C::*getter)() const,
                             SRes (C::*setter)(SArg),
                             uniform_type_info_ptr meminf) {
     typedef getter_setter_access_policy<C, GRes, SRes, SArg> access_policy;
-    typedef typename util::rm_const_and_ref<GRes>::type value_type;
+    typedef typename detail::rm_const_and_ref<GRes>::type value_type;
     typedef member_tinfo<value_type, access_policy, forwarding_serialize_policy>
             tinfo;
     return uniform_type_info_ptr(new tinfo(access_policy(getter, setter),
@@ -446,7 +446,7 @@ uniform_type_info_ptr new_member_tinfo(GRes (C::*getter)() const,
 }
 
 template<typename T>
-class default_uniform_type_info : public util::abstract_uniform_type_info<T> {
+class default_uniform_type_info : public detail::abstract_uniform_type_info<T> {
 
  public:
 
@@ -507,7 +507,7 @@ class default_uniform_type_info : public util::abstract_uniform_type_info<T> {
     template<typename R, class C, typename... Ts>
     void push_back(const std::pair<
                        R C::*,
-                       util::abstract_uniform_type_info<R>*
+                       detail::abstract_uniform_type_info<R>*
                    >& pr,
                    Ts&&... args) {
         m_members.push_back(new_member_tinfo(pr.first, uniform_type_info_ptr(pr.second)));
@@ -534,8 +534,8 @@ class default_uniform_type_info : public util::abstract_uniform_type_info<T> {
                            GR (C::*)() const, // const-qualified getter
                            SR (C::*)(ST)      // setter with one argument
                        >,
-                       util::abstract_uniform_type_info<
-                           typename util::rm_const_and_ref<GR>::type
+                       detail::abstract_uniform_type_info<
+                           typename detail::rm_const_and_ref<GR>::type
                        >*
                    >& pr,
                    Ts&&... args) {
@@ -551,7 +551,7 @@ class default_uniform_type_info : public util::abstract_uniform_type_info<T> {
 
 template<typename... Rs>
 class default_uniform_type_info<typed_actor<Rs...>>
-        : public util::abstract_uniform_type_info<typed_actor<Rs...>> {
+        : public detail::abstract_uniform_type_info<typed_actor<Rs...>> {
 
  public:
 

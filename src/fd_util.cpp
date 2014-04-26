@@ -50,15 +50,16 @@
 #   include <netinet/tcp.h>
 #endif
 
-#include "boost/actor/util/scope_guard.hpp"
+#include "boost/actor/detail/scope_guard.hpp"
 
-#include "boost/actor/detail/fd_util.hpp"
-
-/************** implementation of platform-independent functions **************/
+#include "boost/actor/io/fd_util.hpp"
 
 namespace boost {
 namespace actor {
-namespace detail { namespace fd_util {
+namespace io {
+namespace fd_util {
+
+/************** implementation of platform-independent functions **************/
 
 void throw_io_failure [[noreturn]] (const char* what, bool add_errno) {
     if (add_errno) {
@@ -98,14 +99,7 @@ void handle_read_result(ssize_t res, bool is_nonblock) {
     if (res == 0) throw_io_failure("cannot read from closed file descriptor");
 }
 
-} } } // namespace actor
-} // namespace boost::detail::fd_util
-
-#ifndef BOOST_ACTOR_WINDOWS // Linux or Mac OS
-
-namespace boost {
-namespace actor {
-namespace detail { namespace fd_util {
+#ifndef BOOST_WINDOWS // Linux or Mac OS
 
 std::string last_socket_error_as_string() {
     return strerror(errno);
@@ -128,14 +122,7 @@ std::pair<native_socket_type, native_socket_type> create_pipe() {
     return {pipefds[0], pipefds[1]};
 }
 
-} } } // namespace actor
-} // namespace boost::detail::fd_util
-
-#else // BOOST_ACTOR_WINDOWS
-
-namespace boost {
-namespace actor {
-namespace detail { namespace fd_util {
+#else // BOOST_WINDOWS
 
 std::string last_socket_error_as_string() {
     LPTSTR errorText = NULL;
@@ -222,7 +209,7 @@ std::pair<native_socket_type, native_socket_type> create_pipe() {
     a.inaddr.sin_port = 0;
     bool success = false;
     // makes sure all sockets are closed in case of an error
-    auto guard = util::make_scope_guard([&] {
+    auto guard = detail::make_scope_guard([&] {
         if (success) return; // everyhting's fine
         auto e = WSAGetLastError();
         closesocket(listener);
@@ -261,6 +248,9 @@ std::pair<native_socket_type, native_socket_type> create_pipe() {
     return {read_fd, write_fd};
 }
 
-} } } // namespace actor
-} // namespace boost::detail::fd_util
 #endif
+
+} // namespace fd_util
+} // namespace io
+} // namespace actor
+} // namespace boost
