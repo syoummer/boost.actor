@@ -117,7 +117,6 @@ class behavior_impl : public ref_counted {
         message tmp(std::move(arg));
         return invoke(tmp);
     }
-    virtual bool defined_at(const message&) = 0;
     virtual void handle_timeout();
     inline const duration& timeout() const {
         return m_timeout;
@@ -141,9 +140,6 @@ class behavior_impl : public ref_counted {
                 auto res = first->invoke(arg);
                 if (!res) return second->invoke(arg);
                 return res;
-            }
-            bool defined_at(const message& arg) {
-                return first->defined_at(arg) || second->defined_at(arg);
             }
             void handle_timeout() {
                 // the second behavior overrides the timeout handling of
@@ -196,10 +192,6 @@ class default_behavior_impl : public behavior_impl {
         return apply_visitor(optional_message_visitor{}, res);
     }
 
-    bool defined_at(const message& tup) {
-        return m_expr.can_invoke(tup);
-    }
-
     typename behavior_impl::pointer copy(const generic_timeout_definition& tdef) const {
         return new default_behavior_impl<MatchExpr, std::function<void()>>(m_expr, tdef);
     }
@@ -226,9 +218,8 @@ default_behavior_impl<dummy_match_expr, F>* new_default_behavior(duration d, F f
 typedef intrusive_ptr<behavior_impl> behavior_impl_ptr;
 
 // implemented in partial_function.cpp
-behavior_impl_ptr combine(behavior_impl_ptr, const partial_function&);
-behavior_impl_ptr combine(const partial_function&, behavior_impl_ptr);
-behavior_impl_ptr extract(const partial_function&);
+//partial_function combine(behavior_impl_ptr, behavior_impl_ptr);
+//behavior_impl_ptr extract(const partial_function&);
 
 } // namespace detail
 } // namespace actor

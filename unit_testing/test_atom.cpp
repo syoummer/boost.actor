@@ -29,8 +29,8 @@ void foo() {
                       << " = " << to_string(AtomValue) << ")");
 }
 
-struct mirror {
-    mirror(blocking_actor* self) : m_self(self) { }
+struct send_to_self {
+    send_to_self(blocking_actor* self) : m_self(self) { }
     template<typename... Ts>
     void operator()(Ts&&... args) {
         m_self->send(m_self, std::forward<Ts>(args)...);
@@ -39,7 +39,6 @@ struct mirror {
 };
 
 int main() {
-    bool matched_pattern[3] = { false, false, false };
     BOOST_ACTOR_TEST(test_atom);
     // check if there are leading bits that distinguish "zzz" and "000 "
     BOOST_ACTOR_CHECK_NOT_EQUAL(atom("zzz"), atom("000 "));
@@ -50,27 +49,35 @@ int main() {
     // check to_string impl.
     BOOST_ACTOR_CHECK_EQUAL(to_string(s_foo), "FooBar");
     scoped_actor self;
-    mirror m(self.get());
-    m(atom("foo"), static_cast<std::uint32_t>(42));
-    m(atom(":Attach"), atom(":Baz"), "cstring");
+    send_to_self f{self.get()};
+    f(atom("foo"), static_cast<std::uint32_t>(42));
+    f(atom(":Attach"), atom(":Baz"), "cstring");
     //m(atom("b"), atom("a"), atom("c"), 23.f, 1.f, 1.f);
-    m(1.f);
-    m(atom("a"), atom("b"), atom("c"), 23.f);
+    f(1.f);
+    f(atom("a"), atom("b"), atom("c"), 23.f);
+    bool matched_pattern[3] = { false, false, false };
     int i = 0;
-    self->receive_for(i, 3) (
-        on<atom("foo"), std::uint32_t>() >> [&](std::uint32_t value) {
+    for (i = 0; i < 3; ++i) {
+        self->receive(
+    //}
+    //self->receive_for(i, 3) (
+        on(atom("foo"), arg_match) >> [&](std::uint32_t value) {
+            BOOST_ACTOR_CHECKPOINT();
             matched_pattern[0] = true;
             BOOST_ACTOR_CHECK_EQUAL(value, 42);
         },
-        on<atom(":Attach"), atom(":Baz"), string>() >> [&](const string& str) {
+        on(atom(":Attach"), atom(":Baz"), arg_match) >> [&](const string& str) {
+            BOOST_ACTOR_CHECKPOINT();
             matched_pattern[1] = true;
             BOOST_ACTOR_CHECK_EQUAL(str, "cstring");
         },
-        on<atom("a"), atom("b"), atom("c"), float>() >> [&](float value) {
+        on(atom("a"), atom("b"), atom("c"), arg_match) >> [&](float value) {
+            BOOST_ACTOR_CHECKPOINT();
             matched_pattern[2] = true;
             BOOST_ACTOR_CHECK_EQUAL(value, 23.f);
         }
     );
+    }
     BOOST_ACTOR_CHECK(matched_pattern[0] && matched_pattern[1] && matched_pattern[2]);
     self->receive (
         // "erase" message { atom("b"), atom("a"), atom("c"), 23.f }

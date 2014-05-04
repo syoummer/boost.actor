@@ -9,7 +9,6 @@ using boost::optional;
 
 using namespace std;
 using namespace boost::actor;
-using namespace boost::actor::placeholders;
 
 namespace {
 

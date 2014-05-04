@@ -37,8 +37,6 @@
 #include "boost/variant.hpp"
 
 #include "boost/actor/unit.hpp"
-#include "boost/actor/guard_expr.hpp"
-#include "boost/actor/tpartial_function.hpp"
 
 #include "boost/actor/detail/call.hpp"
 #include "boost/actor/detail/int_list.hpp"
@@ -46,12 +44,11 @@
 #include "boost/actor/detail/purge_refs.hpp"
 #include "boost/actor/detail/type_traits.hpp"
 #include "boost/actor/detail/left_or_right.hpp"
-#include "boost/actor/detail/rebindable_reference.hpp"
 
 #include "boost/actor/detail/matches.hpp"
-#include "boost/actor/detail/projection.hpp"
+#include "boost/actor/detail/type_list.hpp"
+#include "boost/actor/detail/lifted_fun.hpp"
 #include "boost/actor/detail/tuple_dummy.hpp"
-#include "boost/actor/detail/value_guard.hpp"
 #include "boost/actor/detail/pseudo_tuple.hpp"
 #include "boost/actor/detail/behavior_impl.hpp"
 
@@ -365,19 +362,44 @@ struct invoke_util
             typename detail::tl_filter_not_type<Pattern, anything>::type> {
 };
 
-template<class Pattern, class Projection, class PartialFun>
+/*
+template<class Pattern, class Projection, class Fun>
 struct projection_partial_function_pair {
     typedef Projection first_type;
-    typedef PartialFun second_type;
+    typedef Fun second_type;
     Projection first;
-    PartialFun second;
+    Fun second;
     projection_partial_function_pair() = default;
     projection_partial_function_pair(const projection_partial_function_pair&) = default;
-    projection_partial_function_pair(Projection pr, PartialFun pf) : first(std::move(pr)), second(std::move(pf)) { }
+    projection_partial_function_pair(Projection pr, Fun pf) : first(std::move(pr)), second(std::move(pf)) { }
     typedef Pattern pattern_type;
 };
+*/
 
-template<class Expr, class Guard, class Transformers, class Pattern>
+template<class Expr, class Projections, class Signature, class Pattern>
+class match_expr_case : public get_lifted_fun<
+                                   Expr,
+                                   Projections,
+                                   Signature
+                               >::type {
+
+    typedef typename get_lifted_fun<
+                Expr,
+                Projections,
+                Signature
+            >::type
+            super;
+
+ public:
+
+    template<typename... Ts>
+    match_expr_case(Ts&&... args) : super(std::forward<Ts>(args)...) { }
+
+    typedef Pattern pattern_type;
+
+};
+
+template<class Expr, class Transformers, class Pattern>
 struct get_case_ {
     typedef typename detail::get_callable_trait<Expr>::type ctrait;
 
@@ -444,30 +466,23 @@ struct get_case_ {
             >::type
             projection_signature;
 
-    typedef typename projection_from_type_list<
-                padded_transformers,
-                projection_signature
-            >::type
-            type1;
-
-    typedef typename get_tpartial_function<
+    typedef match_expr_case<
                 Expr,
-                Guard,
-                partial_fun_signature
-            >::type
-            type2;
-
-    typedef projection_partial_function_pair<Pattern, type1, type2> type;
+                padded_transformers,
+                projection_signature,
+                Pattern
+            >
+            type;
 
 };
 
-template<bool Complete, class Expr, class Guard, class Trans, class Pattern>
+template<bool Complete, class Expr, class Trans, class Pattern>
 struct get_case {
-    typedef typename get_case_<Expr, Guard, Trans, Pattern>::type type;
+    typedef typename get_case_<Expr, Trans, Pattern>::type type;
 };
 
-template<class Expr, class Guard, class Trans, class Pattern>
-struct get_case<false, Expr, Guard, Trans, Pattern> {
+template<class Expr, class Trans, class Pattern>
+struct get_case<false, Expr, Trans, Pattern> {
     typedef typename detail::tl_pop_back<Pattern>::type lhs_pattern;
     typedef typename detail::tl_map<
                 typename detail::get_callable_trait<Expr>::arg_types,
@@ -476,7 +491,6 @@ struct get_case<false, Expr, Guard, Trans, Pattern> {
             rhs_pattern;
     typedef typename get_case_<
                 Expr,
-                Guard,
                 Trans,
                 typename detail::tl_concat<lhs_pattern, rhs_pattern>::type
             >::type
@@ -537,36 +551,12 @@ Result unroll_expr(PPFPs& fs,
     typename policy::tuple_type targs;
     if (policy::prepare_invoke(targs, type_token, is_dynamic, ptr, tup)) {
         auto is = detail::get_indices(targs);
-        auto res = detail::apply_args_prefixed(f.first,
-                                             deduce_const(tup, targs),
-                                             is,
-                                             f.second);
+        auto res = detail::apply_args(f, deduce_const(tup, targs), is);
         if (unroll_expr_result_valid(res)) {
             return std::move(unroll_expr_result_unbox(res));
         }
     }
     return none;
-}
-
-// PPFP = projection_partial_function_pair
-template<class PPFPs, class T>
-inline bool can_unroll_expr(PPFPs&, minus1l, const std::type_info&, const T&) {
-    return false;
-}
-
-template<class PPFPs, long N, class Tuple>
-inline bool can_unroll_expr(PPFPs& fs,
-                            long_constant<N>,
-                            const std::type_info& arg_types,
-                            const Tuple& tup) {
-    if (can_unroll_expr(fs, long_constant<N-1l>(), arg_types, tup)) {
-        return true;
-    }
-    auto& f = get<N>(fs);
-    typedef typename detail::rm_const_and_ref<decltype(f)>::type Fun;
-    typedef typename Fun::pattern_type pattern_type;
-    typedef detail::invoke_util<pattern_type> policy;
-    return policy::can_invoke(arg_types, tup);
 }
 
 template<class PPFPs, class Tuple>
@@ -577,8 +567,8 @@ inline std::uint64_t calc_bitmask(PPFPs&,
     return 0x00;
 }
 
-template<class PPFPs, long N, class Tuple>
-inline std::uint64_t calc_bitmask(PPFPs& fs,
+template<class Case, long N, class Tuple>
+inline std::uint64_t calc_bitmask(Case& fs,
                                   long_constant<N>,
                                   const std::type_info& tinf,
                                   const Tuple& tup) {
@@ -645,16 +635,20 @@ inline const void* fetch_native_data(const Ptr& ptr, std::false_type) {
 
 template<typename T>
 struct is_manipulator_case {
-    static constexpr bool value = T::second_type::manipulates_args;
+    //static constexpr bool value = T::second_type::manipulates_args;
+    typedef typename T::arg_types arg_types;
+    static constexpr bool value = tl_exists<arg_types, is_mutable_ref>::value;
 };
 
 template<typename T>
 struct get_case_result {
-    typedef typename T::second_type::result_type type;
+    //typedef typename T::second_type::result_type type;
+    typedef typename T::result_type type;
 };
 
-} } // namespace actor
-} // namespace boost::detail
+} // namespace detail
+} // namespace actor
+} // namespace boost
 
 namespace boost {
 namespace actor {
@@ -669,7 +663,7 @@ struct match_result_from_type_list<detail::type_list<Ts...>> {
 
 /**
  * @brief A match expression encapsulating cases <tt>Cs...</tt>, whereas
- *        each case is a @p detail::projection_partial_function_pair.
+ *        each case is a @p detail::match_expr_case<...>.
  */
 template<class... Cs>
 class match_expr {
@@ -713,18 +707,6 @@ class match_expr {
         init();
     }
 
-    bool can_invoke(const message& tup) {
-        auto type_token = tup.type_token();
-        if (not tup.dynamically_typed()) {
-            auto bitmask = get_cache_entry(type_token, tup);
-            return bitmask != 0;
-        }
-        return can_unroll_expr(m_cases,
-                               idx_token,
-                               *type_token,
-                               tup);
-    }
-
     inline result_type operator()(const message& tup) {
         return apply(tup);
     }
@@ -740,10 +722,7 @@ class match_expr {
 
     template<class... Ds>
     match_expr<Cs..., Ds...> or_else(const match_expr<Ds...>& other) const {
-        std::tuple<detail::rebindable_reference<const Cs>...,
-                   detail::rebindable_reference<const Ds>...    > all_cases;
-        rebind_tdata(all_cases, tuple_cat(m_cases, other.cases()));
-        return {all_cases};
+        return {tuple_cat(m_cases, other.cases())};
     }
 
     /** @cond PRIVATE */
@@ -894,117 +873,63 @@ template<typename T, typename... Ts>
                 match_expr
             >::type
 match_expr_collect(const T& arg, const Ts&... args) {
-    typename detail::tl_apply<
-        typename detail::tl_map<
-            typename detail::tl_concat<
-                typename T::cases_list,
-                typename Ts::cases_list...
-            >::type,
-            gref_wrapped
-        >::type,
-        std::tuple
-    >::type
-    all_cases;
-    detail::rebind_tdata(all_cases, std::tuple_cat(arg.cases(), args.cases()...));
-    return {all_cases};
+    return {std::tuple_cat(arg.cases(), args.cases()...)};
 }
 
 namespace detail {
 
-//typedef std::true_type  with_timeout;
-//typedef std::false_type without_timeout;
+// implemented in partial_function.cpp
+partial_function combine(behavior_impl_ptr, behavior_impl_ptr);
+behavior_impl_ptr extract(const partial_function&);
 
-// end of recursion
-template<class Data, class Token>
-behavior_impl_ptr concat_rec(const Data& data, Token) {
-    typedef typename detail::tl_apply<Token, match_expr>::type combined_type;
-    auto lvoid = [] { };
-    typedef default_behavior_impl<combined_type, decltype(lvoid)> impl_type;
-    return new impl_type(data, duration{}, lvoid);
+template<typename... Cs>
+behavior_impl_ptr extract(const match_expr<Cs...>& arg) {
+    return arg.as_behavior_impl();
 }
 
-// end of recursion with nothing but a partial function
-inline behavior_impl_ptr concat_rec(const std::tuple<>&,
-                                    detail::empty_type_list,
-                                    const partial_function& pfun) {
-    return extract(pfun);
+template<typename... As, typename... Bs>
+match_expr<As..., Bs...> combine(const match_expr<As...>& lhs,
+                                 const match_expr<Bs...>& rhs) {
+    return lhs.or_else(rhs);
 }
 
-// end of recursion with timeout
-template<class Data, class Token, typename F>
-behavior_impl_ptr concat_rec(const Data& data,
-                             Token,
-                             const timeout_definition<F>& arg) {
-    typedef typename detail::tl_apply<Token, match_expr>::type combined_type;
-    return new default_behavior_impl<combined_type, F>{data, arg};
+// forwards match_expr as match_expr as long as combining two match_expr,
+// otherwise turns everything into behavior_impl_ptr
+template<typename... As, typename... Bs>
+const match_expr<As...>& combine_fwd(const match_expr<As...>& lhs,
+                                     const match_expr<Bs...>&) {
+    return lhs;
 }
 
-// recursive concatenation function
-template<class Data, class Token, typename T, typename... Ts>
-behavior_impl_ptr concat_rec(const Data& data,
-                             Token,
-                             const T& arg,
-                             const Ts&... args) {
-    typedef typename detail::tl_concat<
-            Token,
-            typename T::cases_list
-        >::type
-        next_token_type;
-    typename detail::tl_apply<
-            typename detail::tl_map<
-                next_token_type,
-                gref_wrapped
-            >::type,
-            std::tuple
-        >::type
-        next_data;
-    next_token_type next_token;
-    rebind_tdata(next_data, std::tuple_cat(data, arg.cases()));
-    return concat_rec(next_data, next_token, args...);
+template<typename T, typename U>
+behavior_impl_ptr combine_fwd(T& lhs, U&) {
+    return extract(lhs);
 }
 
-// handle partial functions at end of recursion
-template<class Data, class Token>
-behavior_impl_ptr concat_rec(const Data& data,
-                             Token token,
-                             const partial_function& pfun) {
-    return combine(concat_rec(data, token), pfun);
+template<typename T>
+behavior_impl_ptr match_expr_concat(const T& arg) {
+    return arg.as_behavior_impl();
 }
 
-// handle partial functions in between
-template<class Data, class Token, typename T, typename... Ts>
-behavior_impl_ptr concat_rec(const Data& data,
-                             Token token,
-                             const partial_function& pfun,
-                             const T& arg,
-                             const Ts&... args) {
-    auto lhs = concat_rec(data, token);
-    std::tuple<> dummy;
-    auto rhs = concat_rec(dummy, detail::empty_type_list{}, arg, args...);
-    return combine(lhs, pfun)->or_else(rhs);
+template<typename F>
+behavior_impl_ptr match_expr_concat(const partial_function& arg0,
+                                    const timeout_definition<F>& arg) {
+    return extract(arg0)->copy(arg);
 }
 
-// handle partial functions at recursion start
-template<typename T, typename... Ts>
-behavior_impl_ptr concat_rec(const std::tuple<>& data,
-                             detail::empty_type_list token,
-                             const partial_function& pfun,
-                             const T& arg,
-                             const Ts&... args) {
-    return combine(pfun, concat_rec(data, token, arg, args...));
+template<typename... Cs, typename F>
+behavior_impl_ptr match_expr_concat(const match_expr<Cs...>& arg0,
+                                    const timeout_definition<F>& arg) {
+    return new default_behavior_impl<match_expr<Cs...>, F>{arg0, arg};
 }
 
 template<typename T0, typename T1, typename... Ts>
 behavior_impl_ptr match_expr_concat(const T0& arg0,
                                     const T1& arg1,
                                     const Ts&... args) {
-    std::tuple<> dummy;
-    return concat_rec(dummy, detail::empty_type_list{}, arg0, arg1, args...);
-}
-
-template<typename T>
-behavior_impl_ptr match_expr_concat(const T& arg) {
-    return arg.as_behavior_impl();
+    return match_expr_concat(combine(combine_fwd(arg0, arg1),
+                                     combine_fwd(arg1, arg0)),
+                             args...);
 }
 
 // some more convenience functions
@@ -1015,7 +940,6 @@ match_expr<
     typename get_case<
         false,
         F,
-        empty_value_guard,
         detail::empty_type_list,
         detail::empty_type_list
     >::type>
@@ -1023,15 +947,11 @@ lift_to_match_expr(F fun) {
     typedef typename get_case<
                 false,
                 F,
-                empty_value_guard,
                 detail::empty_type_list,
                 detail::empty_type_list
             >::type
             result_type;
-    return result_type{typename result_type::first_type{},
-                       typename result_type::second_type{
-                           std::move(fun),
-                           empty_value_guard{}}};
+    return result_type{std::move(fun)};
 }
 
 template<typename T,

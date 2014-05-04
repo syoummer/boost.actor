@@ -236,8 +236,7 @@ struct tl_slice_<List, ListSize, 0, ListSize, PadType> {
  */
 template<class List, size_t First, size_t Last>
 struct tl_slice {
-    static_assert(First <= Last, "First > Last");
-    typedef typename tl_slice_<List, tl_size<List>::value, First, Last>::type type;
+    typedef typename tl_slice_<List, tl_size<List>::value, (First > Last ? Last : First), Last>::type type;
 };
 
 /**

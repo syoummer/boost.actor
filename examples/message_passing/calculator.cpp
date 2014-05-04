@@ -30,7 +30,7 @@ void blocking_math_fun(blocking_actor* self) {
             //       would force stack unwinding by throwing an exception
             done = true;
         }
-    ).until(gref(done));
+    ).until([&] { return done; });
 }
 
 void calculator(event_based_actor* self) {

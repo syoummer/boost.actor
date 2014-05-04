@@ -60,13 +60,6 @@ struct pseudo_tuple {
     }
 };
 
-} // namespace detail
-} // namespace actor
-} // namespace boost
-
-namespace boost {
-namespace actor {
-
 template<size_t N, typename... Ts>
 const typename detail::type_at<N, Ts...>::type& get(const detail::pseudo_tuple<Ts...>& tv) {
     static_assert(N < sizeof...(Ts), "N >= tv.size()");
@@ -74,11 +67,12 @@ const typename detail::type_at<N, Ts...>::type& get(const detail::pseudo_tuple<T
 }
 
 template<size_t N, typename... Ts>
-typename detail::type_at<N, Ts...>::type& get_ref(detail::pseudo_tuple<Ts...>& tv) {
+typename detail::type_at<N, Ts...>::type& get(detail::pseudo_tuple<Ts...>& tv) {
     static_assert(N < sizeof...(Ts), "N >= tv.size()");
     return *reinterpret_cast<typename detail::type_at<N, Ts...>::type*>(tv.mutable_at(N));
 }
 
+} // namespace detail
 } // namespace actor
 } // namespace boost
 

@@ -29,7 +29,6 @@ using boost::optional;
 
 using namespace std;
 using namespace boost::actor;
-using namespace boost::actor::placeholders;
 using namespace boost::program_options;
 
 // our "service"
@@ -80,8 +79,13 @@ void client_bhvr(event_based_actor* self, const string& host, uint16_t port, con
             self->delayed_send(self, chrono::seconds(3), atom("reconnect"));
         }
     }
+    auto custom_guard = [server](atom_value v) -> optional<atom_value> {
+        if ((v == atom("plus") || v == atom("minus")) && server != invalid_actor)
+            return v;
+        return none;
+    };
     self->become (
-        on_arg_match.when(_x1.in({atom("plus"), atom("minus")}) && gval(server) != invalid_actor) >> [=](atom_value op, int lhs, int rhs) {
+        on(custom_guard, arg_match)  >> [=](atom_value op, int lhs, int rhs) {
             self->sync_send_tuple(server, self->last_dequeued()).then(
                 on(atom("result"), arg_match) >> [=](int result) {
                     aout(self) << lhs << " "

@@ -188,7 +188,7 @@ void printer_loop(blocking_actor* self) {
         }
     };
     bool running = true;
-    self->receive_while (gref(running)) (
+    self->receive_while ([&] { return running; }) (
         on(atom("add"), arg_match) >> [&](std::string& str) {
             auto s = self->last_sender();
             if (!str.empty() && s) {

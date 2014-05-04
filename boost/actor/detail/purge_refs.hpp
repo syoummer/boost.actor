@@ -33,9 +33,7 @@
 
 #include <functional>
 
-#include "boost/actor/guard_expr.hpp"
 #include "boost/actor/detail/type_traits.hpp"
-#include "boost/actor/detail/rebindable_reference.hpp"
 
 namespace boost {
 namespace actor {
@@ -43,16 +41,6 @@ namespace detail {
 
 template<typename T>
 struct purge_refs_impl {
-    typedef T type;
-};
-
-template<typename T>
-struct purge_refs_impl<detail::rebindable_reference<T> > {
-    typedef T type;
-};
-
-template<typename T>
-struct purge_refs_impl<detail::rebindable_reference<const T> > {
     typedef T type;
 };
 

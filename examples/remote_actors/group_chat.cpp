@@ -29,11 +29,13 @@ using std::endl;
 using std::flush;
 using std::string;
 
+using boost::none;
+using boost::optional;
+
 using namespace boost::program_options;
 
 using namespace boost::actor;
 using namespace boost::actor::detail;
-using namespace boost::actor::placeholders;
 
 struct line { string str; };
 
@@ -136,6 +138,10 @@ int main(int argc, char** argv) {
     }
 
     cout << "*** starting client, type '/help' for a list of commands" << endl;
+    auto is_cmd = [](const string& str) -> optional<string> {
+        if (str.size() > 1 && str.front() == '/') return str;
+        return none;
+    };
     partial_function loop {
         on("/join", arg_match) >> [&](const string& mod, const string& id) {
             try {
@@ -149,7 +155,7 @@ int main(int argc, char** argv) {
             // close STDIN; causes this match loop to quit
             cin.setstate(std::ios_base::eofbit);
         },
-        on<string, anything>().when(_x1.starts_with("/")) >> [&] {
+        on(is_cmd, any_vals) >> [&] {
             cout <<  "*** available commands:\n"
                      "    /join <module> <group> join a new chat channel\n"
                      "    /quit                  quit the program\n"

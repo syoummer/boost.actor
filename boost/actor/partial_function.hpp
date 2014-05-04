@@ -85,17 +85,8 @@ class partial_function {
     partial_function(const T& arg, Ts&&... args);
 
     /**
-     * @brief Returns @p true if this partial function is defined for the
-     *        types of @p value, false otherwise.
-     */
-    inline bool defined_at(const message& value);
-
-    /**
      * @brief Returns a value if @p arg was matched by one of the
      *        handler of this behavior, returns @p nothing otherwise.
-     * @note This member function can return @p nothing even if
-     *       {@link defined_at()} returns @p true, because {@link defined_at()}
-     *       does not evaluate guards.
      */
     template<typename T>
     inline optional<message> operator()(T&& arg);
@@ -141,10 +132,6 @@ partial_function::partial_function(const T& arg, Ts&&... args)
 : m_impl(detail::match_expr_concat(
              detail::lift_to_match_expr(arg),
              detail::lift_to_match_expr(std::forward<Ts>(args))...)) { }
-
-inline bool partial_function::defined_at(const message& value) {
-    return (m_impl) && m_impl->defined_at(value);
-}
 
 template<typename T>
 inline optional<message> partial_function::operator()(T&& arg) {

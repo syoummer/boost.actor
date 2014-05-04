@@ -31,29 +31,42 @@
 #ifndef CALL_HPP
 #define CALL_HPP
 
-#include "boost/actor/get.hpp"
 #include "boost/actor/detail/int_list.hpp"
 
 namespace boost {
 namespace actor {
 namespace detail {
 
+/*
 template<typename F, class Tuple, long... Is>
 inline auto apply_args(F& f, Tuple& tup, detail::int_list<Is...>)
--> decltype(f(get_cv_aware<Is>(tup)...)) {
-    return f(get_cv_aware<Is>(tup)...);
+-> decltype(f(get<Is>(tup)...)) {
+    return f(get<Is>(tup)...);
+}
+*/
+
+template<typename F, class Tuple, long... Is>
+inline auto apply_args(F& f, Tuple&& tup, detail::int_list<Is...>)
+-> decltype(f(get<Is>(tup)...)) {
+    return f(get<Is>(tup)...);
+}
+
+template<typename F, class Tuple, typename... Ts>
+inline auto apply_args_prefixed(F& f, Tuple&, detail::int_list<>, Ts&&... args)
+-> decltype(f(std::forward<Ts>(args)...)) {
+    return f(std::forward<Ts>(args)...);
 }
 
 template<typename F, class Tuple, long... Is, typename... Ts>
 inline auto apply_args_prefixed(F& f, Tuple& tup, detail::int_list<Is...>, Ts&&... args)
--> decltype(f(std::forward<Ts>(args)..., get_cv_aware<Is>(tup)...)) {
-    return f(std::forward<Ts>(args)..., get_cv_aware<Is>(tup)...);
+-> decltype(f(std::forward<Ts>(args)..., get<Is>(tup)...)) {
+    return f(std::forward<Ts>(args)..., get<Is>(tup)...);
 }
 
 template<typename F, class Tuple, long... Is, typename... Ts>
 inline auto apply_args_suffxied(F& f, Tuple& tup, detail::int_list<Is...>, Ts&&... args)
--> decltype(f(get_cv_aware<Is>(tup)..., std::forward<Ts>(args)...)) {
-    return f(get_cv_aware<Is>(tup)..., std::forward<Ts>(args)...);
+-> decltype(f(get<Is>(tup)..., std::forward<Ts>(args)...)) {
+    return f(get<Is>(tup)..., std::forward<Ts>(args)...);
 }
 
 } // namespace detail

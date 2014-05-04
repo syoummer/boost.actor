@@ -67,10 +67,6 @@ class continuation_decorator : public detail::behavior_impl {
         return invoke_impl(tup);
     }
 
-    bool defined_at(const message& tup) {
-        return m_decorated->defined_at(tup);
-    }
-
     pointer copy(const generic_timeout_definition& tdef) const {
         return new continuation_decorator(m_fun, m_decorated->copy(tdef));
     }

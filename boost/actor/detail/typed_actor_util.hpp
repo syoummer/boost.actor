@@ -66,23 +66,15 @@ struct deduce_signature_helper<std::tuple<Rs...>, detail::type_list<Ts...>> {
 template<typename T>
 struct deduce_signature {
     typedef typename detail::implicit_conversions<
-                typename T::second_type::result_type
+                typename T::result_type
             >::type
             result_type;
     typedef typename detail::tl_map<
-                typename T::second_type::arg_types,
+                typename T::arg_types,
                 detail::rm_const_and_ref
             >::type
             arg_types;
     typedef typename deduce_signature_helper<result_type, arg_types>::type type;
-};
-
-template<typename T>
-struct match_expr_has_no_guard {
-    static constexpr bool value = std::is_same<
-                                      typename T::second_type::guard_type,
-                                      detail::empty_value_guard
-                                  >::value;
 };
 
 template<typename Arguments>

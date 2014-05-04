@@ -130,7 +130,7 @@ class testee_actor {
                 return "wait4string";
             }
         )
-        .until(gref(string_received));
+        .until([&] { return string_received; });
     }
 
     void wait4float(blocking_actor* self) {
@@ -143,7 +143,7 @@ class testee_actor {
                 return "wait4float";
             }
         )
-        .until(gref(float_received));
+        .until([&] { return float_received; });
         wait4string(self);
     }
 

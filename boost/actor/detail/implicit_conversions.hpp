@@ -50,6 +50,7 @@ struct implicit_conversions {
                 std::string,
                 std::is_same<T, const char*>,
                 std::is_same<T, char*>,
+                std::is_same<T, char[]>,
                 detail::is_array_of<T, char>,
                 detail::is_array_of<T, const char>
             >::type

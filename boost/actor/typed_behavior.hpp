@@ -68,6 +68,13 @@ struct unbox_typed_continue_helper<detail::type_list<typed_continue_helper<List>
     typedef List type;
 };
 
+template<typename T, typename U>
+struct same_or_skip_message_t {
+    static constexpr bool value = std::is_same<T, U>::value
+                               || std::is_same<T, skip_message_t>::value;
+    static_assert(value, "WTF");
+};
+
 template<typename SList>
 struct valid_input_predicate {
     typedef typename input_only<SList>::type s_inputs;
@@ -84,15 +91,26 @@ struct valid_input_predicate {
                                  "contains at least one pattern that is "
                                  "not defined in the actor's type");
         typedef typename detail::tl_at<SList, pos>::type s_element;
+        typedef typename s_element::output_types s_out;
+        /*
         typedef typename detail::tl_map<
                     typename s_element::output_types,
                     lift_void
                 >::type
                 s_out;
+        */
+        static constexpr bool value = tl_binary_forall<
+                                          output_types,
+                                          s_out,
+                                          same_or_skip_message_t
+                                      >::value;
+        //              "output types differ from defined interface");
+        /*
         static constexpr bool value =
                std::is_same<output_types, s_out>::value
             || std::is_same<output_types, skip_list>::value;
         static_assert(value, "wtf");
+        */
     };
 };
 
@@ -195,11 +213,6 @@ class typed_behavior {
 
     template<typename... Cs>
     void set(match_expr<Cs...>&& expr) {
-        // check for (the lack of) guards
-        static_assert(detail::conjunction<
-                          detail::match_expr_has_no_guard<Cs>::value...
-                      >::value,
-                      "typed actors are not allowed to use guard expressions");
         // do some transformation before type-checking the input signatures
         typedef typename detail::tl_map<
                     detail::type_list<
