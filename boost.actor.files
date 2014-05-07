@@ -173,7 +173,6 @@ boost/actor/uniform_type_info.hpp
 boost/actor/unit.hpp
 boost/actor/wildcard_position.hpp
 examples/aout.cpp
-examples/curl/curl_fuse.cpp
 examples/hello_world.cpp
 examples/message_passing/calculator.cpp
 examples/message_passing/dancing_kirby.cpp
