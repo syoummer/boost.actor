@@ -107,7 +107,7 @@ class lifted_fun_invoker {
     typename std::enable_if<(sizeof...(Ts) + 1 > args), R>::type
     operator()(T& arg, Ts&... args) const {
         if (has_none(arg)) return none;
-        return (*this)(unopt(args)...);
+        return (*this)(args...);
     }
 
  private:
