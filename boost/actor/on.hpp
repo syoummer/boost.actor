@@ -168,7 +168,7 @@ struct rvalue_builder {
         typedef typename lifted_expr::projections_list target;
         typedef typename tl_trim<Transformers>::type trimmed_projections;
         tuple_maker f;
-        auto lhs = apply_args(f, m_funs, get_indices(trimmed_projections{}));
+        auto lhs = apply_args(f, get_indices(trimmed_projections{}), m_funs);
         typename tl_apply<
                 typename tl_slice<
                     target,

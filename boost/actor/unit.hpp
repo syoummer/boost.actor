@@ -36,7 +36,8 @@ namespace actor {
 
 struct unit_t {
     constexpr unit_t() { }
-    template<typename T> constexpr unit_t(T&&) { }
+    constexpr unit_t(const unit_t&) { }
+    template<typename T> explicit constexpr unit_t(T&&) { }
 };
 
 static constexpr unit_t unit = unit_t{};

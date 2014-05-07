@@ -31,19 +31,25 @@ const char* cppa_strip_path(const char* file);
 void cppa_unexpected_message(const char* file, size_t line, boost::actor::message t);
 void cppa_unexpected_timeout(const char* file, size_t line);
 
-#define BOOST_ACTOR_STREAMIFY(fname, line, message)                                   \
+#define BOOST_ACTOR_STREAMIFY(fname, line, message)                            \
     cppa_strip_path(fname) << ":" << cppa_fill4(line) << " " << message
 
-#define BOOST_ACTOR_PRINTC(filename, linenum, message)                                \
-    BOOST_ACTOR_LOGF_INFO(BOOST_ACTOR_STREAMIFY(filename, linenum, message));                \
+#define BOOST_ACTOR_PRINTC(filename, linenum, message)                         \
+    BOOST_ACTOR_LOGF_INFO(BOOST_ACTOR_STREAMIFY(filename, linenum, message));  \
     std::cout << BOOST_ACTOR_STREAMIFY(filename, linenum, message) << std::endl
 
 #define BOOST_ACTOR_PRINT(message) BOOST_ACTOR_PRINTC(__FILE__, __LINE__, message)
 
-#define BOOST_ACTOR_PRINTERRC(fname, linenum, msg)                                    \
-    BOOST_ACTOR_LOGF(BOOST_ACTOR_ERROR, BOOST_ACTOR_STREAMIFY(fname, linenum, msg));                \
-    std::cerr << "ERROR: " << BOOST_ACTOR_STREAMIFY(fname, linenum, msg)              \
+#if BOOST_ACTOR_LOG_LEVEL > 1
+#define BOOST_ACTOR_PRINTERRC(fname, linenum, msg)                             \
+    BOOST_ACTOR_LOGF_ERROR(BOOST_ACTOR_STREAMIFY(fname, linenum, msg));        \
+    std::cerr << "ERROR: " << BOOST_ACTOR_STREAMIFY(fname, linenum, msg)       \
               << std::endl
+#else
+#define BOOST_ACTOR_PRINTERRC(fname, linenum, msg)                             \
+    std::cerr << "ERROR: " << BOOST_ACTOR_STREAMIFY(fname, linenum, msg)       \
+              << std::endl
+#endif
 
 #define BOOST_ACTOR_PRINTERR(message) BOOST_ACTOR_PRINTERRC(__FILE__, __LINE__, message)
 

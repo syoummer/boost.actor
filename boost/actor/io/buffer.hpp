@@ -230,6 +230,13 @@ class buffer {
 
 };
 
+inline bool operator==(const buffer& lhs, const buffer& rhs) {
+    if (lhs.size() == rhs.size()) {
+        return memcmp(lhs.data(), rhs.data(), lhs.size()) == 0;
+    }
+    return false;
+}
+
 /******************************************************************************
  *             inline and template member function implementations            *
  ******************************************************************************/

@@ -40,15 +40,11 @@ namespace actor {
 namespace detail {
 
 template<typename F, long... Is, class Tup0, class Tup1>
-auto tuple_zip(F& f, detail::int_list<Is...>, Tup0& tup0, Tup1& tup1)
--> decltype(std::forward_as_tuple(f(std::get<Is>(tup0), std::get<Is>(tup1))...)) {
-    return std::forward_as_tuple(f(std::get<Is>(tup0), std::get<Is>(tup1))...);
-}
-
-template<typename F, long... Is, class Tup0, class Tup1, class Tup2>
-auto tuple_zip(F& f, detail::int_list<Is...>, Tup0& tup0, Tup1& tup1, Tup2& tup2)
--> decltype(std::forward_as_tuple(f(std::get<Is>(tup0), std::get<Is>(tup1), std::get<Is>(tup2))...)) {
-    return std::forward_as_tuple(f(std::get<Is>(tup0), std::get<Is>(tup1), std::get<Is>(tup2))...);
+auto tuple_zip(F& f, detail::int_list<Is...>, Tup0&& tup0, Tup1&& tup1)
+-> decltype(std::make_tuple(f(std::get<Is>(tup0),
+                              std::get<Is>(tup1))...)) {
+    return std::make_tuple(f(std::get<Is>(tup0),
+                             std::get<Is>(tup1))...);
 }
 
 } // namespace detail

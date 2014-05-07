@@ -36,10 +36,10 @@
 
 #include "boost/actor/skip_message.hpp"
 
-#include "boost/actor/detail/call.hpp"
 #include "boost/actor/detail/int_list.hpp"
 #include "boost/actor/detail/type_list.hpp"
 #include "boost/actor/detail/tuple_zip.hpp"
+#include "boost/actor/detail/apply_args.hpp"
 #include "boost/actor/detail/type_traits.hpp"
 #include "boost/actor/detail/left_or_right.hpp"
 
@@ -47,77 +47,26 @@ namespace boost {
 namespace actor {
 namespace detail {
 
-template<typename Fun>
-struct is_void_fun {
-    static constexpr bool value = std::is_same<typename Fun::result_type, void>::value;
-};
-
-struct collect_visitor {
-    typedef bool result_type;
-    inline bool operator()() const {
-        // end of recursion
-        return true;
-    }
-    template<typename Storage, typename T>
-    static inline  bool store(Storage& storage, T&& value) {
-        storage = std::forward<T>(value);
-        return true;
-    }
-
-    template<class Storage>
-    static inline bool store(Storage& storage, optional<Storage>&& value) {
-        if (value) {
-            storage = std::move(*value);
-            return true;
-        }
-        return false;
-    }
-
-    template<typename T>
-    static inline auto fetch(const unit_t&, T&& arg)
-    -> decltype(std::forward<T>(arg)) {
-        return std::forward<T>(arg);
-    }
-
-    template<typename Fun, typename T>
-    static inline auto fetch(const Fun& fun, T&& arg)
-    -> decltype(fun(std::forward<T>(arg))) {
-        return fun(std::forward<T>(arg));
-    }
-    template<typename T0, typename T1, typename T2, typename... Vs>
-    inline bool operator()(std::tuple<T0, T1, T2> fwd, Vs&&... args) const {
-        return    store(std::get<0>(fwd), fetch(std::get<1>(fwd), std::get<2>(fwd)))
-               && (*this)(args...);
-    }
-};
-
 class lifted_fun_zipper {
  public:
     template<typename F, typename T>
-    auto operator()(const F& fun, T&& arg) -> decltype(fun(std::forward<T>(arg))) const {
-        return fun(std::forward<T>(arg));
+    auto operator()(const F& fun, T& arg) -> decltype(fun(arg)) const {
+        return fun(arg);
     }
+    // forward everything as reference if no guard/transformation is set
     template<typename T>
-    auto operator()(const unit_t&, T&& arg) -> decltype(std::forward<T>(arg)) const {
-        return std::forward<T>(arg);
+    auto operator()(const unit_t&, T& arg) const -> decltype(std::ref(arg)) {
+        return std::ref(arg);
     }
 };
 
 template<typename T>
-struct is_optional : std::false_type { };
-
-template<typename T>
-struct is_optional<optional<T>> : std::true_type { };
-
-template<typename T>
-typename std::enable_if<not is_optional<typename rm_const_and_ref<T>::type>::value, T&&>::type
-fwd_and_unopt(typename std::remove_reference<T>::type& v) {
-    return static_cast<T&&>(v);
+T& unopt(T& v) {
+    return v;
 }
 
 template<typename T>
-auto fwd_and_unopt(typename std::remove_reference<T>::type& v) ->
-typename std::enable_if<is_optional<typename rm_const_and_ref<T>::type>::value, decltype(*v)>::type {
+T& unopt(optional<T>& v) {
     return *v;
 }
 
@@ -126,12 +75,12 @@ inline bool has_none() {
 }
 
 template<typename T, typename... Ts>
-bool has_none(const T&, const Ts&... vs) {
+inline bool has_none(const T&, const Ts&... vs) {
     return has_none(vs...);
 }
 
 template<typename T, typename... Ts>
-bool has_none(const optional<T>& v, const Ts&... vs) {
+inline bool has_none(const optional<T>& v, const Ts&... vs) {
     return !v || has_none(vs...);
 }
 
@@ -149,16 +98,16 @@ class lifted_fun_invoker {
 
     template<typename... Ts>
     typename std::enable_if<sizeof...(Ts) == args, R>::type
-    operator()(Ts&&... args) const {
+    operator()(Ts&... args) const {
         if (has_none(args...)) return none;
-        return f(fwd_and_unopt<Ts>(args)...);
+        return f(unopt(args)...);
     }
 
     template<typename T, typename... Ts>
     typename std::enable_if<(sizeof...(Ts) + 1 > args), R>::type
-    operator()(T&& arg, Ts&&... args) const {
+    operator()(T& arg, Ts&... args) const {
         if (has_none(arg)) return none;
-        return (*this)(fwd_and_unopt<Ts>(args)...);
+        return (*this)(unopt(args)...);
     }
 
  private:
@@ -182,7 +131,7 @@ class lifted_fun_invoker<bool, F> {
     typename std::enable_if<sizeof...(Ts) == args, bool>::type
     operator()(Ts&&... args) const {
         if (has_none(args...)) return false;
-        f(fwd_and_unopt<Ts>(args)...);
+        f(unopt(args)...);
         return true;
     }
 
@@ -190,7 +139,7 @@ class lifted_fun_invoker<bool, F> {
     typename std::enable_if<(sizeof...(Ts) + 1 > args), bool>::type
     operator()(T&& arg, Ts&&... args) const {
         if (has_none(arg)) return none;
-        return (*this)(fwd_and_unopt<Ts>(args)...);
+        return (*this)(unopt(args)...);
     }
 
  private:
@@ -198,7 +147,6 @@ class lifted_fun_invoker<bool, F> {
     F& f;
 
 };
-
 
 /**
  * @brief A lifted functor consists of a set of projections, a plain-old
@@ -224,10 +172,10 @@ class lifted_fun {
 
     typedef ListOfProjections projections_list;
 
-    typedef typename detail::tl_apply<projections_list, std::tuple>::type
+    typedef typename tl_apply<projections_list, std::tuple>::type
             projections;
 
-    typedef detail::type_list<Args...> arg_types;
+    typedef type_list<Args...> arg_types;
 
     lifted_fun() = default;
 
@@ -247,11 +195,15 @@ class lifted_fun {
      * @brief Invokes @p fun with a lifted_fun of <tt>args...</tt>.
      */
     optional_result_type operator()(Args... args) {
-        auto indices = detail::get_indices(m_ps);
+        auto indices = get_indices(m_ps);
         lifted_fun_zipper zip;
         lifted_fun_invoker<optional_result_type, F> invoke{m_fun};
-        auto fwd_args = std::forward_as_tuple(args...);
-        return detail::apply_args(invoke, detail::tuple_zip(zip, indices, m_ps, fwd_args), indices);
+        return apply_args(invoke,
+                          indices,
+                          tuple_zip(zip,
+                                    indices,
+                                    m_ps,
+                                    std::forward_as_tuple(args...)));
     }
 
  private:
@@ -265,7 +217,7 @@ template<typename F, class ListOfProjections, class List>
 struct get_lifted_fun;
 
 template<typename F, class ListOfProjections, typename... Ts>
-struct get_lifted_fun<F, ListOfProjections, detail::type_list<Ts...> > {
+struct get_lifted_fun<F, ListOfProjections, type_list<Ts...> > {
     typedef lifted_fun<F, ListOfProjections, Ts...> type;
 };
 

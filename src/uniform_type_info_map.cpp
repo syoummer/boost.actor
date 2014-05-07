@@ -966,8 +966,8 @@ class utim_impl : public uniform_type_info_map {
 
     // 10-19
     uti_impl<group_down_msg>                m_type_group_down;
-    uti_impl<message>                     m_type_tuple;
-    uti_impl<duration>                m_type_duration;
+    uti_impl<message>                       m_type_tuple;
+    uti_impl<duration>                      m_type_duration;
     uti_impl<sync_exited_msg>               m_type_sync_exited;
     uti_impl<sync_timeout_msg>              m_type_sync_timeout;
     uti_impl<timeout_msg>                   m_type_timeout;
@@ -979,7 +979,7 @@ class utim_impl : public uniform_type_info_map {
     // 20-29
     uti_impl<std::u16string>                m_type_u16str;
     uti_impl<std::u32string>                m_type_u32str;
-    default_uniform_type_info<strmap>  m_type_strmap;
+    default_uniform_type_info<strmap>       m_type_strmap;
     uti_impl<bool>                          m_type_bool;
     uti_impl<float>                         m_type_float;
     uti_impl<double>                        m_type_double;

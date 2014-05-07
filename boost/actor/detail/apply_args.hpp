@@ -28,49 +28,41 @@
 \******************************************************************************/
 
 
-#ifndef BOOST_ACTOR_TDATA_HPP
-#define BOOST_ACTOR_TDATA_HPP
-
-#include <tuple>
-#include <utility>
-
-#include "boost/optional.hpp"
+#ifndef CALL_HPP
+#define CALL_HPP
 
 #include "boost/actor/detail/int_list.hpp"
-#include "boost/actor/detail/rebindable_reference.hpp"
-
-#include "boost/actor/detail/tuple_zip.hpp"
 
 namespace boost {
 namespace actor {
 namespace detail {
 
-struct rebinder {
-    typedef void result_type;
-    inline void operator()() const {
-        // end of recursion
-    }
-    template<typename T, typename U, typename... Vs>
-    inline void operator()(std::tuple<T, U> fwd, Vs&&... args) const {
-        std::get<0>(fwd) = std::get<1>(fwd);
-        (*this)(std::forward<Vs>(args)...);
-    }
-    template<typename T, typename U, typename... Vs>
-    inline void operator()(std::tuple<detail::rebindable_reference<T>&, U> fwd, Vs&&... args) const {
-        std::get<0>(fwd).rebind(std::get<1>(fwd));
-        (*this)(std::forward<Vs>(args)...);
-    }
-};
+template<typename F, long... Is, class Tuple>
+inline auto apply_args(F& f, detail::int_list<Is...>, Tuple&& tup)
+-> decltype(f(get<Is>(tup)...)) {
+    return f(get<Is>(tup)...);
+}
 
-template<typename... Ts, typename... Us>
-void rebind_tdata(std::tuple<Ts...>& lhs, const std::tuple<Us...>& rhs) {
-    static_assert(sizeof...(Ts) == sizeof...(Us), "tuples of unequal size");
-    rebinder f;
-    tuple_zip(f, get_indices(lhs), lhs, rhs);
+template<typename F, class Tuple, typename... Ts>
+inline auto apply_args_prefixed(F& f, detail::int_list<>, Tuple&, Ts&&... args)
+-> decltype(f(std::forward<Ts>(args)...)) {
+    return f(std::forward<Ts>(args)...);
+}
+
+template<typename F, long... Is, class Tuple, typename... Ts>
+inline auto apply_args_prefixed(F& f, detail::int_list<Is...>, Tuple& tup, Ts&&... args)
+-> decltype(f(std::forward<Ts>(args)..., get<Is>(tup)...)) {
+    return f(std::forward<Ts>(args)..., get<Is>(tup)...);
+}
+
+template<typename F, long... Is, class Tuple, typename... Ts>
+inline auto apply_args_suffxied(F& f, detail::int_list<Is...>, Tuple& tup, Ts&&... args)
+-> decltype(f(get<Is>(tup)..., std::forward<Ts>(args)...)) {
+    return f(get<Is>(tup)..., std::forward<Ts>(args)...);
 }
 
 } // namespace detail
 } // namespace actor
 } // namespace boost
 
-#endif // BOOST_ACTOR_TDATA_HPP
+#endif // CALL_HPP

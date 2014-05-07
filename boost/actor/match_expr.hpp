@@ -38,10 +38,10 @@
 
 #include "boost/actor/unit.hpp"
 
-#include "boost/actor/detail/call.hpp"
 #include "boost/actor/detail/int_list.hpp"
 #include "boost/actor/detail/type_list.hpp"
 #include "boost/actor/detail/purge_refs.hpp"
+#include "boost/actor/detail/apply_args.hpp"
 #include "boost/actor/detail/type_traits.hpp"
 #include "boost/actor/detail/left_or_right.hpp"
 
@@ -514,9 +514,14 @@ inline bool unroll_expr_result_valid(const optional<T>& opt) {
     return static_cast<bool>(opt);
 }
 
-template<typename T>
-inline T& unroll_expr_result_unbox(T& value) {
-    return value;
+//template<typename T>
+//inline T& unroll_expr_result_unbox(T& value) {
+//    return value;
+//}
+
+inline variant<none_t, unit_t> unroll_expr_result_unbox(bool& value) {
+    if (value) return unit;
+    return none;
 }
 
 template<typename T>
@@ -551,7 +556,7 @@ Result unroll_expr(PPFPs& fs,
     typename policy::tuple_type targs;
     if (policy::prepare_invoke(targs, type_token, is_dynamic, ptr, tup)) {
         auto is = detail::get_indices(targs);
-        auto res = detail::apply_args(f, deduce_const(tup, targs), is);
+        auto res = detail::apply_args(f, is, deduce_const(tup, targs));
         if (unroll_expr_result_valid(res)) {
             return std::move(unroll_expr_result_unbox(res));
         }

@@ -35,9 +35,9 @@
 
 #include "boost/actor/config.hpp"
 
-#include "boost/actor/detail/call.hpp"
 #include "boost/actor/detail/int_list.hpp"
 #include "boost/actor/detail/comparable.hpp"
+#include "boost/actor/detail/apply_args.hpp"
 #include "boost/actor/detail/type_traits.hpp"
 
 #include "boost/actor/detail/tuple_vals.hpp"
@@ -331,7 +331,7 @@ struct move_from_tuple_helper {
 template<typename... Ts>
 inline message message::move_from_tuple(std::tuple<Ts...>&& tup) {
     move_from_tuple_helper f;
-    return detail::apply_args(f, tup, detail::get_indices(tup));
+    return detail::apply_args(f, detail::get_indices(tup), tup);
 }
 
 template<typename... Ts>

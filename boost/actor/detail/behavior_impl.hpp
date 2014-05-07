@@ -46,8 +46,8 @@
 #include "boost/actor/skip_message.hpp"
 #include "boost/actor/timeout_definition.hpp"
 
-#include "boost/actor/detail/call.hpp"
 #include "boost/actor/detail/int_list.hpp"
+#include "boost/actor/detail/apply_args.hpp"
 #include "boost/actor/detail/type_traits.hpp"
 
 namespace boost {
@@ -92,7 +92,7 @@ struct optional_message_visitor : static_visitor<bhvr_invoke_result> {
     }
     template<typename... Ts>
     inline bhvr_invoke_result operator()(std::tuple<Ts...>& value) const {
-        return detail::apply_args(*this, value, detail::get_indices(value));
+        return detail::apply_args(*this, detail::get_indices(value), value);
     }
 };
 

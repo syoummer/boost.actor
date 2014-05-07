@@ -28,7 +28,7 @@ boost/actor/detail/atom_val.hpp
 boost/actor/detail/behavior_impl.hpp
 boost/actor/detail/behavior_stack.hpp
 boost/actor/detail/boxed.hpp
-boost/actor/detail/call.hpp
+boost/actor/detail/apply_args.hpp
 boost/actor/detail/comparable.hpp
 boost/actor/detail/cs_thread.hpp
 boost/actor/detail/decorated_tuple.hpp
@@ -56,7 +56,6 @@ boost/actor/detail/proper_actor.hpp
 boost/actor/detail/pseudo_tuple.hpp
 boost/actor/detail/purge_refs.hpp
 boost/actor/detail/raw_access.hpp
-boost/actor/detail/rebind_tdata.hpp
 boost/actor/detail/response_handle_util.hpp
 boost/actor/detail/ripemd_160.hpp
 boost/actor/detail/safe_equal.hpp
