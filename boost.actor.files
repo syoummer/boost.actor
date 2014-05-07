@@ -181,7 +181,6 @@ examples/message_passing/typed_calculator.cpp
 examples/remote_actors/distributed_calculator.cpp
 examples/remote_actors/group_chat.cpp
 examples/remote_actors/group_server.cpp
-examples/remote_actors/protobuf_broker.cpp
 examples/type_system/announce_1.cpp
 examples/type_system/announce_2.cpp
 examples/type_system/announce_3.cpp
