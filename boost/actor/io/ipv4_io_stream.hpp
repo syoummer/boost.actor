@@ -60,6 +60,8 @@ class ipv4_io_stream : public stream {
 
     size_t write_some(const void* buf, size_t len);
 
+    static stream_ptr from_sockfd(native_socket_type fd);
+
  private:
 
     ipv4_io_stream(native_socket_type fd);

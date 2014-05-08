@@ -143,7 +143,7 @@ int main(int argc, char** argv) {
                 BOOST_ACTOR_CHECKPOINT();
                 auto p = spawn(ping, 10);
                 BOOST_ACTOR_CHECKPOINT();
-                auto cl = spawn_io(peer, "localhost", port, p);
+                auto cl = spawn_io_client(peer, "localhost", port, p);
                 BOOST_ACTOR_CHECKPOINT();
                 anon_send(p, atom("kickoff"), cl);
                 BOOST_ACTOR_CHECKPOINT();

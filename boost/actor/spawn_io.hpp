@@ -38,44 +38,45 @@ namespace boost {
 namespace actor {
 
 /**
- * @brief Spawns a new, unconnected broker of type @p Impl.
+ * @brief Spawns a new functor-based broker.
  */
-template<class Impl, spawn_options Os = no_spawn_options, typename... Ts>
-actor spawn_io(Ts&&... args) {
-    auto ptr = detail::make_counted<Impl>(std::forward<Ts>(args)...);
+template<spawn_options Os = no_spawn_options,
+         typename F = std::function<void (io::broker*)>,
+         typename... Ts>
+actor spawn_io(F fun, Ts&&... args) {
+    auto ptr = io::broker::from(std::move(fun), std::forward<Ts>(args)...);
     return {io::init_and_launch(std::move(ptr))};
 }
 
 /**
- * @brief Spawns a new, unconnected broker from given functor.
+ * @brief Spawns a new functor-based broker adapting
+ *        given streams as connection.
  */
 template<spawn_options Os = no_spawn_options,
          typename F = std::function<void (io::broker*)>,
          typename... Ts>
-actor spawn_io(F fun, const std::string& host, uint16_t port, Ts&&... args) {
-    auto ptr = io::ipv4_io_stream::connect_to(host.c_str(), port);
-    return spawn_io(std::move(fun), ptr, ptr, std::forward<Ts>(args)...);
-}
-
-/**
- * @brief Spawns a new functor-based broker managing a connection
- *        given as input and output stream pointer.
- */
-template<spawn_options Os = no_spawn_options,
-         typename F = std::function<void (io::broker*)>,
-         typename... Ts>
-actor spawn_io(F fun,
-               io::input_stream_ptr in,
-               io::output_stream_ptr out,
-               Ts&&... args) {
+actor spawn_io_client(F fun,
+                      io::input_stream_ptr in,
+                      io::output_stream_ptr out,
+                      Ts&&... args) {
     auto ptr = io::broker::from(std::move(fun), std::move(in), std::move(out),
                                 std::forward<Ts>(args)...);
     return {io::init_and_launch(std::move(ptr))};
 }
 
 /**
- * @brief Spawns a new functor-based broker managing acting as
- *        server at given port.
+ * @brief Spawns a new functor-based broker connecting to <tt>host:port</tt>.
+ */
+template<spawn_options Os = no_spawn_options,
+         typename F = std::function<void (io::broker*)>,
+         typename... Ts>
+actor spawn_io_client(F fun, const std::string& host, uint16_t port, Ts&&... args) {
+    auto ptr = io::ipv4_io_stream::connect_to(host.c_str(), port);
+    return spawn_io_client(std::move(fun), ptr, ptr, std::forward<Ts>(args)...);
+}
+
+/**
+ * @brief Spawns a new broker as server running on given @p port.
  */
 template<spawn_options Os = no_spawn_options,
          typename F = std::function<void (io::broker*)>,

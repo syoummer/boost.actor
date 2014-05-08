@@ -50,55 +50,66 @@
 
 using std::cout;
 using std::endl;
-using std::move;
 
 namespace boost {
 namespace actor {
 namespace io {
 
-namespace {
+using detail::make_counted;
 
-constexpr size_t default_max_buffer_size = 65535;
+namespace { constexpr size_t default_max_buffer_size = 65535; }
 
-} // namespace <anonymous>
 
-default_broker::default_broker(function_type f,
-                               input_stream_ptr in,
-                               output_stream_ptr out)
-    : broker(std::move(in), std::move(out)), m_fun(std::move(f)) { }
+class default_broker : public broker {
 
-default_broker::default_broker(function_type f, scribe_pointer ptr)
-    : broker(std::move(ptr)), m_fun(std::move(f)) { }
+ public:
 
-default_broker::default_broker(function_type f, acceptor_uptr ptr)
-    : broker(std::move(ptr)), m_fun(std::move(f)) { }
+    typedef std::function<behavior (broker*)> function_type;
 
-behavior default_broker::make_behavior() {
-    BOOST_ACTOR_PUSH_AID(id());
-    BOOST_ACTOR_LOG_TRACE("");
-    enqueue({invalid_actor_addr, channel{this}},
-            make_message(atom("INITMSG")),
-            nullptr);
-    return (
-        on(atom("INITMSG")) >> [=] {
-            unbecome();
-            auto bhvr = m_fun(this);
-            if (bhvr) become(std::move(bhvr));
-        }
-    );
-}
+
+    default_broker(function_type f) : m_fun(std::move(f)) { }
+
+    default_broker(function_type f, input_stream_ptr in, output_stream_ptr out)
+        : broker(std::move(in), std::move(out)), m_fun(std::move(f)) { }
+
+    default_broker(function_type f, scribe_pointer ptr)
+        : broker(std::move(ptr)), m_fun(std::move(f)) { }
+
+    default_broker(function_type f, acceptor_uptr ptr)
+        : broker(std::move(ptr)), m_fun(std::move(f)) { }
+
+    behavior make_behavior() override {
+        BOOST_ACTOR_PUSH_AID(id());
+        BOOST_ACTOR_LOG_TRACE("");
+        enqueue({invalid_actor_addr, channel{this}},
+                make_message(atom("INITMSG")),
+                nullptr);
+        return (
+            on(atom("INITMSG")) >> [=] {
+                unbecome();
+                auto bhvr = m_fun(this);
+                if (bhvr) become(std::move(bhvr));
+            }
+        );
+    }
+
+ private:
+
+    function_type m_fun;
+
+};
 
 class broker::continuation {
 
  public:
 
     continuation(broker_ptr ptr, msg_hdr_cref hdr, message&& msg)
-    : m_self(move(ptr)), m_hdr(hdr), m_data(move(msg)) { }
+    : m_self(std::move(ptr)), m_hdr(hdr), m_data(std::move(msg)) { }
 
     inline void operator()() {
         BOOST_ACTOR_PUSH_AID(m_self->id());
         BOOST_ACTOR_LOG_TRACE("");
-        m_self->invoke_message(m_hdr, move(m_data));
+        m_self->invoke_message(m_hdr, std::move(m_data));
     }
 
  private:
@@ -120,7 +131,7 @@ class broker::servant : public continuable {
     template<typename... Ts>
     servant(broker_ptr parent, Ts&&... args)
     : super{std::forward<Ts>(args)...}, m_disconnected{false}
-    , m_broker{move(parent)} { }
+    , m_broker{std::move(parent)} { }
 
     void io_failed(event_bitmask mask) override {
         if (mask == event::read) disconnect();
@@ -129,11 +140,6 @@ class broker::servant : public continuable {
     void dispose() override {
         auto ptr = m_broker;
         ptr->erase_io(read_handle());
-        if (ptr->m_io.empty() && ptr->m_accept.empty()) {
-            // release implicit reference count held by middleman
-            // in caes no reader/writer is left for this broker
-            ptr->deref();
-        }
     }
 
     void set_broker(broker_ptr new_broker) {
@@ -172,10 +178,10 @@ class broker::scribe : public extend<broker::servant>::with<buffered_writing> {
     ~scribe();
 
     scribe(broker_ptr parent, input_stream_ptr in, output_stream_ptr out)
-    : super{get_middleman(), out, move(parent), in->read_handle(), out->write_handle()}
+    : super{get_middleman(), out, std::move(parent), in->read_handle(), out->write_handle()}
     , m_is_continue_reading{false}, m_dirty{false}
-    , m_policy{broker::at_least}, m_policy_buffer_size{0}, m_in{in}
-    , m_read_msg(make_message(new_data_msg{})) {
+    , m_policy{broker::at_least}, m_policy_buffer_size{0}, m_in{in} {
+        m_read_msg = make_message(new_data_msg{});
         auto& ndm = read_msg();
         ndm.handle = connection_handle::from_int(in->read_handle());
         ndm.buf.final_size(default_max_buffer_size);
@@ -228,8 +234,7 @@ class broker::scribe : public extend<broker::servant>::with<buffered_writing> {
                || m_policy == broker::at_most) {
                 BOOST_ACTOR_LOG_DEBUG("invoke io actor");
                 m_broker->invoke_message({invalid_actor_addr, nullptr}, m_read_msg);
-                BOOST_ACTOR_LOG_INFO_IF(!m_read_msg.vals()->unique(),
-                                        "client detached buffer");
+                BOOST_ACTOR_LOG_INFO_IF(!m_read_msg.vals()->unique(), "detached buffer");
                 read_msg().buf.clear();
             }
         }
@@ -237,6 +242,15 @@ class broker::scribe : public extend<broker::servant>::with<buffered_writing> {
 
     connection_handle id() const {
         return connection_handle::from_int(m_in->read_handle());
+    }
+
+    inline new_data_msg& read_msg() {
+        return m_read_msg.get_as_mutable<new_data_msg>(0);
+    }
+
+    template<typename... Ts>
+    static std::unique_ptr<scribe> make(Ts&&... args) {
+        return std::unique_ptr<scribe>(new scribe(std::forward<Ts>(args)...));
     }
 
  protected:
@@ -247,10 +261,6 @@ class broker::scribe : public extend<broker::servant>::with<buffered_writing> {
     }
 
  private:
-
-    new_data_msg& read_msg() {
-        return m_read_msg.get_as_mutable<new_data_msg>(0);
-    }
 
     bool m_is_continue_reading;
     bool m_dirty;
@@ -273,8 +283,8 @@ class broker::doorman : public broker::servant {
     ~doorman();
 
     doorman(broker_ptr parent, acceptor_uptr ptr)
-            : super{move(parent), ptr->file_handle()}
-            , m_accept_msg(make_message(new_connection_msg{})) {
+            : super{std::move(parent), ptr->file_handle()} {
+        m_accept_msg = make_message(new_connection_msg{});
         accept_msg().source = accept_handle::from_int(ptr->file_handle());
         m_ptr.swap(ptr);
     }
@@ -292,12 +302,21 @@ class broker::doorman : public broker::servant {
             if (opt) {
                 using namespace std;
                 auto& p = *opt;
-                accept_msg().handle = m_broker->add_scribe(move(p.first),
-                                                           move(p.second));
+                accept_msg().handle = m_broker->add_connection(std::move(p.first),
+                                                               std::move(p.second));
                 m_broker->invoke_message({invalid_actor_addr, nullptr}, m_accept_msg);
             }
             else return continue_reading_result::continue_later;
        }
+    }
+
+    new_connection_msg& accept_msg() {
+        return m_accept_msg.get_as_mutable<new_connection_msg>(0);
+    }
+
+    template<typename... Ts> 
+    static std::unique_ptr<doorman> make(Ts&&... args) {
+        return std::unique_ptr<doorman>(new doorman(std::forward<Ts>(args)...));
     }
 
  protected:
@@ -308,10 +327,6 @@ class broker::doorman : public broker::servant {
     }
 
  private:
-
-    new_connection_msg& accept_msg() {
-        return m_accept_msg.get_as_mutable<new_connection_msg>(0);
-    }
 
     acceptor_uptr m_ptr;
     message m_accept_msg;
@@ -335,7 +350,7 @@ void broker::invoke_message(msg_hdr_cref hdr, message msg) {
     }
     // prepare actor for invocation of message handler
     m_dummy_node.sender = hdr.sender;
-    m_dummy_node.msg = move(msg);
+    m_dummy_node.msg = std::move(msg);
     m_dummy_node.mid = hdr.id;
     try {
         auto bhvr = bhvr_stack().back();
@@ -356,7 +371,7 @@ void broker::invoke_message(msg_hdr_cref hdr, message msg) {
             case policy::hm_skip_msg:
             case policy::hm_cache_msg: {
                 BOOST_ACTOR_LOG_DEBUG("handle_message returned hm_skip_msg or hm_cache_msg");
-                auto e = mailbox_element::create(hdr, move(m_dummy_node.msg));
+                auto e = mailbox_element::create(hdr, std::move(m_dummy_node.msg));
                 m_priority_policy.push_to_cache(unique_mailbox_element_pointer{e});
                 break;
             }
@@ -379,11 +394,15 @@ void broker::invoke_message(msg_hdr_cref hdr, message msg) {
     // cleanup if needed
     if (planned_exit_reason() != exit_reason::not_exited) {
         cleanup(planned_exit_reason());
+        // release implicit reference count held by MM
+        deref();
     }
     else if (bhvr_stack().empty()) {
         BOOST_ACTOR_LOG_DEBUG("bhvr_stack().empty(), quit for normal exit reason");
         quit(exit_reason::normal);
         cleanup(planned_exit_reason());
+        // release implicit reference count held by MM
+        deref();
     }
 }
 
@@ -406,7 +425,7 @@ bool broker::invoke_message_from_cache() {
 }
 
 void broker::enqueue(msg_hdr_cref hdr, message msg, execution_unit*) {
-    get_middleman()->run_later(continuation{this, hdr, move(msg)});
+    get_middleman()->run_later(continuation{this, hdr, std::move(msg)});
 }
 
 bool broker::initialized() const {
@@ -420,10 +439,14 @@ void broker::init_broker() {
     get_actor_registry()->inc_running();
 }
 
+broker::broker() {
+    init_broker();
+}
+
 broker::broker(input_stream_ptr in, output_stream_ptr out) {
     using namespace std;
     init_broker();
-    add_scribe(move(in), move(out));
+    add_connection(std::move(in), std::move(out));
 }
 
 broker::broker(scribe_pointer ptr) {
@@ -436,7 +459,7 @@ broker::broker(scribe_pointer ptr) {
 broker::broker(acceptor_uptr ptr) {
     using namespace std;
     init_broker();
-    add_doorman(std::move(ptr));
+    add_acceptor(std::move(ptr));
 }
 
 void broker::cleanup(std::uint32_t reason) {
@@ -449,11 +472,11 @@ void broker::write(const connection_handle& hdl, size_t num_bytes, const void* b
     if (i != m_io.end()) i->second->write(num_bytes, buf);
 }
 
-void broker::write(const connection_handle& hdl, const io::buffer& buf) {
+void broker::write(const connection_handle& hdl, const buffer& buf) {
     write(hdl, buf.size(), buf.data());
 }
 
-void broker::write(const connection_handle& hdl, io::buffer&& buf) {
+void broker::write(const connection_handle& hdl, buffer&& buf) {
     write(hdl, buf.size(), buf.data());
     buf.clear();
 }
@@ -487,9 +510,8 @@ broker_ptr init_and_launch(broker_ptr ptr) {
 broker_ptr broker::from_impl(std::function<behavior (broker*)> fun,
                              input_stream_ptr in,
                              output_stream_ptr out) {
-    return detail::make_counted<default_broker>(std::move(fun),
-                                                std::move(in),
-                                                std::move(out));
+    return make_counted<default_broker>(std::move(fun), std::move(in),
+                                        std::move(out));
 }
 
 
@@ -497,17 +519,28 @@ broker_ptr broker::from_impl(std::function<void (broker*)> fun,
                              input_stream_ptr in,
                              output_stream_ptr out) {
     auto f = [=](broker* ptr) -> behavior { fun(ptr); return behavior{}; };
-    return detail::make_counted<default_broker>(f, std::move(in), std::move(out));
+    return make_counted<default_broker>(f, std::move(in), std::move(out));
+}
+
+broker_ptr broker::from(std::function<behavior (broker*)> fun) {
+    return make_counted<default_broker>(fun);
+}
+
+broker_ptr broker::from(std::function<void (broker*)> fun) {
+    return from([=](broker* self) -> behavior {
+        fun(self);
+        return {};
+    });
 }
 
 broker_ptr broker::from(std::function<behavior (broker*)> fun, acceptor_uptr in) {
-    return detail::make_counted<default_broker>(std::move(fun), std::move(in));
+    return make_counted<default_broker>(std::move(fun), std::move(in));
 }
 
 
 broker_ptr broker::from(std::function<void (broker*)> fun, acceptor_uptr in) {
     auto f = [=](broker* ptr) -> behavior { fun(ptr); return behavior{}; };
-    return detail::make_counted<default_broker>(f, std::move(in));
+    return make_counted<default_broker>(f, std::move(in));
 }
 
 void broker::erase_io(int id) {
@@ -518,21 +551,21 @@ void broker::erase_acceptor(int id) {
     m_accept.erase(accept_handle::from_int(id));
 }
 
-connection_handle broker::add_scribe(input_stream_ptr in, output_stream_ptr out) {
+connection_handle broker::add_connection(input_stream_ptr in, output_stream_ptr out) {
     using namespace std;
     auto id = connection_handle::from_int(in->read_handle());
-    m_io.insert(make_pair(id, scribe_pointer{new scribe(this, move(in), move(out))}));
+    m_io.insert(make_pair(id, scribe::make(this, std::move(in), std::move(out))));
     return id;
 }
 
-accept_handle broker::add_doorman(acceptor_uptr ptr) {
+accept_handle broker::add_acceptor(acceptor_uptr ptr) {
     using namespace std;
     auto id = accept_handle::from_int(ptr->file_handle());
-    m_accept.insert(make_pair(id, doorman_pointer{new doorman(this, std::move(ptr))}));
+    m_accept.insert(make_pair(id, doorman::make(this, std::move(ptr))));
     return id;
 }
 
-actor broker::fork_impl(std::function<void (broker*)> fun,
+actor broker::fork_impl(std::function<behavior (broker*)> fun,
                         connection_handle hdl) {
     BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_MARG(hdl, id));
     auto i = m_io.find(hdl);
@@ -541,12 +574,19 @@ actor broker::fork_impl(std::function<void (broker*)> fun,
         throw std::invalid_argument("invalid handle");
     }
     scribe* sptr = i->second.get(); // non-owning pointer
-    auto f = [=](broker* ptr) -> behavior { fun(ptr); return behavior{}; };
-    auto result = detail::make_counted<default_broker>(f, std::move(i->second));
+    auto result = make_counted<default_broker>(fun, std::move(i->second));
     init_and_launch(result);
     sptr->set_broker(result); // set new broker
     m_io.erase(i);
     return {result};
+}
+
+actor broker::fork_impl(std::function<void (broker*)> fun,
+                        connection_handle hdl) {
+    return fork_impl([=](broker* self) -> behavior {
+        fun(self);
+        return behavior{};
+    }, hdl);
 }
 
 void broker::receive_policy(const connection_handle& hdl,

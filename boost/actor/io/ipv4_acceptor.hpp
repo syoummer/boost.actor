@@ -48,6 +48,8 @@ class ipv4_acceptor : public acceptor {
     static std::unique_ptr<acceptor> create(std::uint16_t port,
                                             const char* addr = nullptr);
 
+    static std::unique_ptr<acceptor> from_sockfd(native_socket_type fd);
+
     ~ipv4_acceptor();
 
     native_socket_type file_handle() const;

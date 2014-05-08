@@ -36,11 +36,14 @@
 #include "boost/actor/extend.hpp"
 #include "boost/actor/local_actor.hpp"
 
+#include "boost/actor/io/stream.hpp"
 #include "boost/actor/io/buffer.hpp"
 #include "boost/actor/io/acceptor.hpp"
 #include "boost/actor/io/input_stream.hpp"
 #include "boost/actor/io/output_stream.hpp"
 #include "boost/actor/io/accept_handle.hpp"
+#include "boost/actor/io/ipv4_acceptor.hpp"
+#include "boost/actor/io/ipv4_io_stream.hpp"
 #include "boost/actor/io/connection_handle.hpp"
 
 #include "boost/actor/mixin/behavior_stack_based.hpp"
@@ -83,27 +86,76 @@ class broker : public extend<local_actor>::
 
     friend broker_ptr init_and_launch(broker_ptr);
 
-    broker() = delete;
-
  public:
 
     ~broker();
 
+    /**
+     * @brief Used to configure {@link receive_policy()}.
+     */
     enum policy_flag { at_least, at_most, exactly };
 
-    void enqueue(msg_hdr_cref, message, execution_unit*) override;
-
-    bool initialized() const;
-
+    /**
+     * @brief Modifies the receive policy for this broker.
+     * @param hdl Identifies the affected connection.
+     * @param policy Sets the policy for given buffer size.
+     * @param buffer_size Sets the minimal, maximum, or exact number of bytes
+     *                    the middleman should read on this connection
+     *                    before sending the next {@link new_data_msg}.
+     */
     void receive_policy(const connection_handle& hdl,
                         broker::policy_flag policy,
                         size_t buffer_size);
 
+    /**
+     * @brief Sends data.
+     */
     void write(const connection_handle& hdl, size_t num_bytes, const void* buf);
 
+    /**
+     * @brief Sends data.
+     */
     void write(const connection_handle& hdl, const buffer& buf);
 
+    /**
+     * @brief Sends data.
+     */
     void write(const connection_handle& hdl, buffer&& buf);
+
+    /** @cond PRIVATE */
+
+    template<typename F, typename... Ts>
+    actor fork(F fun, connection_handle hdl, Ts&&... args) {
+        return this->fork_impl(std::bind(std::move(fun),
+                                         std::placeholders::_1,
+                                         hdl,
+                                         std::forward<Ts>(args)...),
+                               hdl);
+    }
+
+    inline size_t num_connections() const {
+        return m_io.size();
+    }
+
+    connection_handle add_connection(input_stream_ptr in, output_stream_ptr out);
+
+    inline connection_handle add_connection(stream_ptr sptr) {
+        return add_connection(sptr, sptr);
+    }
+
+    inline connection_handle add_tcp_connection(native_socket_type tcp_sockfd) {
+        return add_connection(ipv4_io_stream::from_sockfd(tcp_sockfd));
+    }
+
+    accept_handle add_acceptor(acceptor_uptr ptr);
+
+    inline accept_handle add_tcp_acceptor(native_socket_type tcp_sockfd) {
+        return add_acceptor(ipv4_acceptor::from_sockfd(tcp_sockfd));
+    }
+
+    void enqueue(msg_hdr_cref, message, execution_unit*) override;
+
+    bool initialized() const;
 
     template<typename F, typename... Ts>
     static broker_ptr from(F fun,
@@ -119,6 +171,10 @@ class broker : public extend<local_actor>::
                          std::move(out));
     }
 
+    static broker_ptr from(std::function<void (broker*)> fun);
+
+    static broker_ptr from(std::function<behavior (broker*)> fun);
+
     static broker_ptr from(std::function<void (broker*)> fun, acceptor_uptr in);
 
     static broker_ptr from(std::function<behavior (broker*)> fun, acceptor_uptr in);
@@ -132,29 +188,13 @@ class broker : public extend<local_actor>::
                     std::move(in));
     }
 
-    template<typename F, typename... Ts>
-    actor fork(F fun, connection_handle hdl, Ts&&... args) {
-        return this->fork_impl(std::bind(std::move(fun),
-                                         std::placeholders::_1,
-                                         hdl,
-                                         std::forward<Ts>(args)...),
-                               hdl);
-    }
-
-    template<typename F>
-    inline void for_each_connection(F fun) const {
-        for (auto& kvp : m_io) fun(kvp.first);
-    }
-
-    inline size_t num_connections() const {
-        return m_io.size();
-    }
-
  protected:
 
     broker(input_stream_ptr in, output_stream_ptr out);
 
     broker(acceptor_uptr in);
+
+    broker();
 
     void cleanup(std::uint32_t reason) override;
 
@@ -166,9 +206,14 @@ class broker : public extend<local_actor>::
 
     virtual behavior make_behavior() = 0;
 
+    /** @endcond */
+
  private:
 
     actor fork_impl(std::function<void (broker*)> fun,
+                    connection_handle hdl);
+
+    actor fork_impl(std::function<behavior (broker*)> fun,
                     connection_handle hdl);
 
     static broker_ptr from_impl(std::function<void (broker*)> fun,
@@ -189,35 +234,11 @@ class broker : public extend<local_actor>::
 
     void init_broker();
 
-    connection_handle add_scribe(input_stream_ptr in, output_stream_ptr out);
-
-    accept_handle add_doorman(acceptor_uptr ptr);
-
     std::map<accept_handle, doorman_pointer> m_accept;
     std::map<connection_handle, scribe_pointer> m_io;
 
     policy::not_prioritizing  m_priority_policy;
     policy::sequential_invoke m_invoke_policy;
-
-};
-
-class default_broker : public broker {
-
- public:
-
-    typedef std::function<behavior (broker*)> function_type;
-
-    default_broker(function_type f, input_stream_ptr in, output_stream_ptr out);
-
-    default_broker(function_type f, scribe_pointer ptr);
-
-    default_broker(function_type f, acceptor_uptr ptr);
-
-    behavior make_behavior() override;
-
- private:
-
-    function_type m_fun;
 
 };
 
