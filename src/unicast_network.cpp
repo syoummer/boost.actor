@@ -43,7 +43,7 @@
 #include <netinet/tcp.h>
 #endif
 
-#include "boost/actor/cppa.hpp"
+#include "boost/actor/all.hpp"
 #include "boost/actor/atom.hpp"
 #include "boost/actor/to_string.hpp"
 #include "boost/actor/exception.hpp"
@@ -74,34 +74,15 @@ typedef std::set<std::string> string_set;
 
 namespace boost {
 namespace actor {
+namespace detail {
 
 using namespace io;
-
-void publish(actor whom, std::uint16_t port, const char* addr) {
-    if (!whom) return;
-    publish(std::move(whom), io::ipv4_acceptor::create(port, addr));
-}
-
-void publish(actor whom, std::unique_ptr<io::acceptor> acceptor) {
-    detail::publish_impl(detail::raw_access::get(whom), std::move(acceptor));
-}
-
-actor remote_actor(io::stream_ptr_pair conn) {
-    auto res = detail::remote_actor_impl(conn, string_set{});
-    return detail::raw_access::unsafe_cast(res);
-}
-
-actor remote_actor(const char* host, std::uint16_t port) {
-    auto ptr = ipv4_io_stream::connect_to(host, port);
-    return remote_actor(stream_ptr_pair(ptr, ptr));
-}
-
-namespace detail {
 
 void publish_impl(abstract_actor_ptr ptr, std::unique_ptr<acceptor> aptr) {
     // begin the scenes, we serialze/deserialize as actor
     actor whom{raw_access::unsafe_cast(ptr.get())};
-    BOOST_ACTOR_LOGF_TRACE(BOOST_ACTOR_TARG(whom, to_string) << ", " << BOOST_ACTOR_MARG(aptr, get));
+    BOOST_ACTOR_LOGF_TRACE(BOOST_ACTOR_TARG(whom, to_string) << ", "
+                           << BOOST_ACTOR_MARG(aptr, get));
     if (!whom) return;
     get_actor_registry()->put(whom->id(), detail::raw_access::get(whom));
     auto mm = get_middleman();
@@ -112,7 +93,8 @@ void publish_impl(abstract_actor_ptr ptr, std::unique_ptr<acceptor> aptr) {
 }
 
 abstract_actor_ptr remote_actor_impl(stream_ptr_pair io, string_set expected) {
-    BOOST_ACTOR_LOGF_TRACE("io{" << io.first.get() << ", " << io.second.get() << "}");
+    BOOST_ACTOR_LOGF_TRACE("io{" << io.first.get() << ", "
+                           << io.second.get() << "}");
     auto mm = get_middleman();
     auto pinf = mm->node();
     std::uint32_t process_id = pinf->process_id();
@@ -194,7 +176,8 @@ abstract_actor_ptr remote_actor_impl(stream_ptr_pair io, string_set expected) {
     auto pinfptr = make_counted<node_id>(peer_pid, peer_node_id);
     if (*pinf == *pinfptr) {
         // this is a local actor, not a remote actor
-        BOOST_ACTOR_LOGF_WARNING("remote_actor() called to access a local actor");
+        BOOST_ACTOR_LOGF_WARNING("remote_actor() called to "
+                                 "access a local actor");
         auto ptr = get_actor_registry()->get(remote_aid);
         return ptr;
     }
@@ -206,7 +189,8 @@ abstract_actor_ptr remote_actor_impl(stream_ptr_pair io, string_set expected) {
         BOOST_ACTOR_LOGC_TRACE("cppa",
                         "remote_actor$create_connection", "");
         auto pp = mm->get_peer(*pinfptr);
-        BOOST_ACTOR_LOGF_INFO_IF(pp, "connection already exists (re-use old one)");
+        BOOST_ACTOR_LOGF_INFO_IF(pp, "connection already exists "
+                                     "(re-use old one)");
         if (!pp) mm->new_peer(io.first, io.second, pinfptr);
         auto res = mm->get_namespace().get_or_put(pinfptr, remote_aid);
         q.synchronized_enqueue(qmtx, qcv, new remote_actor_result{0, res});

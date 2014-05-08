@@ -31,7 +31,7 @@
 #include "boost/none.hpp"
 
 #include "boost/actor/behavior.hpp"
-#include "boost/actor/partial_function.hpp"
+#include "boost/actor/message_handler.hpp"
 
 namespace boost {
 namespace actor {
@@ -81,7 +81,7 @@ class continuation_decorator : public detail::behavior_impl {
 };
 } // namespace <anonymous>
 
-behavior::behavior(const partial_function& fun) : m_impl(fun.m_impl) { }
+behavior::behavior(const message_handler& fun) : m_impl(fun.m_impl) { }
 
 behavior behavior::add_continuation(continuation_fun fun) {
     return behavior::impl_ptr{new continuation_decorator(std::move(fun),

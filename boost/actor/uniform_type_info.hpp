@@ -111,7 +111,7 @@ uniform_value make_uniform_value(const uniform_type_info* ti, Ts&&... args) {
  * runtime.
  *
  * @code
- * #include "boost/actor/cppa.hpp"
+ * #include "boost/actor/all.hpp"
  * using namespace boost::actor;
  *
  * struct foo { int a; int b; };

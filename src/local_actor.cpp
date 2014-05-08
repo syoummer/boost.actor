@@ -29,7 +29,7 @@
 
 
 #include <string>
-#include "boost/actor/cppa.hpp"
+#include "boost/actor/all.hpp"
 #include "boost/actor/atom.hpp"
 #include "boost/actor/logging.hpp"
 #include "boost/actor/scheduler.hpp"

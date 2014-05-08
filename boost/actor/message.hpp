@@ -245,12 +245,22 @@ inline bool operator!=(const message& lhs, const message& rhs) {
  * @brief Creates an {@link message} containing the elements @p args.
  * @param args Values to initialize the tuple elements.
  */
-template<typename... Ts>
-inline message make_message(Ts&&... args) {
+template<typename T, typename... Ts>
+typename std::enable_if<
+       !std::is_same<message, typename detail::rm_const_and_ref<T>::type>::value
+    || (sizeof...(Ts) > 0),
+    message
+>::type
+make_message(T&& arg, Ts&&... args) {
     using namespace detail;
-    typedef tuple_vals<typename strip_and_convert<Ts>::type...> data;
-    auto ptr = new data(std::forward<Ts>(args)...);
+    typedef tuple_vals<typename strip_and_convert<T>::type,
+                       typename strip_and_convert<Ts>::type...> data;
+    auto ptr = new data(std::forward<T>(arg), std::forward<Ts>(args)...);
     return message{detail::message_data::ptr{ptr}};
+}
+
+inline message make_message(message other) {
+    return std::move(other);
 }
 
 /******************************************************************************

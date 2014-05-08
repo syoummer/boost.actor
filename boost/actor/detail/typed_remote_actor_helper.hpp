@@ -28,46 +28,43 @@
 \******************************************************************************/
 
 
-#ifndef BOOST_ACTOR_ABSTRACT_CHANNEL_HPP
-#define BOOST_ACTOR_ABSTRACT_CHANNEL_HPP
+#ifndef BOOST_ACTOR_DETAIL_TYPED_REMOTE_ACTOR_HELPER_HPP
+#define BOOST_ACTOR_DETAIL_TYPED_REMOTE_ACTOR_HELPER_HPP
 
-#include "boost/actor/fwd.hpp"
-#include "boost/actor/ref_counted.hpp"
+#include "boost/actor/typed_actor.hpp"
+
+#include "boost/actor/io/acceptor.hpp"
+#include "boost/actor/io/ipv4_io_stream.hpp"
+
+#include "boost/actor/detail/type_list.hpp"
+#include "boost/actor/detail/raw_access.hpp"
 
 namespace boost {
 namespace actor {
+namespace detail {
 
-/**
- * @brief Interface for all message receivers.
- *
- * This interface describes an entity that can receive messages
- * and is implemented by {@link actor} and {@link group}.
- */
-class abstract_channel : public ref_counted {
+template<class List>
+struct typed_remote_actor_helper;
 
- public:
-
-    /**
-     * @brief Enqueues a new message to the channel.
-     * @param header Contains meta information about this message
-     *               such as the address of the sender and the
-     *               ID of the message if it is a synchronous message.
-     * @param content The content encapsulated in a copy-on-write tuple.
-     * @param host Pointer to the {@link execution_unit execution unit} the
-     *             caller is executed by or @p nullptr if the caller
-     *             is not a scheduled actor.
-     */
-    virtual void enqueue(msg_hdr_cref header,
-                         message content,
-                         execution_unit* host) = 0;
-
- protected:
-
-    virtual ~abstract_channel();
-
+template<typename... Ts>
+struct typed_remote_actor_helper<detail::type_list<Ts...>> {
+    typedef typed_actor<Ts...> return_type;
+    return_type operator()(io::stream_ptr_pair conn) {
+        auto iface = return_type::get_interface();
+        auto tmp = remote_actor_impl(std::move(conn), std::move(iface));
+        return_type res;
+        // actually safe, because remote_actor_impl throws on type mismatch
+        raw_access::unsafe_assign(res, tmp);
+        return res;
+    }
+    return_type operator()(const char* host, std::uint16_t port) {
+        auto ptr = io::ipv4_io_stream::connect_to(host, port);
+        return (*this)(io::stream_ptr_pair(ptr, ptr));
+    }
 };
 
+} // namespace detail
 } // namespace actor
 } // namespace boost
 
-#endif // BOOST_ACTOR_ABSTRACT_CHANNEL_HPP
+#endif // BOOST_ACTOR_DETAIL_TYPED_REMOTE_ACTOR_HELPER_HPP

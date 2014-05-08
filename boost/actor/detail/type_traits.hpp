@@ -37,7 +37,7 @@
 
 #include "boost/optional.hpp"
 
-#include "boost/actor/cppa_fwd.hpp"
+#include "boost/actor/fwd.hpp"
 
 #include "boost/actor/detail/type_list.hpp"
 

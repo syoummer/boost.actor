@@ -15,11 +15,11 @@
 #include "boost/optional.hpp"
 
 #include "boost/actor/on.hpp"
-#include "boost/actor/cppa.hpp"
+#include "boost/actor/all.hpp"
 #include "boost/actor/message.hpp"
 #include "boost/actor/to_string.hpp"
 #include "boost/intrusive_ptr.hpp"
-#include "boost/actor/tpartial_function.hpp"
+#include "boost/actor/tmessage_handler.hpp"
 #include "boost/actor/uniform_type_info.hpp"
 
 #include "boost/actor/detail/type_traits.hpp"

@@ -1,7 +1,7 @@
 #include <atomic>
 
 #include "test.hpp"
-#include "boost/actor/cppa.hpp"
+#include "boost/actor/all.hpp"
 
 using namespace std;
 using namespace boost::actor;

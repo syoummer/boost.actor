@@ -30,7 +30,7 @@
 #ifndef BOOST_ACTOR_DETAIL_TUPLE_DUMMY_HPP
 #define TUPLE_DUMMY_HPP
 
-#include "boost/actor/cppa_fwd.hpp"
+#include "boost/actor/fwd.hpp"
 
 #include "boost/actor/detail/type_list.hpp"
 

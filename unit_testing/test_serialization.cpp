@@ -142,7 +142,7 @@ int main() {
     message atuple1{static_cast<message::raw_ptr>(oarr)};
     try {
         bool ok = false;
-        partial_function check {
+        message_handler check {
             [&](uint32_t val0, string val1) {
                 ok = (val0 == 42 && val1 == "foo");
             }
@@ -230,7 +230,7 @@ int main() {
         message atuple2;
         uniform_typeid<message>()->deserialize(&atuple2, &bd);
         bool ok = false;
-        partial_function check {
+        message_handler check {
             [&](uint32_t val0, string val1) {
                 ok = (val0 == 42 && val1 == "foo");
             }
@@ -269,7 +269,7 @@ int main() {
         message enum_tuple2;
         uniform_typeid<message>()->deserialize(&enum_tuple2, &bd);
         bool ok = false;
-        partial_function check {
+        message_handler check {
             [&](test_enum val) {
                 ok = (val == test_enum::b);
             }

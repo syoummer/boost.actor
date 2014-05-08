@@ -33,7 +33,7 @@
 
 #include <iostream>
 
-#include "boost/actor/cppa.hpp"
+#include "boost/actor/all.hpp"
 #include "boost/actor/exception.hpp"
 
 namespace boost {

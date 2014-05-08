@@ -2,7 +2,7 @@
 
 #include "boost/none.hpp"
 
-#include "boost/actor/cppa.hpp"
+#include "boost/actor/all.hpp"
 
 using boost::none;
 using boost::optional;

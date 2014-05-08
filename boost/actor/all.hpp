@@ -28,60 +28,136 @@
 \******************************************************************************/
 
 
-#ifndef BOOST_ACTOR_HPP
-#define BOOST_ACTOR_HPP
-
-#include <tuple>
-#include <chrono>
-#include <cstdint>
-#include <cstring>
-#include <functional>
-#include <type_traits>
+#ifndef BOOST_ACTOR_ALL_HPP
+#define BOOST_ACTOR_ALL_HPP
 
 #include "boost/actor/on.hpp"
 #include "boost/actor/atom.hpp"
+#include "boost/actor/send.hpp"
+#include "boost/actor/unit.hpp"
+#include "boost/actor/actor.hpp"
+#include "boost/actor/group.hpp"
 #include "boost/actor/spawn.hpp"
+#include "boost/actor/config.hpp"
+#include "boost/actor/extend.hpp"
+#include "boost/actor/policy.hpp"
 #include "boost/actor/channel.hpp"
-#include "boost/actor/behavior.hpp"
-#include "boost/actor/announce.hpp"
-#include "boost/actor/sb_actor.hpp"
-#include "boost/actor/scheduler.hpp"
-#include "boost/actor/to_string.hpp"
+#include "boost/actor/logging.hpp"
 #include "boost/actor/message.hpp"
+#include "boost/actor/node_id.hpp"
+#include "boost/actor/publish.hpp"
+#include "boost/actor/announce.hpp"
+#include "boost/actor/anything.hpp"
+#include "boost/actor/behavior.hpp"
+#include "boost/actor/duration.hpp"
+#include "boost/actor/sb_actor.hpp"
+#include "boost/actor/shutdown.hpp"
+#include "boost/actor/spawn_io.hpp"
+#include "boost/actor/exception.hpp"
+#include "boost/actor/resumable.hpp"
+#include "boost/actor/scheduler.hpp"
+#include "boost/actor/spawn_fwd.hpp"
+#include "boost/actor/to_string.hpp"
+#include "boost/actor/actor_addr.hpp"
+#include "boost/actor/attachable.hpp"
+#include "boost/actor/match_expr.hpp"
+#include "boost/actor/message_id.hpp"
+#include "boost/actor/replies_to.hpp"
+#include "boost/actor/serializer.hpp"
 #include "boost/actor/singletons.hpp"
-#include "boost/actor/typed_actor.hpp"
+#include "boost/actor/actor_proxy.hpp"
 #include "boost/actor/exit_reason.hpp"
+#include "boost/actor/from_string.hpp"
 #include "boost/actor/local_actor.hpp"
+#include "boost/actor/ref_counted.hpp"
+#include "boost/actor/typed_actor.hpp"
+#include "boost/actor/deserializer.hpp"
+#include "boost/actor/max_msg_size.hpp"
+#include "boost/actor/remote_actor.hpp"
 #include "boost/actor/scoped_actor.hpp"
-#include "boost/actor/spawn_options.hpp"
+#include "boost/actor/skip_message.hpp"
 #include "boost/actor/actor_ostream.hpp"
+#include "boost/actor/spawn_options.hpp"
 #include "boost/actor/abstract_actor.hpp"
+#include "boost/actor/abstract_group.hpp"
 #include "boost/actor/blocking_actor.hpp"
+#include "boost/actor/execution_unit.hpp"
+#include "boost/actor/memory_managed.hpp"
+#include "boost/actor/message_header.hpp"
+#include "boost/actor/typed_behavior.hpp"
+#include "boost/actor/actor_namespace.hpp"
+#include "boost/actor/behavior_policy.hpp"
+#include "boost/actor/continue_helper.hpp"
+#include "boost/actor/mailbox_element.hpp"
+#include "boost/actor/message_builder.hpp"
+#include "boost/actor/message_handler.hpp"
+#include "boost/actor/policy/policies.hpp"
+#include "boost/actor/response_handle.hpp"
 #include "boost/actor/system_messages.hpp"
+#include "boost/actor/abstract_channel.hpp"
+#include "boost/actor/may_have_timeout.hpp"
+#include "boost/actor/message_priority.hpp"
+#include "boost/actor/policy/no_resume.hpp"
 #include "boost/actor/response_promise.hpp"
+#include "boost/actor/binary_serializer.hpp"
 #include "boost/actor/event_based_actor.hpp"
+#include "boost/actor/mixin/sync_sender.hpp"
+#include "boost/actor/primitive_variant.hpp"
+#include "boost/actor/type_lookup_table.hpp"
+#include "boost/actor/uniform_type_info.hpp"
+#include "boost/actor/wildcard_position.hpp"
+#include "boost/actor/timeout_definition.hpp"
+#include "boost/actor/binary_deserializer.hpp"
+#include "boost/actor/detail/publish_impl.hpp"
+#include "boost/actor/mixin/mailbox_based.hpp"
+#include "boost/actor/mixin/memory_cached.hpp"
+#include "boost/actor/policy/prioritizing.hpp"
+#include "boost/actor/mixin/single_timeout.hpp"
+#include "boost/actor/policy/invoke_policy.hpp"
+#include "boost/actor/policy/no_scheduling.hpp"
+#include "boost/actor/policy/resume_policy.hpp"
+#include "boost/actor/await_all_actors_done.hpp"
+#include "boost/actor/typed_continue_helper.hpp"
+#include "boost/actor/policy/nestable_invoke.hpp"
+#include "boost/actor/policy/priority_policy.hpp"
+#include "boost/actor/policy/not_prioritizing.hpp"
+#include "boost/actor/typed_event_based_actor.hpp"
+#include "boost/actor/detail/remote_actor_impl.hpp"
+#include "boost/actor/policy/scheduling_policy.hpp"
+#include "boost/actor/policy/sequential_invoke.hpp"
+#include "boost/actor/policy/event_based_resume.hpp"
+#include "boost/actor/mixin/behavior_stack_based.hpp"
+#include "boost/actor/policy/middleman_scheduling.hpp"
+#include "boost/actor/policy/cooperative_scheduling.hpp"
+#include "boost/actor/policy/context_switching_resume.hpp"
+#include "boost/actor/detail/typed_remote_actor_helper.hpp"
 
-#include "boost/actor/detail/type_traits.hpp"
-
+#include "boost/actor/io/peer.hpp"
+#include "boost/actor/io/event.hpp"
 #include "boost/actor/io/broker.hpp"
+#include "boost/actor/io/buffer.hpp"
+#include "boost/actor/io/stream.hpp"
+#include "boost/actor/io/fd_util.hpp"
 #include "boost/actor/io/acceptor.hpp"
+#include "boost/actor/io/platform.hpp"
 #include "boost/actor/io/middleman.hpp"
+#include "boost/actor/io/continuable.hpp"
 #include "boost/actor/io/input_stream.hpp"
-#include "boost/actor/io/output_stream.hpp"
 #include "boost/actor/io/accept_handle.hpp"
 #include "boost/actor/io/ipv4_acceptor.hpp"
+#include "boost/actor/io/output_stream.hpp"
+#include "boost/actor/io/peer_acceptor.hpp"
 #include "boost/actor/io/ipv4_io_stream.hpp"
+#include "boost/actor/io/buffered_writing.hpp"
 #include "boost/actor/io/connection_handle.hpp"
-
-#include "boost/actor/detail/memory.hpp"
-#include "boost/actor/detail/raw_access.hpp"
-#include "boost/actor/detail/make_counted.hpp"
-#include "boost/actor/detail/actor_registry.hpp"
+#include "boost/actor/io/remote_actor_proxy.hpp"
+#include "boost/actor/io/default_message_queue.hpp"
+#include "boost/actor/io/middleman_event_handler.hpp"
 
 /**
  * @author Dominik Charousset <dominik.charousset (at) haw-hamburg.de>
  *
- * @mainpage libcppa
+ * @mainpage Boost.Actor
  *
  * @section Intro Introduction
  *
@@ -89,18 +165,18 @@
  * It uses a network transparent messaging system to ease development
  * of both concurrent and distributed software.
  *
- * @p libcppa uses a thread pool to schedule actors by default.
+ * @p Boost.Actor uses a thread pool to schedule actors by default.
  * A scheduled actor should not call blocking functions.
  * Individual actors can be spawned (created) with a special flag to run in
  * an own thread if one needs to make use of blocking APIs.
  *
- * Writing applications in @p libcppa requires a minimum of gluecode and
+ * Writing applications in @p Boost.Actor requires a minimum of gluecode and
  * each context <i>is</i> an actor. Even main is implicitly
  * converted to an actor if needed.
  *
  * @section GettingStarted Getting Started
  *
- * To build @p libcppa, you need <tt>GCC >= 4.7</tt> or <tt>Clang >= 3.2</tt>,
+ * To build @p Boost.Actor, you need <tt>GCC >= 4.7</tt> or <tt>Clang >= 3.2</tt>,
  * and @p CMake.
  *
  * The usual build steps on Linux and Mac OS X are:
@@ -111,7 +187,8 @@
  *- <tt>make</tt>
  *- <tt>make install</tt> (as root, optionally)
  *
- * Please run the unit tests as well to verify that @p libcppa works properly.
+ * Please run the unit tests as well to verify that @p Boost.Actor
+ * works properly.
  *
  *- <tt>./bin/unit_tests</tt>
  *
@@ -119,12 +196,12 @@
  * (b) your OS, and (c) the output of the unit tests if an error occurs.
  *
  * Windows is not supported yet, because MVSC++ doesn't implement the
- * C++11 features needed to compile @p libcppa.
+ * C++11 features needed to compile @p Boost.Actor.
  *
- * Please read the <b>Manual</b> for an introduction to @p libcppa.
- * It is available online at
- * http://neverlord.github.com/libboost/actor/manual/index.html or as PDF version at
- * http://neverlord.github.com/libboost/actor/manual/libcppa_manual.pdf
+ * Please read the <b>Manual</b> for an introduction to @p Boost.Actor.
+ * It is available online as HTML at
+ * http://neverlord.github.com/boost.actor/manual/index.html or as PDF at
+ * http://neverlord.github.com/boost.actor/manual/manual.pdf
  *
  * @section IntroHelloWorld Hello World Example
  *
@@ -135,21 +212,21 @@
  * The {@link math_actor.cpp Math Actor Example} shows the usage
  * of {@link receive_loop} and {@link cppa::arg_match arg_match}.
  * The {@link dining_philosophers.cpp Dining Philosophers Example}
- * introduces event-based actors and includes a lot of <tt>libcppa</tt>
+ * introduces event-based actors and includes a lot of <tt>Boost.Actor</tt>
  * features.
  *
  * @namespace cppa
- * @brief Root namespace of libcppa.
+ * @brief Root namespace of Boost.Actor.
  *
  * @namespace cppa::util
  * @brief Contains utility classes and metaprogramming
- *        utilities used by the libcppa implementation.
+ *        utilities used by the Boost.Actor implementation.
  *
  * @namespace cppa::intrusive
  * @brief Contains intrusive container implementations.
  *
  * @namespace cppa::opencl
- * @brief Contains all classes of libcppa's OpenCL binding (optional).
+ * @brief Contains all classes of Boost.Actor's OpenCL binding (optional).
  *
  * @namespace cppa::network
  * @brief Contains all network related classes.
@@ -165,7 +242,7 @@
  * @brief Contains the guard placeholders @p _x1 to @p _x9.
  *
  * @defgroup CopyOnWrite Copy-on-write optimization.
- * @p libcppa uses a copy-on-write optimization for its message
+ * @p Boost.Actor uses a copy-on-write optimization for its message
  * passing implementation.
  *
  * {@link cppa::cow_tuple Tuples} should @b always be used with by-value
@@ -202,29 +279,26 @@
  *
  * @defgroup MessageHandling Message handling.
  *
- * @brief This is the beating heart of @p libcppa. Actor programming is
+ * @brief This is the beating heart of @p Boost.Actor. Actor programming is
  *        all about message handling.
  *
- * A message in @p libcppa is a n-tuple of values (with size >= 1). You can use
- * almost every type in a messages - as long as it is announced, i.e., known
- * by libcppa's type system.
+ * A message in @p Boost.Actor is a n-tuple of values (with size >= 1)
+ * You can use almost every type in a messages - as long as it is announced,
+ * i.e., known by the type system of @p Boost.Actor.
  *
  * @defgroup BlockingAPI Blocking API.
  *
  * @brief Blocking functions to receive messages.
  *
- * The blocking API of libcppa is intended to be used for migrating
+ * The blocking API of Boost.Actor is intended to be used for migrating
  * previously threaded applications. When writing new code, you should use
  * ibcppas nonblocking become/unbecome API.
  *
  * @section Send Send messages
  *
- * The function @p send could be used to send a message to an actor.
+ * The function @p send can be used to send a message to an actor.
  * The first argument is the receiver of the message followed by any number
- * of values. @p send creates a tuple from the given values and enqueues the
- * tuple to the receivers mailbox. Thus, send should @b not be used to send
- * a message to multiple receivers. You should use @p operator<<
- * instead as in the following example:
+ * of values:
  *
  * @code
  * // spawn some actors
@@ -235,22 +309,11 @@
  * // send a message to a1
  * send(a1, atom("hello"), "hello a1!");
  *
- * // send a message to a1, a2 and a3
+ * // send a message to a1, a2, and a3
  * auto msg = make_message(atom("compute"), 1, 2, 3);
- *
- * // note: this is more efficient then using send() three times because
- * //       send() would create a new tuple each time;
- * //       this safes both time and memory thanks to libcppa's copy-on-write
- * a1 << msg;
- * a2 << msg;
- * a3 << msg;
- *
- * // modify msg and send it again
- * // (msg becomes detached due to copy-on-write optimization)
- * get_ref<1>(msg) = 10; // msg is now { atom("compute"), 10, 2, 3 }
- * a1 << msg;
- * a2 << msg;
- * a3 << msg;
+ * send(a1, msg);
+ * send(a2, msg);
+ * send(a3, msg);
  * @endcode
  *
  * @section Receive Receive messages
@@ -374,10 +437,10 @@
  *
  * @defgroup ImplicitConversion Implicit type conversions.
  *
- * The message passing of @p libcppa prohibits pointers in messages because
+ * The message passing of @p Boost.Actor prohibits pointers in messages because
  * it enforces network transparent messaging.
  * Unfortunately, string literals in @p C++ have the type <tt>const char*</tt>,
- * resp. <tt>const char[]</tt>. Since @p libcppa is a user-friendly library,
+ * resp. <tt>const char[]</tt>. Since @p Boost.Actor is a user-friendly library,
  * it silently converts string literals and C-strings to @p std::string objects.
  * It also converts unicode literals to the corresponding STL container.
  *
@@ -430,286 +493,4 @@
  * @example dining_philosophers.cpp
  */
 
-namespace boost {
-namespace actor {
-
-/**
- * @brief Sends @p to a message under the identity of @p from.
- */
-inline void send_tuple_as(const actor& from, const channel& to, message msg) {
-    if (to) to->enqueue({from.address(), to}, std::move(msg), nullptr);
-}
-
-/**
- * @brief Sends @p to a message under the identity of @p from.
- */
-template<typename... Ts>
-void send_as(const actor& from, const channel& to, Ts&&... args) {
-    send_tuple_as(from, to, make_message(std::forward<Ts>(args)...));
-}
-
-/**
- * @brief Anonymously sends @p to a message.
- */
-inline void anon_send_tuple(const channel& to, message msg) {
-    send_tuple_as(invalid_actor, to, std::move(msg));
-}
-
-/**
- * @brief Anonymously sends @p to a message.
- */
-template<typename... Ts>
-inline void anon_send(const channel& to, Ts&&... args) {
-    send_as(invalid_actor, to, std::forward<Ts>(args)...);
-}
-
-/**
- * @brief Sets the maximum size of a message over network.
- * @param size The maximum number of bytes a message may occupy.
- */
-void max_msg_size(size_t size);
-
-/**
- * @brief Queries the maximum size of messages over network.
- * @returns The number maximum number of bytes a message may occupy.
- */
-size_t max_msg_size();
-
-// implemented in local_actor.cpp
-/**
- * @brief Anonymously sends @p whom an exit message.
- */
-void anon_send_exit(const actor_addr& whom, std::uint32_t reason);
-
-/**
- * @brief Anonymously sends @p whom an exit message.
- */
-template<typename ActorHandle>
-inline void anon_send_exit(const ActorHandle& whom, std::uint32_t reason) {
-    anon_send_exit(whom.address(), reason);
-}
-
-/**
- * @brief Blocks execution of this actor until all
- *        other actors finished execution.
- * @warning This function will cause a deadlock if called from multiple actors.
- * @warning Do not call this function in cooperatively scheduled actors.
- */
-inline void await_all_actors_done() {
-    get_actor_registry()->await_running_count_equal(0);
-}
-
-namespace detail {
-
-void publish_impl(abstract_actor_ptr whom, std::unique_ptr<io::acceptor> aptr);
-
-abstract_actor_ptr remote_actor_impl(io::stream_ptr_pair io,
-                                     std::set<std::string> expected_interface);
-
-template<class List>
-struct typed_remote_actor_helper;
-
-template<typename... Ts>
-struct typed_remote_actor_helper<detail::type_list<Ts...>> {
-    typedef typed_actor<Ts...> return_type;
-    return_type operator()(io::stream_ptr_pair conn) {
-        auto iface = return_type::get_interface();
-        auto tmp = remote_actor_impl(std::move(conn), std::move(iface));
-        return_type res;
-        // actually safe, because remote_actor_impl throws on type mismatch
-        raw_access::unsafe_assign(res, tmp);
-        return res;
-    }
-    return_type operator()(const char* host, std::uint16_t port) {
-        auto ptr = io::ipv4_io_stream::connect_to(host, port);
-        return (*this)(io::stream_ptr_pair(ptr, ptr));
-    }
-};
-
-} // namespace detail
-
-/**
- * @brief Publishes @p whom at @p port.
- *
- * The connection is automatically closed if the lifetime of @p whom ends.
- * @param whom Actor that should be published at @p port.
- * @param port Unused TCP port.
- * @param addr The IP address to listen to, or @p INADDR_ANY if @p addr is
- *             @p nullptr.
- * @throws bind_failure
- */
-void publish(actor whom, std::uint16_t port, const char* addr = nullptr);
-
-// implemented in unicast_network.cpp
-/**
- * @brief Publishes @p whom using @p acceptor to handle incoming connections.
- *
- * The connection is automatically closed if the lifetime of @p whom ends.
- * @param whom Actor that should be published at @p port.
- * @param acceptor Network technology-specific acceptor implementation.
- */
-void publish(actor whom, std::unique_ptr<io::acceptor> acceptor);
-
-// implemented in unicast_network.cpp
-/**
- * @brief Establish a new connection to a remote actor via @p connection.
- * @param connection A connection to another libcppa process described by a pair
- *                   of input and output stream.
- * @returns An {@link actor_ptr} to the proxy instance
- *          representing a remote actor.
- * @throws std::invalid_argument Thrown when connecting to a typed actor.
- */
-actor remote_actor(io::stream_ptr_pair connection);
-
-/**
- * @brief Establish a new connection to the actor at @p host on given @p port.
- * @param host Valid hostname or IP address.
- * @param port TCP port.
- * @returns An {@link actor_ptr} to the proxy instance
- *          representing a remote actor.
- * @throws std::invalid_argument Thrown when connecting to a typed actor.
- */
-actor remote_actor(const char* host, std::uint16_t port);
-
-/**
- * @copydoc remote_actor(const char*, std::uint16_t)
- */
-inline actor remote_actor(const std::string& host, std::uint16_t port) {
-    return remote_actor(host.c_str(), port);
-}
-
-/**
- * @copydoc publish(actor,std::unique_ptr<io::acceptor>)
- */
-template<typename... Rs>
-void typed_publish(typed_actor<Rs...> whom, std::unique_ptr<io::acceptor> uptr) {
-    if (!whom) return;
-    detail::publish_impl(detail::raw_access::get(whom), std::move(uptr));
-}
-
-/**
- * @copydoc publish(actor,std::uint16_t,const char*)
- */
-template<typename... Rs>
-void typed_publish(typed_actor<Rs...> whom,
-                   std::uint16_t port, const char* addr = nullptr) {
-    if (!whom) return;
-    detail::publish_impl(detail::raw_access::get(whom),
-                         io::ipv4_acceptor::create(port, addr));
-}
-
-/**
- * @copydoc remote_actor(io::stream_ptr_pair)
- */
-template<class List>
-typename detail::typed_remote_actor_helper<List>::return_type
-typed_remote_actor(io::stream_ptr_pair connection) {
-    detail::typed_remote_actor_helper<List> f;
-    return f(std::move(connection));
-}
-
-/**
- * @copydoc remote_actor(const char*,std::uint16_t)
- */
-template<class List>
-typename detail::typed_remote_actor_helper<List>::return_type
-typed_remote_actor(const char* host, std::uint16_t port) {
-    detail::typed_remote_actor_helper<List> f;
-    return f(host, port);
-}
-
-/**
- * @copydoc remote_actor(const std::string&,std::uint16_t)
- */
-template<class List>
-typename detail::typed_remote_actor_helper<List>::return_type
-typed_remote_actor(const std::string& host, std::uint16_t port) {
-    detail::typed_remote_actor_helper<List> f;
-    return f(host.c_str(), port);
-}
-
-/**
- * @brief Spawns an IO actor of type @p Impl.
- * @param args Constructor arguments.
- * @tparam Impl Subtype of {@link io::broker}.
- * @tparam Os Optional flags to modify <tt>spawn</tt>'s behavior.
- * @returns An {@link actor_ptr} to the spawned {@link actor}.
- */
-template<class Impl, spawn_options Os = no_spawn_options, typename... Ts>
-actor spawn_io(Ts&&... args) {
-    auto ptr = detail::make_counted<Impl>(std::forward<Ts>(args)...);
-    return {io::init_and_launch(std::move(ptr))};
-}
-
-/**
- * @brief Spawns a new, function-based IO actor.
- * @param fun  A functor implementing the actor's behavior.
- * @param in   The actor's input stream.
- * @param out  The actor's output stream.
- * @param args Optional arguments for @p fun.
- * @tparam Os Optional flags to modify <tt>spawn</tt>'s behavior.
- * @returns A {@link actor handle} to the spawned actor.
- */
-template<spawn_options Os = no_spawn_options,
-         typename F = std::function<void (io::broker*)>,
-         typename... Ts>
-actor spawn_io(F fun,
-               io::input_stream_ptr in,
-               io::output_stream_ptr out,
-               Ts&&... args) {
-    auto ptr = io::broker::from(std::move(fun), std::move(in), std::move(out),
-                                std::forward<Ts>(args)...);
-    return {io::init_and_launch(std::move(ptr))};
-}
-
-template<spawn_options Os = no_spawn_options,
-         typename F = std::function<void (io::broker*)>,
-         typename... Ts>
-actor spawn_io(F fun, const std::string& host, uint16_t port, Ts&&... args) {
-    auto ptr = io::ipv4_io_stream::connect_to(host.c_str(), port);
-    return spawn_io(std::move(fun), ptr, ptr, std::forward<Ts>(args)...);
-}
-
-template<spawn_options Os = no_spawn_options,
-         typename F = std::function<void (io::broker*)>,
-         typename... Ts>
-actor spawn_io_server(F fun, uint16_t port, Ts&&... args) {
-    static_assert(!has_detach_flag(Os),
-                  "brokers cannot be detached");
-    static_assert(is_unbound(Os),
-                  "top-level spawns cannot have monitor or link flag");
-    using namespace std;
-    auto ptr = io::broker::from(move(fun),
-                                io::ipv4_acceptor::create(port),
-                                forward<Ts>(args)...);
-    return {io::init_and_launch(move(ptr))};
-}
-
-/**
- * @brief Destroys all singletons, disconnects all peers and stops the
- *        scheduler. It is recommended to use this function as very last
- *        function call before leaving main(). Especially in programs
- *        using libcppa's networking infrastructure.
- */
-void shutdown(); // note: implemented in singleton_manager.cpp
-
-} // namespace actor
-} // namespace boost
-
-namespace std {
-// allow actor and actor_addr to be used in hash maps
-template<>
-struct hash<boost::actor::actor> {
-    inline size_t operator()(const boost::actor::actor& ref) const {
-        return static_cast<size_t>(ref->id());
-    }
-};
-template<>
-struct hash<boost::actor::actor_addr> {
-    inline size_t operator()(const boost::actor::actor_addr& ref) const {
-        return static_cast<size_t>(ref.id());
-    }
-};
-} // namespace std
-
-#endif // BOOST_ACTOR_HPP
+#endif // BOOST_ACTOR_ALL_HPP

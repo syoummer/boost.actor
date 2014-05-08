@@ -1,9 +1,9 @@
 \section{Actors}
 
-\libcppa provides several actor implementations, each covering a particular use case.
+\ba provides several actor implementations, each covering a particular use case.
 The class \lstinline^local_actor^ is the base class for all implementations, except for (remote) proxy actors.
 Hence, \lstinline^local_actor^ provides a common interface for actor operations like trapping exit messages or finishing execution.
-The default actor implementation in \libcppa is event-based.
+The default actor implementation in \ba is event-based.
 Event-based actors have a very small memory footprint and are thus very lightweight and scalable.
 Context-switching actors are used for actors that make use of the blocking API (see Section \ref{Sec::BlockingAPI}), but do not need to run in a separate thread.
 Context-switching and event-based actors are scheduled cooperatively in a thread pool.

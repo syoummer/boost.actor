@@ -194,4 +194,14 @@ class actor : detail::comparable<actor>
 } // namespace actor
 } // namespace boost
 
+// allow actor to be used in hash maps
+namespace std {
+template<>
+struct hash<boost::actor::actor> {
+    inline size_t operator()(const boost::actor::actor& ref) const {
+        return ref ? static_cast<size_t>(ref->id()) : 0;
+    }
+};
+} // namespace std
+
 #endif // BOOST_ACTOR_ACTOR_HPP

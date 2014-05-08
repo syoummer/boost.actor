@@ -41,7 +41,7 @@
 #include <sys/types.h>
 #endif
 
-#include "boost/actor/cppa.hpp"
+#include "boost/actor/all.hpp"
 #include "boost/actor/logging.hpp"
 #include "boost/actor/actor_proxy.hpp"
 

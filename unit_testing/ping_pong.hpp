@@ -4,7 +4,7 @@
 //#include "boost/actor/actor.hpp"
 
 #include <cstddef>
-#include "boost/actor/cppa_fwd.hpp"
+#include "boost/actor/fwd.hpp"
 
 void ping(boost::actor::blocking_actor*, size_t num_pings);
 

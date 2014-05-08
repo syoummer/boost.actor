@@ -46,14 +46,14 @@
 namespace boost {
 namespace actor {
 
-class partial_function;
+class message_handler;
 
 /**
  * @brief Describes the behavior of an actor.
  */
 class behavior {
 
-    friend class partial_function;
+    friend class message_handler;
 
  public:
 
@@ -75,7 +75,7 @@ class behavior {
     behavior& operator=(behavior&&) = default;
     behavior& operator=(const behavior&) = default;
 
-    behavior(const partial_function& fun);
+    behavior(const message_handler& fun);
 
     template<typename F>
     behavior(const timeout_definition<F>& arg);

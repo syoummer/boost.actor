@@ -28,46 +28,28 @@
 \******************************************************************************/
 
 
-#ifndef BOOST_ACTOR_ABSTRACT_CHANNEL_HPP
-#define BOOST_ACTOR_ABSTRACT_CHANNEL_HPP
+#ifndef BOOST_ACTOR_DETAIL_REMOTE_ACTOR_IMPL_HPP
+#define BOOST_ACTOR_DETAIL_REMOTE_ACTOR_IMPL_HPP
 
-#include "boost/actor/fwd.hpp"
-#include "boost/actor/ref_counted.hpp"
+#include <set>
+#include <string>
+
+#include "boost/actor/abstract_actor.hpp"
+
+#include "boost/actor/io/acceptor.hpp"
 
 namespace boost {
 namespace actor {
+namespace detail {
 
-/**
- * @brief Interface for all message receivers.
- *
- * This interface describes an entity that can receive messages
- * and is implemented by {@link actor} and {@link group}.
- */
-class abstract_channel : public ref_counted {
+// functions are implemented in unicast_network.cpp
 
- public:
+abstract_actor_ptr remote_actor_impl(io::stream_ptr_pair io,
+                                     std::set<std::string> expected);
 
-    /**
-     * @brief Enqueues a new message to the channel.
-     * @param header Contains meta information about this message
-     *               such as the address of the sender and the
-     *               ID of the message if it is a synchronous message.
-     * @param content The content encapsulated in a copy-on-write tuple.
-     * @param host Pointer to the {@link execution_unit execution unit} the
-     *             caller is executed by or @p nullptr if the caller
-     *             is not a scheduled actor.
-     */
-    virtual void enqueue(msg_hdr_cref header,
-                         message content,
-                         execution_unit* host) = 0;
-
- protected:
-
-    virtual ~abstract_channel();
-
-};
-
+} // namespace detail
 } // namespace actor
 } // namespace boost
 
-#endif // BOOST_ACTOR_ABSTRACT_CHANNEL_HPP
+
+#endif // BOOST_ACTOR_DETAIL_REMOTE_ACTOR_IMPL_HPP

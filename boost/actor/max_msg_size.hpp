@@ -28,46 +28,27 @@
 \******************************************************************************/
 
 
-#ifndef BOOST_ACTOR_ABSTRACT_CHANNEL_HPP
-#define BOOST_ACTOR_ABSTRACT_CHANNEL_HPP
+#ifndef BOOST_ACTOR_MAX_MSG_SIZE_HPP
+#define BOOST_ACTOR_MAX_MSG_SIZE_HPP
 
-#include "boost/actor/fwd.hpp"
-#include "boost/actor/ref_counted.hpp"
+#include <cstddef> // size_t
 
 namespace boost {
 namespace actor {
 
 /**
- * @brief Interface for all message receivers.
- *
- * This interface describes an entity that can receive messages
- * and is implemented by {@link actor} and {@link group}.
+ * @brief Sets the maximum size of a message over network.
+ * @param size The maximum number of bytes a message may occupy.
  */
-class abstract_channel : public ref_counted {
+void max_msg_size(size_t size);
 
- public:
-
-    /**
-     * @brief Enqueues a new message to the channel.
-     * @param header Contains meta information about this message
-     *               such as the address of the sender and the
-     *               ID of the message if it is a synchronous message.
-     * @param content The content encapsulated in a copy-on-write tuple.
-     * @param host Pointer to the {@link execution_unit execution unit} the
-     *             caller is executed by or @p nullptr if the caller
-     *             is not a scheduled actor.
-     */
-    virtual void enqueue(msg_hdr_cref header,
-                         message content,
-                         execution_unit* host) = 0;
-
- protected:
-
-    virtual ~abstract_channel();
-
-};
+/**
+ * @brief Queries the maximum size of messages over network.
+ * @returns The number maximum number of bytes a message may occupy.
+ */
+size_t max_msg_size();
 
 } // namespace actor
 } // namespace boost
 
-#endif // BOOST_ACTOR_ABSTRACT_CHANNEL_HPP
+#endif // BOOST_ACTOR_MAX_MSG_SIZE_HPP

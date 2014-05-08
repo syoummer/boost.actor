@@ -33,6 +33,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <type_traits>
 
 #include "boost/intrusive_ptr.hpp"
@@ -120,5 +121,16 @@ class actor_addr : detail::comparable<actor_addr>
 
 } // namespace actor
 } // namespace boost
+
+// allow actor_addr to be used in hash maps
+namespace std {
+template<>
+struct hash<boost::actor::actor_addr> {
+    inline size_t operator()(const boost::actor::actor_addr& ref) const {
+        return static_cast<size_t>(ref.id());
+    }
+};
+} // namespace std
+
 
 #endif // BOOST_ACTOR_ACTOR_ADDR_HPP

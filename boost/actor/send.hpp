@@ -28,46 +28,63 @@
 \******************************************************************************/
 
 
-#ifndef BOOST_ACTOR_ABSTRACT_CHANNEL_HPP
-#define BOOST_ACTOR_ABSTRACT_CHANNEL_HPP
+#ifndef BOOST_ACTOR_SEND_HPP
+#define BOOST_ACTOR_SEND_HPP
 
-#include "boost/actor/fwd.hpp"
-#include "boost/actor/ref_counted.hpp"
+#include "boost/actor/actor.hpp"
+#include "boost/actor/channel.hpp"
+#include "boost/actor/message.hpp"
+#include "boost/actor/actor_addr.hpp"
+#include "boost/actor/message_header.hpp"
 
 namespace boost {
 namespace actor {
 
 /**
- * @brief Interface for all message receivers.
- *
- * This interface describes an entity that can receive messages
- * and is implemented by {@link actor} and {@link group}.
+ * @brief Sends @p to a message under the identity of @p from.
  */
-class abstract_channel : public ref_counted {
+inline void send_tuple_as(const actor& from, const channel& to, message msg) {
+    if (to) to->enqueue({from.address(), to}, std::move(msg), nullptr);
+}
 
- public:
+/**
+ * @brief Sends @p to a message under the identity of @p from.
+ */
+template<typename... Ts>
+void send_as(const actor& from, const channel& to, Ts&&... args) {
+    send_tuple_as(from, to, make_message(std::forward<Ts>(args)...));
+}
 
-    /**
-     * @brief Enqueues a new message to the channel.
-     * @param header Contains meta information about this message
-     *               such as the address of the sender and the
-     *               ID of the message if it is a synchronous message.
-     * @param content The content encapsulated in a copy-on-write tuple.
-     * @param host Pointer to the {@link execution_unit execution unit} the
-     *             caller is executed by or @p nullptr if the caller
-     *             is not a scheduled actor.
-     */
-    virtual void enqueue(msg_hdr_cref header,
-                         message content,
-                         execution_unit* host) = 0;
+/**
+ * @brief Anonymously sends @p to a message.
+ */
+inline void anon_send_tuple(const channel& to, message msg) {
+    send_tuple_as(invalid_actor, to, std::move(msg));
+}
 
- protected:
+/**
+ * @brief Anonymously sends @p to a message.
+ */
+template<typename... Ts>
+inline void anon_send(const channel& to, Ts&&... args) {
+    send_as(invalid_actor, to, std::forward<Ts>(args)...);
+}
 
-    virtual ~abstract_channel();
+// implemented in local_actor.cpp
+/**
+ * @brief Anonymously sends @p whom an exit message.
+ */
+void anon_send_exit(const actor_addr& whom, std::uint32_t reason);
 
-};
+/**
+ * @brief Anonymously sends @p whom an exit message.
+ */
+template<typename ActorHandle>
+inline void anon_send_exit(const ActorHandle& whom, std::uint32_t reason) {
+    anon_send_exit(whom.address(), reason);
+}
 
 } // namespace actor
 } // namespace boost
 
-#endif // BOOST_ACTOR_ABSTRACT_CHANNEL_HPP
+#endif // BOOST_ACTOR_SEND_HPP

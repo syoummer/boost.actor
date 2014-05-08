@@ -37,12 +37,13 @@
 
 #include "boost/thread/locks.hpp"
 
-#include "boost/actor/cppa.hpp"
+#include "boost/actor/all.hpp"
 #include "boost/actor/group.hpp"
 #include "boost/actor/to_string.hpp"
 #include "boost/actor/message.hpp"
 #include "boost/actor/serializer.hpp"
 #include "boost/actor/deserializer.hpp"
+#include "boost/actor/remote_actor.hpp"
 #include "boost/actor/message_header.hpp"
 #include "boost/actor/event_based_actor.hpp"
 

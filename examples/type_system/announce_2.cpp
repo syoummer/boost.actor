@@ -1,7 +1,7 @@
 #include <utility>
 #include <iostream>
 
-#include "boost/actor/cppa.hpp"
+#include "boost/actor/all.hpp"
 
 using std::cout;
 using std::endl;

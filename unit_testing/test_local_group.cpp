@@ -9,7 +9,7 @@
 #include "test.hpp"
 
 #include "boost/actor/on.hpp"
-#include "boost/actor/cppa.hpp"
+#include "boost/actor/all.hpp"
 #include "boost/actor/actor.hpp"
 #include "boost/actor/abstract_group.hpp"
 #include "boost/actor/ref_counted.hpp"

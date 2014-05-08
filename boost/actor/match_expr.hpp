@@ -364,14 +364,14 @@ struct invoke_util
 
 /*
 template<class Pattern, class Projection, class Fun>
-struct projection_partial_function_pair {
+struct projection_message_handler_pair {
     typedef Projection first_type;
     typedef Fun second_type;
     Projection first;
     Fun second;
-    projection_partial_function_pair() = default;
-    projection_partial_function_pair(const projection_partial_function_pair&) = default;
-    projection_partial_function_pair(Projection pr, Fun pf) : first(std::move(pr)), second(std::move(pf)) { }
+    projection_message_handler_pair() = default;
+    projection_message_handler_pair(const projection_message_handler_pair&) = default;
+    projection_message_handler_pair(Projection pr, Fun pf) : first(std::move(pr)), second(std::move(pf)) { }
     typedef Pattern pattern_type;
 };
 */
@@ -513,11 +513,6 @@ template<typename T>
 inline bool unroll_expr_result_valid(const optional<T>& opt) {
     return static_cast<bool>(opt);
 }
-
-//template<typename T>
-//inline T& unroll_expr_result_unbox(T& value) {
-//    return value;
-//}
 
 inline variant<none_t, unit_t> unroll_expr_result_unbox(bool& value) {
     if (value) return unit;
@@ -883,9 +878,9 @@ match_expr_collect(const T& arg, const Ts&... args) {
 
 namespace detail {
 
-// implemented in partial_function.cpp
-partial_function combine(behavior_impl_ptr, behavior_impl_ptr);
-behavior_impl_ptr extract(const partial_function&);
+// implemented in message_handler.cpp
+message_handler combine(behavior_impl_ptr, behavior_impl_ptr);
+behavior_impl_ptr extract(const message_handler&);
 
 template<typename... Cs>
 behavior_impl_ptr extract(const match_expr<Cs...>& arg) {
@@ -917,7 +912,7 @@ behavior_impl_ptr match_expr_concat(const T& arg) {
 }
 
 template<typename F>
-behavior_impl_ptr match_expr_concat(const partial_function& arg0,
+behavior_impl_ptr match_expr_concat(const message_handler& arg0,
                                     const timeout_definition<F>& arg) {
     return extract(arg0)->copy(arg);
 }

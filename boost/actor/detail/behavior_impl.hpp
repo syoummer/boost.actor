@@ -53,7 +53,7 @@
 namespace boost {
 namespace actor {
 
-class partial_function;
+class message_handler;
 typedef optional<message> bhvr_invoke_result;
 
 } // namespace actor
@@ -217,9 +217,9 @@ default_behavior_impl<dummy_match_expr, F>* new_default_behavior(duration d, F f
 
 typedef intrusive_ptr<behavior_impl> behavior_impl_ptr;
 
-// implemented in partial_function.cpp
-//partial_function combine(behavior_impl_ptr, behavior_impl_ptr);
-//behavior_impl_ptr extract(const partial_function&);
+// implemented in message_handler.cpp
+//message_handler combine(behavior_impl_ptr, behavior_impl_ptr);
+//behavior_impl_ptr extract(const message_handler&);
 
 } // namespace detail
 } // namespace actor

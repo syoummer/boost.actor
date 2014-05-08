@@ -36,7 +36,7 @@
 #include "boost/actor/on.hpp"
 #include "boost/actor/behavior.hpp"
 #include "boost/actor/message_id.hpp"
-#include "boost/actor/partial_function.hpp"
+#include "boost/actor/message_handler.hpp"
 
 namespace boost {
 namespace actor {
@@ -62,7 +62,7 @@ class continue_helper {
      */
     template<typename F>
     continue_helper& continue_with(F fun) {
-        return continue_with(behavior::continuation_fun{partial_function{
+        return continue_with(behavior::continuation_fun{message_handler{
                    on(any_vals, arg_match) >> fun
                }});
     }

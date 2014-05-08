@@ -33,7 +33,7 @@
 #include <cstring>
 #include <utility>
 
-#include "boost/actor/cppa.hpp"
+#include "boost/actor/all.hpp"
 
 #include "boost/actor/io/buffer.hpp"
 #include "boost/actor/io/input_stream.hpp"

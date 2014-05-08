@@ -18,8 +18,8 @@ boost/actor/blocking_actor.hpp
 boost/actor/channel.hpp
 boost/actor/config.hpp
 boost/actor/continue_helper.hpp
-boost/actor/cppa.hpp
-boost/actor/cppa_fwd.hpp
+boost/actor/all.hpp
+boost/actor/fwd.hpp
 boost/actor/deserializer.hpp
 boost/actor/detail/abstract_uniform_type_info.hpp
 boost/actor/detail/actor_registry.hpp
@@ -128,7 +128,7 @@ boost/actor/mixin/single_timeout.hpp
 boost/actor/mixin/sync_sender.hpp
 boost/actor/node_id.hpp
 boost/actor/on.hpp
-boost/actor/partial_function.hpp
+boost/actor/message_handler.hpp
 boost/actor/policy.hpp
 boost/actor/policy/context_switching_resume.hpp
 boost/actor/policy/cooperative_scheduling.hpp
@@ -165,7 +165,6 @@ boost/actor/timeout_definition.hpp
 boost/actor/to_string.hpp
 boost/actor/type_lookup_table.hpp
 boost/actor/typed_actor.hpp
-boost/actor/typed_actor_ptr.hpp
 boost/actor/typed_behavior.hpp
 boost/actor/typed_continue_helper.hpp
 boost/actor/typed_event_based_actor.hpp
@@ -293,3 +292,14 @@ unit_testing/test_typed_remote_actor.cpp
 unit_testing/test_typed_spawn.cpp
 unit_testing/test_uniform_type.cpp
 unit_testing/test_yield_interface.cpp
+boost/actor/max_msg_size.hpp
+src/max_msg_size.cpp
+boost/actor/send.hpp
+boost/actor/spawn_io.hpp
+boost/actor/publish.hpp
+boost/actor/remote_actor.hpp
+boost/actor/detail/typed_remote_actor_helper.hpp
+boost/actor/detail/publish_impl.hpp
+boost/actor/detail/remote_actor_impl.hpp
+boost/actor/await_all_actors_done.hpp
+boost/actor/shutdown.hpp

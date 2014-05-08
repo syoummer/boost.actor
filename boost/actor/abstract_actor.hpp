@@ -41,7 +41,7 @@
 #include <type_traits>
 
 #include "boost/actor/node_id.hpp"
-#include "boost/actor/cppa_fwd.hpp"
+#include "boost/actor/fwd.hpp"
 #include "boost/actor/attachable.hpp"
 #include "boost/actor/message_id.hpp"
 #include "boost/actor/exit_reason.hpp"

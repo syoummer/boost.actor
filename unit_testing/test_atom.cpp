@@ -4,7 +4,7 @@
 
 #include "test.hpp"
 
-#include "boost/actor/cppa.hpp"
+#include "boost/actor/all.hpp"
 #include "boost/actor/scoped_actor.hpp"
 
 namespace boost {

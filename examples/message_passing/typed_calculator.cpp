@@ -5,7 +5,7 @@
 
 #include <cassert>
 #include <iostream>
-#include "boost/actor/cppa.hpp"
+#include "boost/actor/all.hpp"
 
 using std::endl;
 using namespace boost::actor;

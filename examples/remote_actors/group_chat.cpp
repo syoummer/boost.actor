@@ -17,7 +17,7 @@
 
 #include "boost/program_options.hpp"
 
-#include "boost/actor/cppa.hpp"
+#include "boost/actor/all.hpp"
 #include "boost/actor/message_builder.hpp"
 
 #include "boost/actor/detail/make_counted.hpp"
@@ -142,7 +142,7 @@ int main(int argc, char** argv) {
         if (str.size() > 1 && str.front() == '/') return str;
         return none;
     };
-    partial_function loop {
+    message_handler loop {
         on("/join", arg_match) >> [&](const string& mod, const string& id) {
             try {
                 anon_send(client_actor, atom("join"), group::get(mod, id));

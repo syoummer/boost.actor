@@ -28,46 +28,53 @@
 \******************************************************************************/
 
 
-#ifndef BOOST_ACTOR_ABSTRACT_CHANNEL_HPP
-#define BOOST_ACTOR_ABSTRACT_CHANNEL_HPP
+#ifndef BOOST_ACTOR_FWD_HPP
+#define BOOST_ACTOR_FWD_HPP
 
-#include "boost/actor/fwd.hpp"
-#include "boost/actor/ref_counted.hpp"
+#include <cstdint>
 
 namespace boost {
+
+template<class> class intrusive_ptr;
+
 namespace actor {
 
-/**
- * @brief Interface for all message receivers.
- *
- * This interface describes an entity that can receive messages
- * and is implemented by {@link actor} and {@link group}.
- */
-class abstract_channel : public ref_counted {
+// classes
+class actor;
+class group;
+class channel;
+class node_id;
+class behavior;
+class resumable;
+class message;
+class actor_addr;
+class actor_proxy;
+class scoped_actor;
+class execution_unit;
+class abstract_actor;
+class abstract_group;
+class blocking_actor;
+class message_header;
+class message_handler;
+class uniform_type_info;
+class event_based_actor;
 
- public:
+// structs
+struct anything;
 
-    /**
-     * @brief Enqueues a new message to the channel.
-     * @param header Contains meta information about this message
-     *               such as the address of the sender and the
-     *               ID of the message if it is a synchronous message.
-     * @param content The content encapsulated in a copy-on-write tuple.
-     * @param host Pointer to the {@link execution_unit execution unit} the
-     *             caller is executed by or @p nullptr if the caller
-     *             is not a scheduled actor.
-     */
-    virtual void enqueue(msg_hdr_cref header,
-                         message content,
-                         execution_unit* host) = 0;
+// enums
+enum primitive_type : unsigned char;
+enum class atom_value : std::uint64_t;
 
- protected:
+// intrusive pointer typedefs
+typedef intrusive_ptr<abstract_group>      abstract_group_ptr;
+typedef intrusive_ptr<actor_proxy>         actor_proxy_ptr;
+typedef intrusive_ptr<node_id>             node_id_ptr;
 
-    virtual ~abstract_channel();
-
-};
+// convenience typedefs
+typedef const message_header& msg_hdr_cref;
 
 } // namespace actor
 } // namespace boost
 
-#endif // BOOST_ACTOR_ABSTRACT_CHANNEL_HPP
+#endif // BOOST_ACTOR_FWD_HPP

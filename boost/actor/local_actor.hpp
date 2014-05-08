@@ -53,7 +53,7 @@
 #include "boost/actor/mailbox_element.hpp"
 #include "boost/actor/response_promise.hpp"
 #include "boost/actor/message_priority.hpp"
-#include "boost/actor/partial_function.hpp"
+#include "boost/actor/message_handler.hpp"
 
 #include "boost/actor/mixin/memory_cached.hpp"
 

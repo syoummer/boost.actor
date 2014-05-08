@@ -6,7 +6,7 @@
 #include "test.hpp"
 #include "ping_pong.hpp"
 
-#include "boost/actor/cppa.hpp"
+#include "boost/actor/all.hpp"
 
 #include "boost/actor/detail/cs_thread.hpp"
 #include "boost/actor/detail/yield_interface.hpp"
@@ -410,13 +410,13 @@ void test_serial_reply() {
 
 void test_or_else() {
     scoped_actor self;
-    partial_function handle_a {
+    message_handler handle_a {
         on("a") >> [] { return 1; }
     };
-    partial_function handle_b {
+    message_handler handle_b {
         on("b") >> [] { return 2; }
     };
-    partial_function handle_c {
+    message_handler handle_c {
         on("c") >> [] { return 3; }
     };
     auto run_testee([&](actor testee) {

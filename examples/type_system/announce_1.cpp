@@ -3,7 +3,7 @@
 #include <utility>
 #include <iostream>
 
-#include "boost/actor/cppa.hpp"
+#include "boost/actor/all.hpp"
 #include "boost/actor/binary_serializer.hpp"
 #include "boost/actor/binary_deserializer.hpp"
 

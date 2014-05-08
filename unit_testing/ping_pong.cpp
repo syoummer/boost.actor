@@ -3,7 +3,7 @@
 #include "test.hpp"
 #include "ping_pong.hpp"
 
-#include "boost/actor/cppa.hpp"
+#include "boost/actor/all.hpp"
 #include "boost/actor/logging.hpp"
 #include "boost/actor/sb_actor.hpp"
 #include "boost/actor/to_string.hpp"

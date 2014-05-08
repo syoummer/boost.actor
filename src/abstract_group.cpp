@@ -28,10 +28,11 @@
 \******************************************************************************/
 
 
-#include "boost/actor/cppa.hpp"
-#include "boost/actor/abstract_group.hpp"
+#include "boost/actor/all.hpp"
 #include "boost/actor/message.hpp"
+#include "boost/actor/publish.hpp"
 #include "boost/actor/singletons.hpp"
+#include "boost/actor/abstract_group.hpp"
 #include "boost/actor/detail/shared_spinlock.hpp"
 
 #include "boost/actor/detail/group_manager.hpp"
@@ -41,7 +42,7 @@ namespace boost {
 namespace actor {
 
 abstract_group::subscription::subscription(const channel& s,
-                                  const intrusive_ptr<abstract_group>& g)
+                                           const intrusive_ptr<abstract_group>& g)
 : m_subscriber(s), m_group(g) { }
 
 abstract_group::subscription::~subscription() {

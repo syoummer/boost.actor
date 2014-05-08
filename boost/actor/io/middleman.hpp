@@ -37,7 +37,7 @@
 #include <functional>
 
 #include "boost/actor/node_id.hpp"
-#include "boost/actor/cppa_fwd.hpp"
+#include "boost/actor/fwd.hpp"
 #include "boost/actor/actor_namespace.hpp"
 
 namespace boost { namespace actor {

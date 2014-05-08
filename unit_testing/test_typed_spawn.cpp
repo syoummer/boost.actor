@@ -30,7 +30,7 @@
 
 #include "boost/algorithm/string/join.hpp"
 
-#include "boost/actor/cppa.hpp"
+#include "boost/actor/all.hpp"
 
 #include "test.hpp"
 

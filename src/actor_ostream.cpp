@@ -28,7 +28,7 @@
 \******************************************************************************/
 
 
-#include "boost/actor/cppa.hpp"
+#include "boost/actor/all.hpp"
 #include "boost/actor/scheduler.hpp"
 #include "boost/actor/singletons.hpp"
 #include "boost/actor/local_actor.hpp"

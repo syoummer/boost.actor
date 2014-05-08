@@ -28,46 +28,71 @@
 \******************************************************************************/
 
 
-#ifndef BOOST_ACTOR_ABSTRACT_CHANNEL_HPP
-#define BOOST_ACTOR_ABSTRACT_CHANNEL_HPP
+#ifndef BOOST_ACTOR_SPAWN_IO_HPP
+#define BOOST_ACTOR_SPAWN_IO_HPP
 
-#include "boost/actor/fwd.hpp"
-#include "boost/actor/ref_counted.hpp"
+#include "boost/actor/io/broker.hpp"
+#include "boost/actor/io/ipv4_io_stream.hpp"
 
 namespace boost {
 namespace actor {
 
 /**
- * @brief Interface for all message receivers.
- *
- * This interface describes an entity that can receive messages
- * and is implemented by {@link actor} and {@link group}.
+ * @brief Spawns a new, unconnected broker of type @p Impl.
  */
-class abstract_channel : public ref_counted {
+template<class Impl, spawn_options Os = no_spawn_options, typename... Ts>
+actor spawn_io(Ts&&... args) {
+    auto ptr = detail::make_counted<Impl>(std::forward<Ts>(args)...);
+    return {io::init_and_launch(std::move(ptr))};
+}
 
- public:
+/**
+ * @brief Spawns a new, unconnected broker from given functor.
+ */
+template<spawn_options Os = no_spawn_options,
+         typename F = std::function<void (io::broker*)>,
+         typename... Ts>
+actor spawn_io(F fun, const std::string& host, uint16_t port, Ts&&... args) {
+    auto ptr = io::ipv4_io_stream::connect_to(host.c_str(), port);
+    return spawn_io(std::move(fun), ptr, ptr, std::forward<Ts>(args)...);
+}
 
-    /**
-     * @brief Enqueues a new message to the channel.
-     * @param header Contains meta information about this message
-     *               such as the address of the sender and the
-     *               ID of the message if it is a synchronous message.
-     * @param content The content encapsulated in a copy-on-write tuple.
-     * @param host Pointer to the {@link execution_unit execution unit} the
-     *             caller is executed by or @p nullptr if the caller
-     *             is not a scheduled actor.
-     */
-    virtual void enqueue(msg_hdr_cref header,
-                         message content,
-                         execution_unit* host) = 0;
+/**
+ * @brief Spawns a new functor-based broker managing a connection
+ *        given as input and output stream pointer.
+ */
+template<spawn_options Os = no_spawn_options,
+         typename F = std::function<void (io::broker*)>,
+         typename... Ts>
+actor spawn_io(F fun,
+               io::input_stream_ptr in,
+               io::output_stream_ptr out,
+               Ts&&... args) {
+    auto ptr = io::broker::from(std::move(fun), std::move(in), std::move(out),
+                                std::forward<Ts>(args)...);
+    return {io::init_and_launch(std::move(ptr))};
+}
 
- protected:
-
-    virtual ~abstract_channel();
-
-};
+/**
+ * @brief Spawns a new functor-based broker managing acting as
+ *        server at given port.
+ */
+template<spawn_options Os = no_spawn_options,
+         typename F = std::function<void (io::broker*)>,
+         typename... Ts>
+actor spawn_io_server(F fun, uint16_t port, Ts&&... args) {
+    static_assert(!has_detach_flag(Os),
+                  "brokers cannot be detached");
+    static_assert(is_unbound(Os),
+                  "top-level spawns cannot have monitor or link flag");
+    using namespace std;
+    auto ptr = io::broker::from(move(fun),
+                                io::ipv4_acceptor::create(port),
+                                forward<Ts>(args)...);
+    return {io::init_and_launch(move(ptr))};
+}
 
 } // namespace actor
 } // namespace boost
 
-#endif // BOOST_ACTOR_ABSTRACT_CHANNEL_HPP
+#endif // BOOST_ACTOR_SPAWN_IO_HPP

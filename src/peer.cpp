@@ -32,7 +32,7 @@
 #include <cstdint>
 
 #include "boost/actor/on.hpp"
-#include "boost/actor/cppa.hpp"
+#include "boost/actor/all.hpp"
 #include "boost/actor/actor.hpp"
 #include "boost/actor/logging.hpp"
 #include "boost/actor/to_string.hpp"
@@ -157,7 +157,7 @@ continue_reading_result peer::continue_reading() {
                     return continue_reading_result::failure;
                 }
                 BOOST_ACTOR_LOG_DEBUG("deserialized: " << to_string(hdr) << " " << to_string(msg));
-                partial_function pf {
+                message_handler pf {
                     // monitor messages are sent automatically whenever
                     // actor_proxy_cache creates a new proxy
                     // note: aid is the *original* actor id

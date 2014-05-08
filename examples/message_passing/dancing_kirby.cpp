@@ -5,7 +5,7 @@
 #include <chrono>
 #include <iostream>
 #include <algorithm>
-#include "boost/actor/cppa.hpp"
+#include "boost/actor/all.hpp"
 
 using std::cout;
 using std::endl;

@@ -188,6 +188,7 @@ set(LIBCPPA_SRC
     src/local_actor.cpp
     src/logging.cpp
     src/mailbox_element.cpp
+    src/max_msg_size.cpp
     src/memory.cpp
     src/memory_managed.cpp
     src/message.cpp

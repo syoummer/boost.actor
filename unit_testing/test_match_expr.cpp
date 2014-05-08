@@ -2,7 +2,7 @@
 
 #include "boost/variant.hpp"
 
-#include "boost/actor/cppa.hpp"
+#include "boost/actor/all.hpp"
 #include "boost/actor/detail/demangle.hpp"
 
 using std::cout;
@@ -163,9 +163,9 @@ int main() {
         BOOST_ACTOR_CHECK_OPT_MSG_NONE(m3->invoke(make_message("1")));
     }
 
-    { // --- mixin it up with partial_function
+    { // --- mixin it up with message_handler
         // check on() usage
-        partial_function m0{on<int>() >> [](int) { }};
+        message_handler m0{on<int>() >> [](int) { }};
         BOOST_ACTOR_CHECK_OPT_MSG_VOID(m0(make_message(1)));
         // check lifted functor
         auto m1 = detail::lift_to_match_expr([](float) { });

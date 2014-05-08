@@ -46,7 +46,7 @@
 #include "boost/actor/exit_reason.hpp"
 #include "boost/actor/mailbox_element.hpp"
 #include "boost/actor/system_messages.hpp"
-#include "boost/actor/partial_function.hpp"
+#include "boost/actor/message_handler.hpp"
 #include "boost/actor/response_promise.hpp"
 
 #include "boost/actor/detail/memory.hpp"
@@ -126,8 +126,8 @@ class invoke_policy {
 
     std::list<std::unique_ptr<mailbox_element, detail::disposer> > m_cache;
 
-    inline void handle_timeout(partial_function&) {
-        BOOST_ACTOR_CRITICAL("handle_timeout(partial_function&)");
+    inline void handle_timeout(message_handler&) {
+        BOOST_ACTOR_CRITICAL("handle_timeout(message_handler&)");
     }
 
     enum class msg_type {

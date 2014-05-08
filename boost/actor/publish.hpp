@@ -28,46 +28,71 @@
 \******************************************************************************/
 
 
-#ifndef BOOST_ACTOR_ABSTRACT_CHANNEL_HPP
-#define BOOST_ACTOR_ABSTRACT_CHANNEL_HPP
+#ifndef BOOST_ACTOR_PUBLISH_HPP
+#define BOOST_ACTOR_PUBLISH_HPP
 
-#include "boost/actor/fwd.hpp"
-#include "boost/actor/ref_counted.hpp"
+#include <cstdint>
+
+#include "boost/actor/actor.hpp"
+
+#include "boost/actor/io/acceptor.hpp"
+#include "boost/actor/io/ipv4_acceptor.hpp"
+
+#include "boost/actor/detail/raw_access.hpp"
+#include "boost/actor/detail/publish_impl.hpp"
 
 namespace boost {
 namespace actor {
 
 /**
- * @brief Interface for all message receivers.
+ * @brief Publishes @p whom using @p acceptor to handle incoming connections.
  *
- * This interface describes an entity that can receive messages
- * and is implemented by {@link actor} and {@link group}.
+ * The connection is automatically closed if the lifetime of @p whom ends.
+ * @param whom Actor that should be published at @p port.
+ * @param acceptor Network technology-specific acceptor implementation.
  */
-class abstract_channel : public ref_counted {
+inline void publish(actor whom, io::acceptor_uptr acceptor) {
+    detail::publish_impl(detail::raw_access::get(whom), std::move(acceptor));
+}
 
- public:
+/**
+ * @brief Publishes @p whom at @p port.
+ *
+ * The connection is automatically closed if the lifetime of @p whom ends.
+ * @param whom Actor that should be published at @p port.
+ * @param port Unused TCP port.
+ * @param addr The IP address to listen to, or @p INADDR_ANY if @p addr is
+ *             @p nullptr.
+ * @throws bind_failure
+ */
+inline void publish(actor whom, uint16_t port, const char* addr = nullptr) {
+    if (!whom) return;
+    publish(std::move(whom), io::ipv4_acceptor::create(port, addr));
+}
 
-    /**
-     * @brief Enqueues a new message to the channel.
-     * @param header Contains meta information about this message
-     *               such as the address of the sender and the
-     *               ID of the message if it is a synchronous message.
-     * @param content The content encapsulated in a copy-on-write tuple.
-     * @param host Pointer to the {@link execution_unit execution unit} the
-     *             caller is executed by or @p nullptr if the caller
-     *             is not a scheduled actor.
-     */
-    virtual void enqueue(msg_hdr_cref header,
-                         message content,
-                         execution_unit* host) = 0;
+/**
+ * @copydoc publish(actor,io::acceptor_uptr)
+ */
+template<typename... Rs>
+void typed_publish(typed_actor<Rs...> whom, io::acceptor_uptr uptr) {
+    if (!whom) return;
+    detail::publish_impl(detail::raw_access::get(whom), std::move(uptr));
+}
 
- protected:
-
-    virtual ~abstract_channel();
-
-};
+/**
+ * @copydoc publish(actor,std::uint16_t,const char*)
+ */
+template<typename... Rs>
+void typed_publish(typed_actor<Rs...> whom,
+                   std::uint16_t port,
+                   const char* addr = nullptr) {
+    if (!whom) return;
+    detail::publish_impl(detail::raw_access::get(whom),
+                         io::ipv4_acceptor::create(port, addr));
+}
 
 } // namespace actor
 } // namespace boost
 
-#endif // BOOST_ACTOR_ABSTRACT_CHANNEL_HPP
+
+#endif // BOOST_ACTOR_PUBLISH_HPP

@@ -28,53 +28,22 @@
 \******************************************************************************/
 
 
-#ifndef BOOST_ACTOR_FWD_HPP
-#define BOOST_ACTOR_FWD_HPP
+#include <atomic>
 
-#include <cstdint>
+#include "boost/actor/max_msg_size.hpp"
 
 namespace boost {
-
-template<class> class intrusive_ptr;
-
 namespace actor {
 
-// classes
-class actor;
-class group;
-class channel;
-class node_id;
-class behavior;
-class resumable;
-class message;
-class actor_addr;
-class actor_proxy;
-class scoped_actor;
-class execution_unit;
-class abstract_actor;
-class abstract_group;
-class blocking_actor;
-class message_header;
-class partial_function;
-class uniform_type_info;
-class event_based_actor;
+namespace { std::atomic<size_t> default_max_msg_size{16 * 1024 * 1024}; }
 
-// structs
-struct anything;
+void max_msg_size(size_t size) {
+  default_max_msg_size = size;
+}
 
-// enums
-enum primitive_type : unsigned char;
-enum class atom_value : std::uint64_t;
-
-// intrusive pointer typedefs
-typedef intrusive_ptr<abstract_group>      abstract_group_ptr;
-typedef intrusive_ptr<actor_proxy>         actor_proxy_ptr;
-typedef intrusive_ptr<node_id>             node_id_ptr;
-
-// convenience typedefs
-typedef const message_header& msg_hdr_cref;
+size_t max_msg_size() {
+  return default_max_msg_size;
+}
 
 } // namespace actor
 } // namespace boost
-
-#endif // BOOST_ACTOR_FWD_HPP

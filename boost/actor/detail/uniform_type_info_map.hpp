@@ -37,7 +37,7 @@
 #include <utility>
 #include <type_traits>
 
-#include "boost/actor/cppa_fwd.hpp"
+#include "boost/actor/fwd.hpp"
 
 #include "boost/actor/atom.hpp"
 #include "boost/actor/unit.hpp"

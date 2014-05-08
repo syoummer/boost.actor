@@ -33,6 +33,8 @@
 
 #include <cstddef> // size_t
 
+#include "boost/actor/max_msg_size.hpp"
+
 namespace boost { namespace actor { class deserializer; } }
 
 namespace boost {

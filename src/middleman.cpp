@@ -549,20 +549,5 @@ middleman* middleman::create_singleton() {
 }
 
 } // namespace io
-
-namespace {
-
-std::atomic<size_t> default_max_msg_size{16 * 1024 * 1024};
-
-} // namespace <anonymous>
-
-void max_msg_size(size_t size) {
-  default_max_msg_size = size;
-}
-
-size_t max_msg_size() {
-  return default_max_msg_size;
-}
-
 } // namespace actor
 } // namespace boost

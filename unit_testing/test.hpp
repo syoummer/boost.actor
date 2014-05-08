@@ -9,7 +9,7 @@
 #include <iostream>
 #include <type_traits>
 
-#include "boost/actor/cppa.hpp"
+#include "boost/actor/all.hpp"
 #include "boost/actor/actor.hpp"
 #include "boost/actor/config.hpp"
 #include "boost/actor/logging.hpp"

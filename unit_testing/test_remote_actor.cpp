@@ -7,7 +7,7 @@
 
 #include "test.hpp"
 #include "ping_pong.hpp"
-#include "boost/actor/cppa.hpp"
+#include "boost/actor/all.hpp"
 #include "boost/actor/logging.hpp"
 #include "boost/actor/exception.hpp"
 

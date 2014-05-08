@@ -37,7 +37,7 @@
 #include "boost/actor/extend.hpp"
 #include "boost/actor/node_id.hpp"
 #include "boost/actor/actor_proxy.hpp"
-#include "boost/actor/partial_function.hpp"
+#include "boost/actor/message_handler.hpp"
 #include "boost/actor/type_lookup_table.hpp"
 
 #include "boost/actor/io/buffer.hpp"
@@ -119,7 +119,7 @@ class peer : public extend<continuable>::with<buffered_writing> {
     // point to the published actor of the remote node
     bool m_stop_on_last_proxy_exited;
 
-    partial_function m_content_handler;
+    message_handler m_content_handler;
 
     type_lookup_table m_incoming_types;
     type_lookup_table m_outgoing_types;

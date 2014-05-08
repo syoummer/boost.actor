@@ -31,12 +31,12 @@
 #include "boost/actor/to_string.hpp"
 
 #include "boost/actor/config.hpp"
-#include "boost/actor/partial_function.hpp"
+#include "boost/actor/message_handler.hpp"
 
 namespace boost {
 namespace actor {
 
-partial_function::partial_function(impl_ptr ptr) : m_impl(std::move(ptr)) { }
+message_handler::message_handler(impl_ptr ptr) : m_impl(std::move(ptr)) { }
 
 void detail::behavior_impl::handle_timeout() { }
 
@@ -47,11 +47,11 @@ namespace boost {
 namespace actor {
 namespace detail {
 
-partial_function combine(behavior_impl_ptr lhs, behavior_impl_ptr rhs) {
+message_handler combine(behavior_impl_ptr lhs, behavior_impl_ptr rhs) {
     return {lhs->or_else(rhs)};
 }
 
-behavior_impl_ptr extract(const partial_function& arg) {
+behavior_impl_ptr extract(const message_handler& arg) {
     return arg.as_behavior_impl();
 }
 

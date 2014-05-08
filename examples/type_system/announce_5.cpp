@@ -12,7 +12,7 @@
 
 #include <cstdint>
 #include <iostream>
-#include "boost/actor/cppa.hpp"
+#include "boost/actor/all.hpp"
 #include "boost/actor/to_string.hpp"
 
 using std::cout;
