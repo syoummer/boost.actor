@@ -10,5 +10,6 @@ Makefile
 bin/*
 lib/*
 manual/manual.pdf
+manual/manual.html
 manual/build-pdf/*
 manual/build-html/*

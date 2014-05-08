@@ -4,7 +4,7 @@
 \subsection{Event-Based API}
 
 \begin{itemize}
-\item The functions \lstinline^become^ and \lstinline^handle_response^ do not block, i.e., always return immediately.
+\item The function \lstinline^become^ does not block, i.e., always returns immediately.
 Thus, one should \textit{always} capture by value in lambda expressions, because all references on the stack will cause undefined behavior if the lambda expression is executed.
 \end{itemize}
 
@@ -15,22 +15,10 @@ Thus, one should \textit{always} capture by value in lambda expressions, because
 \item
 A handle returned by \lstinline^sync_send^ represents \emph{exactly one} response message.
 Therefore, it is not possible to receive more than one response message.
-%Calling \lstinline^reply^ more than once will result in lost messages and calling \lstinline^handle_response^ or \lstinline^receive_response^ more than once on a future will throw an exception.
 
 \item
 The handle returned by \lstinline^sync_send^ is bound to the calling actor.
 It is not possible to transfer a handle to a response to another actor.
-
-\end{itemize}
-
-\subsection{Sending Messages}
-
-\begin{itemize}
-
-\item
-\lstinline^send(whom, ...)^ is defined as \lstinline^send_tuple(whom, make_any_tuple(...))^.
-Hence, a message sent via \lstinline^send(whom, self->last_dequeued())^ will not yield the expected result, since it wraps \lstinline^self->last_dequeued()^ into another \lstinline^any_tuple^ instance.
-The correct way of forwarding messages is \lstinline^self->forward_to(whom)^.
 
 \end{itemize}
 
@@ -43,8 +31,7 @@ Accessing shared memory segments concurrently can cause undefined behavior that 
 However, sharing \textit{data} between actors is fine, as long as the data is \textit{immutable} and its lifetime is guaranteed to outlive all actors.
 The simplest way to meet the lifetime guarantee is by storing the data in smart pointers such as \lstinline^std::shared_ptr^.
 Nevertheless, the recommended way of sharing informations is message passing.
-Sending data to multiple actors does not necessarily result in copying the data several times.
-Read Section \ref{Sec::Tuples} to learn more about \ba's copy-on-write optimization for tuples.
+Sending data to multiple actors does not necessarily result in copying the data several times, because \ba uses a copy-on-write optimization for its messages.
 \end{itemize}
 
 \subsection{Constructors of Class-based Actors}

@@ -6,7 +6,7 @@ if [ ! -d manual ]; then
     exit
 fi
 
-if [ ! -d ../gh-pages ]; then
+if [ ! -d ../boost.actor.gh-pages ]; then
     echo "no gh-pages folder found"
     exit
 fi
@@ -27,12 +27,12 @@ cd manual/
 make html &>/dev/null
 
 echo "copy documentation into gh-pages ..."
-cd ../../gh-pages
+cd ../../boost.actor.gh-pages
 rm -f *.tex *.html *.css *.png *.js manual/manual.pdf manual/index.html
-cp -R ../libcppa/html/* .
+cp -R ../boost.actor/html/* .
 mkdir manual
-cp ../libcppa/manual.pdf manual/
-cp ../libcppa/manual/manual.html manual/index.html
+cp ../boost.actor/manual.pdf manual/
+cp ../boost.actor/manual/manual.html manual/index.html
 
 echo "commit ..."
 git add .
@@ -41,4 +41,4 @@ git commit -a -m "documentation update"
 echo "push ..."
 git push
 
-cd ../libcppa
+cd ../boost.actor

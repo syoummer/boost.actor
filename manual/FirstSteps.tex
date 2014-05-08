@@ -4,11 +4,11 @@
 
 %\subsection{Some Terminology}
 
-To compile \ba, you will need CMake and a C++11 compiler. To get and compile the sources, open a terminal (on Linux or Mac OS X) and type:
+To compile \ba, you will need CMake and a C++11 compiler (and Boost of course). To get and compile the sources, open a terminal (on Linux or Mac OS X) and type:
 
 \begin{verbatim}
-git clone git://github.com/Neverlord/libcppa.git
-cd libcppa
+git clone https://github.com/Neverlord/boost.actor.git
+cd boost.actor
 ./configure
 make
 make install [as root, optional]
@@ -46,7 +46,7 @@ Please submit a bug report that includes (a) your compiler version, (b) your OS,
 \begin{itemize*}
 \item Linux
 \item Mac OS X
-\item Windows
+\item Windows (currently only via MinGW)
 \end{itemize*}
 
 \clearpage
@@ -56,10 +56,10 @@ Please submit a bug report that includes (a) your compiler version, (b) your OS,
 #include <string>
 #include <iostream>
 
-#include "cppa/cppa.hpp"
+#include "boost/actor/all.hpp"
 
 using namespace std;
-using namespace cppa;
+using namespace boost.actor;
 
 behavior mirror(event_based_actor* self) {
     // return the (initial) actor behavior

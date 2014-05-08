@@ -1,24 +1,17 @@
 \section{Synchronous Communication}
 \label{Sec::Sync}
 
-\ba supports both asynchronous and synchronous communication.
-The member functions \lstinline^sync_send^ and \lstinline^sync_send_tuple^ send synchronous request messages.
+In addition to asynchronous communication, \ba also provides synchronous message passing via the member function \lstinline^sync_send^.
 
 \begin{lstlisting}
 template<typename... Args>
 __unspecified__ sync_send(actor_ptr whom, Args&&... what);
-
-__unspecified__ sync_send_tuple(actor_ptr whom, any_tuple what);
 
 template<typename Duration, typename... Args>
 __unspecified__ timed_sync_send(actor_ptr whom,
                                 Duration timeout,
                                 Args&&... what);
 
-template<typename Duration, typename... Args>
-__unspecified__ timed_sync_send_tuple(actor_ptr whom,
-                                      Duration timeout,
-                                      any_tuple what);
 \end{lstlisting}
 
 A synchronous message is sent to the receiving actor's mailbox like any other asynchronous message.

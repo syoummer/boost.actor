@@ -1,7 +1,6 @@
 \section{Strongly Typed Actors}
 
 Strongly typed actors provide a convenient way of defining type-safe messaging interfaces.
-Unlike untyped actorsd, typed actors are not allowed to use guard expressions.
 When calling \lstinline^become^ in a strongly typed actor, \emph{all} message handlers from the typed interface must be set.
 
 Typed actors use handles of type \lstinline^typed_actor<...>^ rather than \lstinline^actor^, whereas the template parameters hold the messaging interface.
@@ -12,23 +11,24 @@ All functions for message passing, linking and monitoring are overloaded to acce
 \label{sec:strong:spawn}
 
 Typed actors are spawned using the function \lstinline^spawn_typed^.
-The argument to this function call \emph{must} be a match expression as shown in the example below, because the runtime of libcppa needs to evaluate the signature of each message handler.
+The most convenient way to is to use a typedef for a particular kind of actor.
 
 \begin{lstlisting}
-auto p0 = spawn_typed(
-  on_arg_match >> [](int a, int b) {
+// assign to identical type
+using my_actor = typed_actor_ptr<
+                   replies_to<int, int>::with<double>,
+                   replies_to<double, double>::with<double, double>
+                 >;
+my_actor::behavior_type my_actor_impl() {
+  [](int a, int b) {
    return static_cast<double>(a) * b;
   },
-  on_arg_match >> [](double a, double b) {
-    return make_cow_tuple(a * b, a / b);
+  [](double a, double b) {
+    return std::make_tuple(a * b, a / b);
   }
 );
-// assign to identical type
-using full_type = typed_actor_ptr<
-                    replies_to<int, int>::with<double>,
-                    replies_to<double, double>::with<double, double>
-                  >;
-full_type p1 = p0;
+auto p0 = spawn_typed(my_actor_impl);
+my_actor p1 = p0;
 // assign to subtype
 using subtype1 = typed_actor_ptr<
                    replies_to<int, int>::with<double>
