@@ -1,9 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
-project(cppa C CXX)
-
-set(LIBCPPA_VERSION_MAJOR 0)
-set(LIBCPPA_VERSION_MINOR 9)
-set(LIBCPPA_VERSION_PATCH 0)
+project(boost_actor C CXX)
 
 # prohibit in-source builds
 if ("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
@@ -88,7 +84,7 @@ include(CheckIncludeFileCXX)
 check_include_file_cxx("valgrind/valgrind.h" HAVE_VALGRIND_H)
 if (HAVE_VALGRIND_H)
   set(VALGRIND "yes")
-  add_definitions(-DCPPA_ANNOTATE_VALGRIND)
+  add_definitions(-DBOOST_ACTOR_ANNOTATE_VALGRIND)
 else (HAVE_VALGRIND_H)
   set(VALGRIND "no")
 endif (HAVE_VALGRIND_H)
@@ -96,8 +92,8 @@ endif (HAVE_VALGRIND_H)
 # set build type (evaluate ENABLE_DEBUG flag)
 if (ENABLE_DEBUG)
   set(CMAKE_BUILD_TYPE Debug)
-  add_definitions(-DCPPA_DEBUG_MODE)
-  message(STATUS "Enable libcppa's debug mode")
+  add_definitions(-DBOOST_ACTOR_DEBUG_MODE)
+  message(STATUS "Enable libboost_actor's debug mode")
 endif (ENABLE_DEBUG)
 
 if (ENABLE_ADDRESS_SANITIZER)
@@ -105,9 +101,9 @@ if (ENABLE_ADDRESS_SANITIZER)
   message(STATUS "Enable address sanitizer")
 endif (ENABLE_ADDRESS_SANITIZER)
 
-if (CPPA_LOG_LEVEL)
-  add_definitions(-DCPPA_LOG_LEVEL=${CPPA_LOG_LEVEL})
-endif(CPPA_LOG_LEVEL)
+if (BOOST_ACTOR_LOG_LEVEL)
+  add_definitions(-DBOOST_ACTOR_LOG_LEVEL=${BOOST_ACTOR_LOG_LEVEL})
+endif(BOOST_ACTOR_LOG_LEVEL)
 
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
@@ -117,27 +113,18 @@ if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
 endif ("${CMAKE_BUILD_TYPE}" STREQUAL "")
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  set(LIBCPPA_PLATFORM_SRC src/middleman_event_handler_epoll.cpp)
+  set(LIBBOOST_ACTOR_PLATFORM_SRC src/middleman_event_handler_epoll.cpp)
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  set(LIBCPPA_PLATFORM_SRC src/middleman_event_handler_poll.cpp)
+  set(LIBBOOST_ACTOR_PLATFORM_SRC src/middleman_event_handler_poll.cpp)
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Window")
-  set(LIBCPPA_PLATFORM_SRC src/middleman_event_handler_poll.cpp src/execinfo_windows.cpp)
+  set(LIBBOOST_ACTOR_PLATFORM_SRC src/middleman_event_handler_poll.cpp src/execinfo_windows.cpp)
 else ()
-  message(FATAL_ERROR "This platform is not supported by libcppa")
+  message(FATAL_ERROR "This platform is not supported by libboost_actor")
 endif()
 
-# get header files; only needed by CMake generators,
-# e.g., for creating proper Xcode projects
-file(GLOB LIBCPPA_HDRS "cppa/*.hpp"
-                       "cppa/detail/*.hpp"
-                       "cppa/intrusive/*.hpp"
-                       "cppa/io/*.hpp"
-                       "cppa/qtsupport/*.hpp"
-                       "cppa/util/*.hpp")
-
 # list cpp files including platform-dependent files
-set(LIBCPPA_SRC
-    ${LIBCPPA_PLATFORM_SRC}
+set(LIBBOOST_ACTOR_SRC
+    ${LIBBOOST_ACTOR_PLATFORM_SRC}
     src/abstract_actor.cpp
     src/abstract_channel.cpp
     src/abstract_group.cpp
@@ -238,11 +225,11 @@ elseif (MINGW)
 endif ()
 
 if (DISABLE_MEM_MANAGEMENT)
-  add_definitions(-DCPPA_DISABLE_MEM_MANAGEMENT)
+  add_definitions(-DBOOST_ACTOR_DISABLE_MEM_MANAGEMENT)
 endif (DISABLE_MEM_MANAGEMENT)
 
 if (STANDALONE_BUILD)
-  add_definitions(-DCPPA_STANDALONE_BUILD)
+  add_definitions(-DBOOST_ACTOR_STANDALONE_BUILD)
 endif (STANDALONE_BUILD)
 
 find_package(Boost 1.54.0 COMPONENTS REQUIRED system context coroutine thread)
@@ -259,37 +246,37 @@ set(LD_DIRS ${LD_DIRS} ${Boost_LIBRARY_DIRS})
 
 # set compiler flag when compiling w/o context-switching actors
 if (DISABLE_CONTEXT_SWITCHING)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCPPA_DISABLE_CONTEXT_SWITCHING")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_ACTOR_DISABLE_CONTEXT_SWITCHING")
 endif ()
 
 # build shared library if not compiling static only
-if (NOT "${CPPA_BUILD_STATIC_ONLY}" STREQUAL "yes")
-  add_library(libcppa SHARED ${LIBCPPA_SRC} ${LIBCPPA_HDRS})
-  target_link_libraries(libcppa ${LD_FLAGS})
-  set(LIBRARY_VERSION ${LIBCPPA_VERSION_MAJOR}.${LIBCPPA_VERSION_MINOR}.${LIBCPPA_VERSION_PATCH})
-  set(LIBRARY_SOVERSION ${LIBCPPA_VERSION_MAJOR})
-  set_target_properties(libcppa 
+if (NOT "${BOOST_ACTOR_BUILD_STATIC_ONLY}" STREQUAL "yes")
+  add_library(libboost_actor SHARED ${LIBBOOST_ACTOR_SRC} ${LIBBOOST_ACTOR_HDRS})
+  target_link_libraries(libboost_actor ${LD_FLAGS})
+  set(LIBRARY_VERSION ${LIBBOOST_ACTOR_VERSION_MAJOR}.${LIBBOOST_ACTOR_VERSION_MINOR}.${LIBBOOST_ACTOR_VERSION_PATCH})
+  set(LIBRARY_SOVERSION ${LIBBOOST_ACTOR_VERSION_MAJOR})
+  set_target_properties(libboost_actor
                         PROPERTIES
-                        SOVERSION ${LIBRARY_SOVERSION}
-                        VERSION ${LIBRARY_VERSION}
-                        OUTPUT_NAME cppa)
+                        SOVERSION 0
+                        VERSION 0
+                        OUTPUT_NAME boost_actor)
   if(NOT MINGW)
-    install(TARGETS libcppa LIBRARY DESTINATION lib)
+    install(TARGETS libboost_actor LIBRARY DESTINATION lib)
   endif()
 endif ()
 
 # build static library only if --build-static or --build-static-only was set
-if ("${CPPA_BUILD_STATIC_ONLY}" STREQUAL "yes" OR "${CPPA_BUILD_STATIC}" STREQUAL "yes")
-  add_library(libcppaStatic STATIC ${LIBCPPA_HDRS} ${LIBCPPA_SRC})
-  set_target_properties(libcppaStatic PROPERTIES OUTPUT_NAME cppa_static)
-  install(TARGETS libcppaStatic ARCHIVE DESTINATION lib)
+if ("${BOOST_ACTOR_BUILD_STATIC_ONLY}" STREQUAL "yes" OR "${BOOST_ACTOR_BUILD_STATIC}" STREQUAL "yes")
+  add_library(libboost_actorStatic STATIC ${LIBBOOST_ACTOR_HDRS} ${LIBBOOST_ACTOR_SRC})
+  set_target_properties(libboost_actorStatic PROPERTIES OUTPUT_NAME boost_actor_static)
+  install(TARGETS libboost_actorStatic ARCHIVE DESTINATION lib)
 endif ()
 
 link_directories(${LD_DIRS})
 include_directories(${INCLUDE_DIRS})
 
 # install includes
-install(DIRECTORY cppa/ DESTINATION include/cppa FILES_MATCHING PATTERN "*.hpp")
+install(DIRECTORY boost/actor/ DESTINATION include/boost/actor FILES_MATCHING PATTERN "*.hpp")
 
 # process cmake_uninstall.cmake.in
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake_uninstall.cmake.in"
@@ -301,45 +288,45 @@ add_custom_target(uninstall
                   COMMAND ${CMAKE_COMMAND} -P
                   ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 
-# setting path to cppa headers and libcppa
-set (CPPA_INCLUDE_PATH ${CMAKE_SOURCE_DIR}/libcppa)
-set (CPPA_INCLUDE ${CPPA_INCLUDE_PATH})
+# setting path to boost_actor headers and libboost_actor
+set (BOOST_ACTOR_INCLUDE_PATH ${CMAKE_SOURCE_DIR}/boost.actor)
+set (BOOST_ACTOR_INCLUDE ${BOOST_ACTOR_INCLUDE_PATH})
 
-if ("${CPPA_BUILD_STATIC_ONLY}" STREQUAL "yes")
-  set (CPPA_LIBRARY ${LIBRARY_OUTPUT_PATH}/libcppa_static.a ${LD_FLAGS})
+if ("${BOOST_ACTOR_BUILD_STATIC_ONLY}" STREQUAL "yes")
+  set (BOOST_ACTOR_LIBRARY ${LIBRARY_OUTPUT_PATH}/libboost_actor_static.a ${LD_FLAGS})
 else ()
   if (APPLE)
     if ("${CMAKE_GENERATOR}" STREQUAL "Xcode")
-      set (CPPA_LIBRARY "-lcppa")
+      set (BOOST_ACTOR_LIBRARY "-lboost_actor")
     else ()
-      set (CPPA_LIBRARY ${LIBRARY_OUTPUT_PATH}/libcppa.dylib)
+      set (BOOST_ACTOR_LIBRARY ${LIBRARY_OUTPUT_PATH}/libboost_actor.dylib)
     endif ()
-    #set (CPPA_LIBRARY -L${LIBRARY_OUTPUT_PATH} -lcppa)
+    #set (BOOST_ACTOR_LIBRARY -L${LIBRARY_OUTPUT_PATH} -lboost_actor)
   elseif (UNIX)
-    set (CPPA_LIBRARY ${LIBRARY_OUTPUT_PATH}/libcppa.so)
+    set (BOOST_ACTOR_LIBRARY ${LIBRARY_OUTPUT_PATH}/libboost_actor.so)
   elseif (MINGW)
-    set (CPPA_LIBRARY ${LIBRARY_OUTPUT_PATH}/libcppa.dll)
+    set (BOOST_ACTOR_LIBRARY ${LIBRARY_OUTPUT_PATH}/libboost_actor.dll)
   else ()
     message (SEND_FATAL "Host platform not supported ...")
   endif ()
 endif ()
 
 # set up subdirectories
-if (NOT "${CPPA_NO_UNIT_TESTS}" STREQUAL "yes")
+if (NOT "${BOOST_ACTOR_NO_UNIT_TESTS}" STREQUAL "yes")
   enable_testing()
   add_subdirectory(unit_testing)
-  if ("${CPPA_BUILD_STATIC_ONLY}" STREQUAL "yes")
-    add_dependencies(all_unit_tests libcppaStatic)
+  if ("${BOOST_ACTOR_BUILD_STATIC_ONLY}" STREQUAL "yes")
+    add_dependencies(all_unit_tests libboost_actorStatic)
   else ()
-    add_dependencies(all_unit_tests libcppa)
+    add_dependencies(all_unit_tests libboost_actor)
   endif ()
 endif ()
-if (NOT "${CPPA_NO_EXAMPLES}" STREQUAL "yes")
+if (NOT "${BOOST_ACTOR_NO_EXAMPLES}" STREQUAL "yes")
   add_subdirectory(examples)
-  if ("${CPPA_BUILD_STATIC_ONLY}" STREQUAL "yes")
-    add_dependencies(all_examples libcppaStatic)
+  if ("${BOOST_ACTOR_BUILD_STATIC_ONLY}" STREQUAL "yes")
+    add_dependencies(all_examples libboost_actorStatic)
   else ()
-    add_dependencies(all_examples libcppa)
+    add_dependencies(all_examples libboost_actor)
   endif ()
 endif ()
 
@@ -363,21 +350,21 @@ endif (DOXYGEN_FOUND)
 
 # set variables for summary
 set(LOG_LEVEL_STR "none")
-if (CPPA_LOG_LEVEL)
-  if (${CPPA_LOG_LEVEL} EQUAL 0)
+if (BOOST_ACTOR_LOG_LEVEL)
+  if (${BOOST_ACTOR_LOG_LEVEL} EQUAL 0)
     set(LOG_LEVEL_STR "ERROR")
-  elseif (${CPPA_LOG_LEVEL} EQUAL 1)
+  elseif (${BOOST_ACTOR_LOG_LEVEL} EQUAL 1)
     set(LOG_LEVEL_STR "WARNING")
-  elseif (${CPPA_LOG_LEVEL} EQUAL 2)
+  elseif (${BOOST_ACTOR_LOG_LEVEL} EQUAL 2)
     set(LOG_LEVEL_STR "INFO")
-  elseif (${CPPA_LOG_LEVEL} EQUAL 3)
+  elseif (${BOOST_ACTOR_LOG_LEVEL} EQUAL 3)
     set(LOG_LEVEL_STR "DEBUG")
-  elseif (${CPPA_LOG_LEVEL} EQUAL 4)
+  elseif (${BOOST_ACTOR_LOG_LEVEL} EQUAL 4)
     set(LOG_LEVEL_STR "TRACE")
   else ()
     set(LOG_LEVEL_STR "invalid")
   endif ()
-endif (CPPA_LOG_LEVEL)
+endif (BOOST_ACTOR_LOG_LEVEL)
 
 macro (toYesNo in out)
   if (${in})
@@ -398,24 +385,22 @@ endmacro ()
 toYesNo(ENABLE_DEBUG DEBUG_MODE_STR)
 toYesNo(ENABLE_OPENCL BUILD_OPENCL_STR)
 toYesNo(DISABLE_MEM_MANAGEMENT DISABLE_MEM_MANAGEMENT_STR)
-invertYesNo(CPPA_NO_EXAMPLES BUILD_EXAMPLES)
-invertYesNo(CPPA_NO_UNIT_TESTS BUILD_UNIT_TESTS)
+invertYesNo(BOOST_ACTOR_NO_EXAMPLES BUILD_EXAMPLES)
+invertYesNo(BOOST_ACTOR_NO_UNIT_TESTS BUILD_UNIT_TESTS)
 invertYesNo(DISABLE_MEM_MANAGEMENT_STR WITH_MEM_MANAGEMENT)
 
-if (NOT "${CPPA_BUILD_STATIC}" STREQUAL "yes")
-  set(CPPA_BUILD_STATIC "no")
+if (NOT "${BOOST_ACTOR_BUILD_STATIC}" STREQUAL "yes")
+  set(BOOST_ACTOR_BUILD_STATIC "no")
 endif ()
 
-if (NOT "${CPPA_BUILD_STATIC_ONLY}" STREQUAL "yes")
-  set(CPPA_BUILD_STATIC_ONLY "no")
+if (NOT "${BOOST_ACTOR_BUILD_STATIC_ONLY}" STREQUAL "yes")
+  set(BOOST_ACTOR_BUILD_STATIC_ONLY "no")
 else ()
-  set(CPPA_BUILD_STATIC "yes")
+  set(BOOST_ACTOR_BUILD_STATIC "yes")
 endif ()
 
 # done (print summary)
 message("\n====================|  Build Summary  |===================="
-        "\n"
-        "\nLibcppa version:   ${LIBRARY_VERSION}"
         "\n"
         "\nBuild type:        ${CMAKE_BUILD_TYPE}"
         "\nDebug mode:        ${DEBUG_MODE_STR}"
@@ -424,8 +409,8 @@ message("\n====================|  Build Summary  |===================="
         "\nValgrind:          ${VALGRIND}"
         "\nBuild examples:    ${BUILD_EXAMPLES}"
         "\nBuild unit tests:  ${BUILD_UNIT_TESTS}"
-        "\nBuild static:      ${CPPA_BUILD_STATIC}"
-        "\nBulid static only: ${CPPA_BUILD_STATIC_ONLY}"
+        "\nBuild static:      ${BOOST_ACTOR_BUILD_STATIC}"
+        "\nBulid static only: ${BOOST_ACTOR_BUILD_STATIC_ONLY}"
         "\nBuild OpenCL:      ${BUILD_OPENCL_STR}"
         "\nWith mem. mgmt.:   ${WITH_MEM_MANAGEMENT}"
         "\n"
