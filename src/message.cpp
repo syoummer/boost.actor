@@ -52,34 +52,34 @@ void message::reset() {
 }
 
 void* message::mutable_at(size_t p) {
-    BOOST_ACTOR_REQUIRE(m_vals != nullptr);
+    BOOST_ACTOR_REQUIRE(m_vals);
     return m_vals->mutable_at(p);
 }
 
 const void* message::at(size_t p) const {
-    BOOST_ACTOR_REQUIRE(m_vals != nullptr);
+    BOOST_ACTOR_REQUIRE(m_vals);
     return m_vals->at(p);
 }
 
 const uniform_type_info* message::type_at(size_t p) const {
-    BOOST_ACTOR_REQUIRE(m_vals != nullptr);
+    BOOST_ACTOR_REQUIRE(m_vals);
     return m_vals->type_at(p);
 }
 
 bool message::equals(const message& other) const {
-    BOOST_ACTOR_REQUIRE(m_vals != nullptr);
+    BOOST_ACTOR_REQUIRE(m_vals);
     return m_vals->equals(*other.vals());
 }
 
 message message::drop(size_t n) const {
-    BOOST_ACTOR_REQUIRE(m_vals != nullptr);
+    BOOST_ACTOR_REQUIRE(m_vals);
     if (n == 0) return *this;
     if (n >= size()) return message{};
     return message{detail::decorated_tuple::create(m_vals, n)};
 }
 
 message message::drop_right(size_t n) const {
-    BOOST_ACTOR_REQUIRE(m_vals != nullptr);
+    BOOST_ACTOR_REQUIRE(m_vals);
     using namespace std;
     if (n == 0) return *this;
     if (n >= size()) return message{};
