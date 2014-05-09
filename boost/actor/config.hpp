@@ -93,7 +93,7 @@
         printf("%s:%u: requirement failed '%s'\n", file, line, stmt);          \
         abort()
 #   define BOOST_ACTOR_REQUIRE(stmt)                                           \
-        if ((stmt) == false) {                                                 \
+        if (static_cast<bool>(stmt) == false) {                                \
             BOOST_ACTOR_REQUIRE__(#stmt, __FILE__, __LINE__);                  \
         }((void) 0)
 #else
