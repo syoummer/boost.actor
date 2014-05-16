@@ -198,6 +198,10 @@ message_id local_actor::timed_sync_send_tuple_impl(message_priority mp,
                                                    const actor& dest,
                                                    const duration& rtime,
                                                    message&& what) {
+    if (!dest) {
+        throw std::invalid_argument("cannot send synchronous message "
+                                    "to invalid_actor");
+    }
     auto nri = new_request_id();
     if (mp == message_priority::high) nri = nri.with_high_priority();
     dest->enqueue({address(), dest, nri}, std::move(what), m_host);
@@ -210,6 +214,10 @@ message_id local_actor::timed_sync_send_tuple_impl(message_priority mp,
 message_id local_actor::sync_send_tuple_impl(message_priority mp,
                                              const actor& dest,
                                              message&& what) {
+    if (!dest) {
+        throw std::invalid_argument("cannot send synchronous message "
+                                    "to invalid_actor");
+    }
     auto nri = new_request_id();
     if (mp == message_priority::high) nri = nri.with_high_priority();
     dest->enqueue({address(), dest, nri}, std::move(what), m_host);
@@ -217,6 +225,7 @@ message_id local_actor::sync_send_tuple_impl(message_priority mp,
 }
 
 void anon_send_exit(const actor_addr& whom, std::uint32_t reason) {
+    if (!whom) return;
     auto ptr = detail::raw_access::get(whom);
     ptr->enqueue({invalid_actor_addr, ptr, message_id{}.with_high_priority()},
                  make_message(exit_msg{invalid_actor_addr, reason}), nullptr);
