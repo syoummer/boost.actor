@@ -31,6 +31,7 @@
 #ifndef NOT_PRIORITIZING_HPP
 #define NOT_PRIORITIZING_HPP
 
+#include <list>
 #include <iterator>
 
 #include "boost/actor/mailbox_element.hpp"
@@ -45,7 +46,7 @@ class not_prioritizing {
 
  public:
 
-    typedef std::vector<unique_mailbox_element_pointer> cache_type;
+    typedef std::list<unique_mailbox_element_pointer> cache_type;
 
     typedef cache_type::iterator cache_iterator;
 

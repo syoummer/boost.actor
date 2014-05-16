@@ -31,6 +31,7 @@
 #ifndef PRIORITIZING_HPP
 #define PRIORITIZING_HPP
 
+#include <list>
 #include <iostream>
 
 #include "boost/actor/mailbox_element.hpp"
@@ -44,7 +45,7 @@ class prioritizing {
 
  public:
 
-    typedef std::vector<unique_mailbox_element_pointer> cache_type;
+    typedef std::list<unique_mailbox_element_pointer> cache_type;
 
     typedef cache_type::iterator cache_iterator;
 
