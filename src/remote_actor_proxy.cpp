@@ -159,7 +159,7 @@ void remote_actor_proxy::enqueue(msg_hdr_cref hdr, message msg,
                             "KILL_PROXY " << to_string(_this->address())
                             << " with exit reason " << reason);
             if (_this->m_pending_requests.closed()) {
-                BOOST_ACTOR_LOG_WARNING("received KILL_PROXY twice");
+                BOOST_ACTOR_LOG_INFO("received KILL_PROXY twice");
             }
             else {
                 _this->cleanup(reason);
