@@ -16,13 +16,13 @@
 \******************************************************************************/
 
 
-#ifndef IPV4_PEER_ACCEPTOR_HPP
-#define IPV4_PEER_ACCEPTOR_HPP
+#ifndef tcp_PEER_ACCEPTOR_HPP
+#define tcp_PEER_ACCEPTOR_HPP
 
 #include "boost/actor/actor.hpp"
 
-#include "boost/actor/io/ipv4_acceptor.hpp"
 #include "boost/actor/io/continuable.hpp"
+#include "boost/actor/io/tcp_acceptor.hpp"
 
 namespace boost {
 namespace actor {
@@ -64,4 +64,4 @@ class peer_acceptor : public continuable {
 } // namespace actor
 } // namespace boost
 
-#endif // IPV4_PEER_ACCEPTOR_HPP
+#endif // tcp_PEER_ACCEPTOR_HPP

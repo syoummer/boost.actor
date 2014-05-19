@@ -100,8 +100,8 @@ boost/actor/io/default_message_queue.hpp
 boost/actor/io/event.hpp
 boost/actor/io/fd_util.hpp
 boost/actor/io/input_stream.hpp
-boost/actor/io/ipv4_acceptor.hpp
-boost/actor/io/ipv4_io_stream.hpp
+boost/actor/io/tcp_acceptor.hpp
+boost/actor/io/tcp_io_stream.hpp
 boost/actor/io/middleman.hpp
 boost/actor/io/middleman_event_handler.hpp
 boost/actor/io/output_stream.hpp
@@ -231,8 +231,8 @@ src/get_root_uuid.cpp
 src/group.cpp
 src/group_manager.cpp
 src/input_stream.cpp
-src/ipv4_acceptor.cpp
-src/ipv4_io_stream.cpp
+src/tcp_acceptor.cpp
+src/tcp_io_stream.cpp
 src/local_actor.cpp
 src/logging.cpp
 src/mailbox_element.cpp

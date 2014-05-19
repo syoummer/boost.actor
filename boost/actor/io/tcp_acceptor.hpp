@@ -16,8 +16,8 @@
 \******************************************************************************/
 
 
-#ifndef BOOST_ACTOR_IPV4_ACCEPTOR_HPP
-#define BOOST_ACTOR_IPV4_ACCEPTOR_HPP
+#ifndef BOOST_ACTOR_tcp_ACCEPTOR_HPP
+#define BOOST_ACTOR_tcp_ACCEPTOR_HPP
 
 #include <memory>
 #include <cstdint>
@@ -29,7 +29,7 @@ namespace boost {
 namespace actor {
 namespace io {
 
-class ipv4_acceptor : public acceptor {
+class tcp_acceptor : public acceptor {
 
  public:
 
@@ -38,7 +38,7 @@ class ipv4_acceptor : public acceptor {
 
     static std::unique_ptr<acceptor> from_sockfd(native_socket_type fd);
 
-    ~ipv4_acceptor();
+    ~tcp_acceptor();
 
     native_socket_type file_handle() const;
 
@@ -48,7 +48,7 @@ class ipv4_acceptor : public acceptor {
 
  private:
 
-    ipv4_acceptor(native_socket_type fd, bool nonblocking);
+    tcp_acceptor(native_socket_type fd, bool nonblocking);
 
     native_socket_type m_fd;
     bool m_is_nonblocking;
@@ -59,4 +59,4 @@ class ipv4_acceptor : public acceptor {
 } // namespace actor
 } // namespace boost
 
-#endif // BOOST_ACTOR_IPV4_ACCEPTOR_HPP
+#endif // BOOST_ACTOR_tcp_ACCEPTOR_HPP

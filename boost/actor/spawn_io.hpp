@@ -20,7 +20,7 @@
 #define BOOST_ACTOR_SPAWN_IO_HPP
 
 #include "boost/actor/io/broker.hpp"
-#include "boost/actor/io/ipv4_io_stream.hpp"
+#include "boost/actor/io/tcp_io_stream.hpp"
 
 namespace boost {
 namespace actor {
@@ -60,7 +60,7 @@ template<spawn_options Os = no_spawn_options,
          typename F = std::function<void (io::broker*)>,
          typename... Ts>
 actor spawn_io_client(F fun, const std::string& host, uint16_t port, Ts&&... args) {
-    auto ptr = io::ipv4_io_stream::connect_to(host.c_str(), port);
+    auto ptr = io::tcp_io_stream::connect_to(host.c_str(), port);
     return spawn_io_client(std::move(fun), ptr, ptr, std::forward<Ts>(args)...);
 }
 
@@ -76,7 +76,7 @@ actor spawn_io_server(F fun, uint16_t port, Ts&&... args) {
     static_assert(is_unbound(Os),
                   "top-level spawns cannot have monitor or link flag");
     using namespace std;
-    auto aptr = io::ipv4_acceptor::create(port);
+    auto aptr = io::tcp_acceptor::create(port);
     auto ptr = io::broker::from(move(fun), forward<Ts>(args)...);
     ptr->add_acceptor(std::move(aptr));
     return {io::init_and_launch(move(ptr))};

@@ -45,9 +45,9 @@
 
 #include "boost/actor/io/acceptor.hpp"
 #include "boost/actor/io/middleman.hpp"
+#include "boost/actor/io/tcp_acceptor.hpp"
+#include "boost/actor/io/tcp_io_stream.hpp"
 #include "boost/actor/io/peer_acceptor.hpp"
-#include "boost/actor/io/ipv4_acceptor.hpp"
-#include "boost/actor/io/ipv4_io_stream.hpp"
 #include "boost/actor/io/remote_actor_proxy.hpp"
 
 namespace {

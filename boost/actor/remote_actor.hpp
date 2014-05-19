@@ -24,7 +24,7 @@
 #include <cstdint>
 
 #include "boost/actor/io/acceptor.hpp"
-#include "boost/actor/io/ipv4_io_stream.hpp"
+#include "boost/actor/io/tcp_io_stream.hpp"
 
 #include "boost/actor/detail/raw_access.hpp"
 #include "boost/actor/detail/remote_actor_impl.hpp"
@@ -54,7 +54,7 @@ inline actor remote_actor(io::stream_ptr_pair connection) {
  * @throws std::invalid_argument Thrown when connecting to a typed actor.
  */
 inline actor remote_actor(const char* host, uint16_t port) {
-    auto ptr = io::ipv4_io_stream::connect_to(host, port);
+    auto ptr = io::tcp_io_stream::connect_to(host, port);
     return remote_actor(io::stream_ptr_pair{ptr, ptr});
 }
 

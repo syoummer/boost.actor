@@ -16,8 +16,8 @@
 \******************************************************************************/
 
 
-#ifndef BOOST_ACTOR_IPV4_IO_STREAM_HPP
-#define BOOST_ACTOR_IPV4_IO_STREAM_HPP
+#ifndef BOOST_ACTOR_tcp_IO_STREAM_HPP
+#define BOOST_ACTOR_tcp_IO_STREAM_HPP
 
 #include "boost/actor/io/stream.hpp"
 #include "boost/actor/io/platform.hpp"
@@ -26,11 +26,11 @@ namespace boost {
 namespace actor {
 namespace io {
 
-class ipv4_io_stream : public stream {
+class tcp_io_stream : public stream {
 
  public:
 
-    ~ipv4_io_stream();
+    ~tcp_io_stream();
 
     static stream_ptr connect_to(const char* host, std::uint16_t port);
 
@@ -52,7 +52,7 @@ class ipv4_io_stream : public stream {
 
  private:
 
-    ipv4_io_stream(native_socket_type fd);
+    tcp_io_stream(native_socket_type fd);
 
     native_socket_type m_fd;
 
@@ -62,4 +62,4 @@ class ipv4_io_stream : public stream {
 } // namespace actor
 } // namespace boost
 
-#endif // BOOST_ACTOR_IPV4_IO_STREAM_HPP
+#endif // BOOST_ACTOR_tcp_IO_STREAM_HPP

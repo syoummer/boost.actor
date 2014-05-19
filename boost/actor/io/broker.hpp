@@ -28,10 +28,10 @@
 #include "boost/actor/io/buffer.hpp"
 #include "boost/actor/io/acceptor.hpp"
 #include "boost/actor/io/input_stream.hpp"
+#include "boost/actor/io/tcp_acceptor.hpp"
+#include "boost/actor/io/tcp_io_stream.hpp"
 #include "boost/actor/io/output_stream.hpp"
 #include "boost/actor/io/accept_handle.hpp"
-#include "boost/actor/io/ipv4_acceptor.hpp"
-#include "boost/actor/io/ipv4_io_stream.hpp"
 #include "boost/actor/io/connection_handle.hpp"
 
 #include "boost/actor/mixin/behavior_stack_based.hpp"
@@ -135,14 +135,14 @@ class broker : public extend<local_actor>::
         return add_connection(sptr, sptr);
     }
 
-    inline connection_handle add_ipv4_connection(native_socket_type ipv4_sockfd) {
-        return add_connection(ipv4_io_stream::from_sockfd(ipv4_sockfd));
+    inline connection_handle add_tcp_connection(native_socket_type tcp_sockfd) {
+        return add_connection(tcp_io_stream::from_sockfd(tcp_sockfd));
     }
 
     accept_handle add_acceptor(acceptor_uptr ptr);
 
-    inline accept_handle add_ipv4_acceptor(native_socket_type ipv4_sockfd) {
-        return add_acceptor(ipv4_acceptor::from_sockfd(ipv4_sockfd));
+    inline accept_handle add_tcp_acceptor(native_socket_type tcp_sockfd) {
+        return add_acceptor(tcp_acceptor::from_sockfd(tcp_sockfd));
     }
 
     void enqueue(msg_hdr_cref, message, execution_unit*) override;

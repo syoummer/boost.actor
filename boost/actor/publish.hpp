@@ -24,7 +24,7 @@
 #include "boost/actor/actor.hpp"
 
 #include "boost/actor/io/acceptor.hpp"
-#include "boost/actor/io/ipv4_acceptor.hpp"
+#include "boost/actor/io/tcp_acceptor.hpp"
 
 #include "boost/actor/detail/raw_access.hpp"
 #include "boost/actor/detail/publish_impl.hpp"
@@ -55,7 +55,7 @@ inline void publish(actor whom, io::acceptor_uptr acceptor) {
  */
 inline void publish(actor whom, uint16_t port, const char* addr = nullptr) {
     if (!whom) return;
-    publish(std::move(whom), io::ipv4_acceptor::create(port, addr));
+    publish(std::move(whom), io::tcp_acceptor::create(port, addr));
 }
 
 /**
@@ -76,7 +76,7 @@ void typed_publish(typed_actor<Rs...> whom,
                    const char* addr = nullptr) {
     if (!whom) return;
     detail::publish_impl(detail::raw_access::get(whom),
-                         io::ipv4_acceptor::create(port, addr));
+                         io::tcp_acceptor::create(port, addr));
 }
 
 } // namespace actor

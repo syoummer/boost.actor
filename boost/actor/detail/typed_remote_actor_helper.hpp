@@ -22,7 +22,7 @@
 #include "boost/actor/typed_actor.hpp"
 
 #include "boost/actor/io/acceptor.hpp"
-#include "boost/actor/io/ipv4_io_stream.hpp"
+#include "boost/actor/io/tcp_io_stream.hpp"
 
 #include "boost/actor/detail/type_list.hpp"
 #include "boost/actor/detail/raw_access.hpp"
@@ -46,7 +46,7 @@ struct typed_remote_actor_helper<detail::type_list<Ts...>> {
         return res;
     }
     return_type operator()(const char* host, std::uint16_t port) {
-        auto ptr = io::ipv4_io_stream::connect_to(host, port);
+        auto ptr = io::tcp_io_stream::connect_to(host, port);
         return (*this)(io::stream_ptr_pair(ptr, ptr));
     }
 };

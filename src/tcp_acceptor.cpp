@@ -37,8 +37,8 @@
 
 #include "boost/actor/io/stream.hpp"
 #include "boost/actor/io/fd_util.hpp"
-#include "boost/actor/io/ipv4_acceptor.hpp"
-#include "boost/actor/io/ipv4_io_stream.hpp"
+#include "boost/actor/io/tcp_acceptor.hpp"
+#include "boost/actor/io/tcp_io_stream.hpp"
 
 #ifdef BOOST_ACTOR_WINDOWS
 #   include <winsock2.h>
@@ -95,7 +95,7 @@ bool accept_impl(stream_ptr_pair& result,
         }
         throw_io_failure("accept failed");
     }
-    stream_ptr ptr(ipv4_io_stream::from_native_socket(sfd));
+    stream_ptr ptr(tcp_io_stream::from_native_socket(sfd));
     result.first = ptr;
     result.second = ptr;
     return true;
@@ -103,12 +103,12 @@ bool accept_impl(stream_ptr_pair& result,
 
 } // namespace <anonymous>
 
-ipv4_acceptor::ipv4_acceptor(native_socket_type fd, bool nonblocking)
+tcp_acceptor::tcp_acceptor(native_socket_type fd, bool nonblocking)
 : m_fd(fd), m_is_nonblocking(nonblocking) { }
 
-std::unique_ptr<acceptor> ipv4_acceptor::create(std::uint16_t port,
+std::unique_ptr<acceptor> tcp_acceptor::create(std::uint16_t port,
                                                 const char* addr) {
-    BOOST_ACTOR_LOGM_TRACE("ipv4_acceptor", BOOST_ACTOR_ARG(port) << ", addr = "
+    BOOST_ACTOR_LOGM_TRACE("tcp_acceptor", BOOST_ACTOR_ARG(port) << ", addr = "
                                      << (addr ? addr : "nullptr"));
 #   ifdef BOOST_ACTOR_WINDOWS
     // ensure that TCP has been initialized via WSAStartup
@@ -145,19 +145,19 @@ std::unique_ptr<acceptor> ipv4_acceptor::create(std::uint16_t port,
     nonblocking(sockfd, true);
     // ok, no exceptions
     sguard.release();
-    BOOST_ACTOR_LOGM_DEBUG("ipv4_acceptor", "sockfd = " << sockfd);
-    return std::unique_ptr<ipv4_acceptor>(new ipv4_acceptor(sockfd, true));
+    BOOST_ACTOR_LOGM_DEBUG("tcp_acceptor", "sockfd = " << sockfd);
+    return std::unique_ptr<tcp_acceptor>(new tcp_acceptor(sockfd, true));
 }
 
-ipv4_acceptor::~ipv4_acceptor() {
+tcp_acceptor::~tcp_acceptor() {
     closesocket(m_fd);
 }
 
-native_socket_type ipv4_acceptor::file_handle() const {
+native_socket_type tcp_acceptor::file_handle() const {
     return m_fd;
 }
 
-stream_ptr_pair ipv4_acceptor::accept_connection() {
+stream_ptr_pair tcp_acceptor::accept_connection() {
     if (m_is_nonblocking) {
         nonblocking(m_fd, false);
         m_is_nonblocking = false;
@@ -167,7 +167,7 @@ stream_ptr_pair ipv4_acceptor::accept_connection() {
     return result;
 }
 
-optional<stream_ptr_pair> ipv4_acceptor::try_accept_connection() {
+optional<stream_ptr_pair> tcp_acceptor::try_accept_connection() {
     if (!m_is_nonblocking) {
         nonblocking(m_fd, true);
         m_is_nonblocking = true;

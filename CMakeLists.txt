@@ -170,8 +170,6 @@ set(LIBBOOST_ACTOR_SRC
     src/group.cpp
     src/group_manager.cpp
     src/input_stream.cpp
-    src/ipv4_acceptor.cpp
-    src/ipv4_io_stream.cpp
     src/local_actor.cpp
     src/logging.cpp
     src/mailbox_element.cpp
@@ -199,6 +197,8 @@ set(LIBBOOST_ACTOR_SRC
     src/stream.cpp
     src/string_serialization.cpp
     src/sync_request_bouncer.cpp
+    src/tcp_acceptor.cpp
+    src/tcp_io_stream.cpp
     src/to_uniform_name.cpp
     src/type_lookup_table.cpp
     src/unicast_network.cpp
