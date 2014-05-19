@@ -40,11 +40,7 @@ class message_builder {
 
     template<typename T>
     message_builder& append(T what) {
-        auto uti = uniform_typeid<T>();
-        auto uval = uti->create();
-        *reinterpret_cast<T*>(uval->val) = std::move(what);
-        return append(std::move(uval));
-        return *this;
+        return append_impl<T>(std::move(what));
     }
 
     message_builder& append(uniform_value what);
@@ -52,6 +48,17 @@ class message_builder {
     message to_message();
 
  private:
+
+    template<typename T>
+    message_builder&
+    append_impl(typename detail::implicit_conversions<T>::type what) {
+        typedef decltype(what) type;
+        auto uti = uniform_typeid<type>();
+        auto uval = uti->create();
+        *reinterpret_cast<type*>(uval->val) = std::move(what);
+        return append(std::move(uval));
+        return *this;
+    }
 
     std::vector<uniform_value> m_elements;
 
