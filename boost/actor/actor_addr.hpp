@@ -113,7 +113,8 @@ class actor_addr : detail::comparable<actor_addr>
 // allow actor_addr to be used in hash maps
 namespace std {
 template<>
-struct hash<boost::actor::actor_addr> {
+class hash<boost::actor::actor_addr> {
+ public:
     inline size_t operator()(const boost::actor::actor_addr& ref) const {
         return static_cast<size_t>(ref.id());
     }
