@@ -20,7 +20,7 @@
 #include <limits>
 #include <string>
 #include <vector>
-#include <cstring>
+#include <cstring>     // memcmp
 #include <algorithm>
 #include <type_traits>
 

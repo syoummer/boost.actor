@@ -19,6 +19,7 @@
 #ifndef BOOST_ACTOR_BUFFER_HPP
 #define BOOST_ACTOR_BUFFER_HPP
 
+#include <cstring> // memcmp
 #include <cstddef> // size_t
 
 #include "boost/actor/max_msg_size.hpp"
