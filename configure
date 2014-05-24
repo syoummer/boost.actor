@@ -46,7 +46,7 @@ Usage: $0 [OPTION]... [VAR=VALUE]...
                                 (always sets --build-type=Debug)
     --enable-perftools          use Google perftools
     --enable-address-sanitizer  use Clang's address sanitizer
-    --with-cppa-log-level=LVL   sets the debugging output, possible values:
+    --with-log-level=LVL        sets the debugging output, possible values:
                                   - ERROR
                                   - WARNING
                                   - INFO
@@ -196,23 +196,23 @@ while [ $# -ne 0 ]; do
         --more-clang-warnings)
             append_cache_entry MORE_CLANG_WARNINGS BOOL true
             ;;
-        --with-cppa-log-level=*)
+        --with-log-level=*)
             level=$(echo "$optarg" | tr '[:lower:]' '[:upper:]')
             case $level in
                 ERROR)
-                    append_cache_entry CPPA_LOG_LEVEL STRING 0
+                    append_cache_entry BOOST_ACTOR_LOG_LEVEL STRING 0
                     ;;
                 WARNING)
-                    append_cache_entry CPPA_LOG_LEVEL STRING 1
+                    append_cache_entry BOOST_ACTOR_LOG_LEVEL STRING 1
                     ;;
                 INFO)
-                    append_cache_entry CPPA_LOG_LEVEL STRING 2
+                    append_cache_entry BOOST_ACTOR_LOG_LEVEL STRING 2
                     ;;
                 DEBUG)
-                    append_cache_entry CPPA_LOG_LEVEL STRING 3
+                    append_cache_entry BOOST_ACTOR_LOG_LEVEL STRING 3
                     ;;
                 TRACE)
-                    append_cache_entry CPPA_LOG_LEVEL STRING 4
+                    append_cache_entry BOOST_ACTOR_LOG_LEVEL STRING 4
                     ;;
                 *)
                     echo "Invalid log level '$level'. Try '$0 --help' to see valid values."
