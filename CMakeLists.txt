@@ -233,7 +233,7 @@ if (STANDALONE_BUILD)
 endif (STANDALONE_BUILD)
 
 #find_package(Boost 1.54.0 COMPONENTS REQUIRED system context coroutine thread)
-find_package(Boost 1.54.0 COMPONENTS REQUIRED system thread)
+find_package(Boost 1.53.0 COMPONENTS REQUIRED system thread)
 set(LD_FLAGS ${LD_FLAGS} ${Boost_COROUTINE_LIBRARY} ${Boost_CONTEXT_LIBRARY} ${Boost_SYSTEM_LIBRARY})
 # This hack fixes a problem when the linker search path is the same as
 # the one provided by the compiler. In this case, CMake replaces the absolute

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(boost_actor_examples CXX)
 
-find_package(Boost 1.54.0 COMPONENTS REQUIRED program_options)
+find_package(Boost 1.53.0 COMPONENTS REQUIRED program_options)
 set(LD_FLAGS ${LD_FLAGS} ${Boost_PROGRAM_OPTIONS_LIBRARY})
 # This hack fixes a problem when the linker search path is the same as
 # the one provided by the compiler. In this case, CMake replaces the absolute
