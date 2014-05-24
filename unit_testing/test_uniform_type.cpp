@@ -87,7 +87,7 @@ int main() {
         "@cn_hdl",                   // io::connection_handle
         "@atom",                     // atom_value
         "@addr",                     // actor address
-        "@tuple",                    // message
+        "@message",                  // message
         "@header",                   // message_header
         "@actor",                    // actor_ptr
         "@group",                    // group
