@@ -25,7 +25,7 @@
 
 #include "boost/actor/detail/demangle.hpp"
 
-#if defined(BOOST_GCC) || defined(BOOST_CLANG)
+#if defined(__GNUC__)
 #   include <cxxabi.h>
 #   include <stdlib.h>
 #endif
@@ -69,7 +69,7 @@ std::string filter_whitespaces(const char* cstr, size_t size = 0) {
 
 } // namespace <anonymous>
 
-#if defined(BOOST_GCC) || defined(BOOST_CLANG)
+#if defined(__GNUC__)
 
 std::string demangle(const char* decorated) {
     using std::string;
@@ -108,7 +108,7 @@ string demangle(const char* decorated) {
 
 #else
 #   error "compiler or platform not supported"
-#endif // defined(BOOST_GCC) || defined(BOOST_CLANG)
+#endif // defined(__GNUC__)
 
 
 std::string demangle(const std::type_info& tinf) {
