@@ -58,17 +58,18 @@ namespace detail {
     { "boost::actor::acceptor_closed_msg",              "@acceptor_closed"    },
     { "boost::actor::actor",                            "@actor"              },
     { "boost::actor::actor_addr",                       "@addr"               },
-    { "boost::actor::message",                          "@tuple"              },
     { "boost::actor::atom_value",                       "@atom"               },
     { "boost::actor::channel",                          "@channel"            },
     { "boost::actor::connection_closed_msg",            "@conn_closed"        },
     { "boost::actor::down_msg",                         "@down"               },
+    { "boost::actor::duration",                         "@duration"           },
     { "boost::actor::exit_msg",                         "@exit"               },
     { "boost::actor::group",                            "@group"              },
     { "boost::actor::group_down_msg",                   "@group_down"         },
     { "boost::actor::io::accept_handle",                "@ac_hdl"             },
     { "boost::actor::io::buffer",                       "@buffer"             },
     { "boost::actor::io::connection_handle",            "@cn_hdl"             },
+    { "boost::actor::message",                          "@message"            },
     { "boost::actor::message_header",                   "@header"             },
     { "boost::actor::new_connection_msg",               "@new_conn"           },
     { "boost::actor::new_data_msg",                     "@new_data"           },
@@ -76,7 +77,6 @@ namespace detail {
     { "boost::actor::sync_timeout_msg",                 "@sync_timeout"       },
     { "boost::actor::timeout_msg",                      "@timeout"            },
     { "boost::actor::unit_t",                           "@0"                  },
-    { "boost::actor::duration",                   "@duration"           },
     { "boost::intrusive_ptr<boost::actor::node_id>",    "@proc"               },
     { "double",                                         "double"              },
     { "float",                                          "float"               },
@@ -840,6 +840,7 @@ class utim_impl : public uniform_type_info_map {
         *i++ = &m_type_i64;                 // @i64
         *i++ = &m_type_i8;                  // @i8
         *i++ = &m_type_long_double;         // @ldouble
+        *i++ = &m_type_message;             // @message
         *i++ = &m_new_connection_msg;       // @new_conn
         *i++ = &m_new_data_msg;             // @new_data
         *i++ = &m_type_proc;                // @proc
@@ -848,7 +849,6 @@ class utim_impl : public uniform_type_info_map {
         *i++ = &m_type_sync_exited;         // @sync_exited
         *i++ = &m_type_sync_timeout;        // @sync_timeout
         *i++ = &m_type_timeout;             // @timeout
-        *i++ = &m_type_tuple;               // @tuple
         *i++ = &m_type_u16;                 // @u16
         *i++ = &m_type_u16str;              // @u16str
         *i++ = &m_type_u32;                 // @u32
@@ -860,25 +860,33 @@ class utim_impl : public uniform_type_info_map {
         *i++ = &m_type_float;               // float
         BOOST_ACTOR_REQUIRE(i == m_builtin_types.end());
 #       ifdef BOOST_ACTOR_DEBUG_MODE
+        using namespace std;
         auto cmp = [](pointer lhs, pointer rhs) {
             return strcmp(lhs->name(), rhs->name()) < 0;
         };
         auto& arr = m_builtin_types;
-        if (!std::is_sorted(arr.begin(), arr.end(), cmp)) {
-            std::cerr << "FATAL: uniform type map not sorted" << std::endl
-                      << "order is:" << std::endl;
-            for (auto ptr : arr) std::cerr << ptr->name() << std::endl;
-            std::sort(arr.begin(), arr.end(), cmp);
-            std::cerr << std::endl << "order should be:" << std::endl;
-            for (auto ptr : arr) std::cerr << ptr->name() << std::endl;
+        if (!is_sorted(arr.begin(), arr.end(), cmp)) {
+            cerr << "FATAL: uniform type map not sorted" << endl
+                      << "order is:" << endl;
+            for (auto ptr : arr) cerr << ptr->name() << endl;
+            sort(arr.begin(), arr.end(), cmp);
+            cerr << endl << "order should be:" << endl;
+            for (auto ptr : arr) cerr << ptr->name() << endl;
             abort();
         }
         auto cmp2 = [](const char** lhs, const char** rhs) {
             return strcmp(lhs[0], rhs[0]) < 0;
         };
-        if (!std::is_sorted(std::begin(mapped_type_names),
-                            std::end(mapped_type_names), cmp2)) {
-            std::cerr << "FATAL: mapped_type_names not sorted" << std::endl;
+        if (!is_sorted(begin(mapped_type_names),
+                            end(mapped_type_names), cmp2)) {
+            vector<string> mtps;
+            for (auto ptr : mapped_type_names) mtps.emplace_back(ptr[0]);
+            cerr << "FATAL: mapped_type_names not sorted" << endl
+                      << "order is:" << endl;
+            for (auto mtp : mtps) cerr << mtp << endl;
+            sort(mtps.begin(), mtps.end());
+            cerr << endl << "order should be:" << endl;
+            for (auto mtp : mtps) cerr << mtp << endl;
             abort();
         }
 #       endif
@@ -959,7 +967,7 @@ class utim_impl : public uniform_type_info_map {
 
     // 10-19
     uti_impl<group_down_msg>                m_type_group_down;
-    uti_impl<message>                       m_type_tuple;
+    uti_impl<message>                       m_type_message;
     uti_impl<duration>                      m_type_duration;
     uti_impl<sync_exited_msg>               m_type_sync_exited;
     uti_impl<sync_timeout_msg>              m_type_sync_timeout;
