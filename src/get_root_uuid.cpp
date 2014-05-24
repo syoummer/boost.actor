@@ -39,7 +39,8 @@ constexpr const char* s_get_uuid = "/usr/sbin/diskutil info / | "
 } // namespace <anonymous>
 
 namespace boost {
-namespace actor { namespace detail {
+namespace actor {
+namespace detail {
 
 std::string get_root_uuid() {
     char cbuf[100];
@@ -54,8 +55,9 @@ std::string get_root_uuid() {
     return uuid;
 }
 
-} } // namespace actor
-} // namespace boost::util
+} // namespace detail
+} // namespace actor
+} // namespace boost
 
 #elif defined(BOOST_ACTOR_LINUX)
 
@@ -76,11 +78,13 @@ std::string get_root_uuid() {
 #include <unistd.h>
 #include <iostream>
 
-#include "boost/actor/detail/algorithm.hpp"
+#include <boost/algorithm/string.hpp>
 
-using namespace std;
+using std::vector;
+using std::string;
+using std::ifstream;
 
-struct columns_iterator : iterator<forward_iterator_tag, vector<string>> {
+struct columns_iterator : std::iterator<std::forward_iterator_tag, vector<string>> {
 
     columns_iterator(ifstream* s = nullptr) : fs(s) { }
 
@@ -88,8 +92,11 @@ struct columns_iterator : iterator<forward_iterator_tag, vector<string>> {
 
     columns_iterator& operator++() {
         string line;
-        if (!getline(*fs, line)) fs = nullptr;
-        else cols = cppa::detail::split(line);
+        if (!std::getline(*fs, line)) fs = nullptr;
+        else {
+            using namespace boost::algorithm;
+            split(cols, line, is_any_of(" "), token_compress_on);
+        }
         return *this;
     }
 
@@ -107,7 +114,8 @@ bool operator!=(const columns_iterator& lhs, const columns_iterator& rhs) {
 }
 
 namespace boost {
-namespace actor { namespace detail {
+namespace actor {
+namespace detail {
 
 std::string get_root_uuid() {
     int sck = socket(AF_INET, SOCK_DGRAM, 0);
@@ -140,7 +148,7 @@ std::string get_root_uuid() {
         }
         // convert MAC address to standard string representation
         std::ostringstream oss;
-        oss << hex;
+        oss << std::hex;
         oss.width(2);
         oss << ctoi(item.ifr_hwaddr.sa_data[0]);
         for (size_t i = 1; i < 6; ++i) {
@@ -155,7 +163,7 @@ std::string get_root_uuid() {
     }
     string uuid;
     ifstream fs;
-    fs.open("/etc/fstab", ios_base::in);
+    fs.open("/etc/fstab", std::ios_base::in);
     columns_iterator end;
     auto i = find_if(columns_iterator{&fs}, end, [](const vector<string>& cols) {
         return cols.size() == 6 && cols[1] == "/";
@@ -176,8 +184,9 @@ std::string get_root_uuid() {
     return uuid;
 }
 
-} } // namespace actor
-} // namespace boost::util
+} // namespace detail
+} // namespace actor
+} // namespace boost
 
 #elif defined(BOOST_ACTOR_WINDOWS)
 

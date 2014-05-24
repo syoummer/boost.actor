@@ -232,7 +232,8 @@ if (STANDALONE_BUILD)
   add_definitions(-DBOOST_ACTOR_STANDALONE_BUILD)
 endif (STANDALONE_BUILD)
 
-find_package(Boost 1.54.0 COMPONENTS REQUIRED system context coroutine thread)
+#find_package(Boost 1.54.0 COMPONENTS REQUIRED system context coroutine thread)
+find_package(Boost 1.54.0 COMPONENTS REQUIRED system thread)
 set(LD_FLAGS ${LD_FLAGS} ${Boost_COROUTINE_LIBRARY} ${Boost_CONTEXT_LIBRARY} ${Boost_SYSTEM_LIBRARY})
 # This hack fixes a problem when the linker search path is the same as
 # the one provided by the compiler. In this case, CMake replaces the absolute
@@ -245,9 +246,10 @@ set(INCLUDE_DIRS ${INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 set(LD_DIRS ${LD_DIRS} ${Boost_LIBRARY_DIRS})
 
 # set compiler flag when compiling w/o context-switching actors
-if (DISABLE_CONTEXT_SWITCHING)
+# DEFAULT for now, because the Context API seems to be broken again
+#if (DISABLE_CONTEXT_SWITCHING)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_ACTOR_DISABLE_CONTEXT_SWITCHING")
-endif ()
+#endif ()
 
 # build shared library if not compiling static only
 if (NOT "${BOOST_ACTOR_BUILD_STATIC_ONLY}" STREQUAL "yes")

@@ -62,7 +62,7 @@ class delayed_msg {
 
     delayed_msg(message_header&& arg1,
                 message&&      arg2)
-    : hdr(move(arg1)), msg(move(arg2)) { }
+    : hdr(std::move(arg1)), msg(std::move(arg2)) { }
 
     delayed_msg(delayed_msg&&) = default;
     delayed_msg(const delayed_msg&) = default;
@@ -85,7 +85,7 @@ inline void insert_dmsg(Map& storage, const duration& d,
                         message_header&& hdr, message&& tup) {
     auto tout = hrc::now();
     tout += d;
-    delayed_msg dmsg{move(hdr), move(tup)};
+    delayed_msg dmsg{std::move(hdr), std::move(tup)};
     storage.insert(std::make_pair(std::move(tout), std::move(dmsg)));
 }
 
@@ -117,7 +117,7 @@ class timer_actor final : public detail::proper_actor<blocking_actor,
             on(atom("SEND"), arg_match) >> [&](const duration& d,
                                                message_header& hdr,
                                                message& tup) {
-                insert_dmsg(messages, d, move(hdr), move(tup));
+                insert_dmsg(messages, d, std::move(hdr), std::move(tup));
             },
             on(atom("DIE")) >> [&] {
                 done = true;

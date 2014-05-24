@@ -223,7 +223,7 @@ class fixed_stack : public sb_actor<fixed_stack> {
                 auto result = data.back();
                 data.pop_back();
                 become(filled);
-                return {atom("ok"), result};
+                return std::make_tuple(atom("ok"), result);
             }
         );
         filled = (
@@ -235,7 +235,7 @@ class fixed_stack : public sb_actor<fixed_stack> {
                 auto result = data.back();
                 data.pop_back();
                 if (data.empty()) become(empty);
-                return {atom("ok"), result};
+                return std::make_tuple(atom("ok"), result);
             }
         );
         empty = (

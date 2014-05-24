@@ -288,13 +288,13 @@ std::function<optional<T> (const T&)> guarded(Predicate p, T value) {
         if (p(other, value)) return value;
         return none;
     };
-};
+}
 
 // special case covering arg_match as argument to guarded()
 template<typename T, typename Predicate>
 unit_t guarded(Predicate, const detail::wrapped<T>&) {
     return {};
-};
+}
 
 template<typename T, bool Callable = detail::is_callable<T>::value>
 struct to_guard {

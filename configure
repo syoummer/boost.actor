@@ -158,7 +158,7 @@ builddir="$sourcedir/build"
 CMakeCacheEntries=""
 append_cache_entry CMAKE_INSTALL_PREFIX        PATH   /usr/local
 append_cache_entry ENABLE_DEBUG                BOOL   false
-append_cache_entry DISABLE_CONTEXT_SWITCHING   BOOL   false
+append_cache_entry DISABLE_CONTEXT_SWITCHING   BOOL   true
 
 # Parse arguments.
 while [ $# -ne 0 ]; do

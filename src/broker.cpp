@@ -72,7 +72,7 @@ class broker::continuation {
  public:
 
     continuation(broker_ptr ptr, msg_hdr_cref hdr, message&& msg)
-    : m_self(std::move(ptr)), m_hdr(hdr), m_data(move(msg)) { }
+    : m_self(std::move(ptr)), m_hdr(hdr), m_data(std::move(msg)) { }
 
     inline void operator()() {
         BOOST_ACTOR_PUSH_AID(m_self->id());

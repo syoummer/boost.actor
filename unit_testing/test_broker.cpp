@@ -63,7 +63,7 @@ void pong(event_based_actor* self) {
                 others() >> BOOST_ACTOR_UNEXPECTED_MSG_CB(self)
             );
             // reply to 'ping'
-            return {atom("pong"), value};
+            return std::make_tuple(atom("pong"), value);
         },
         others() >> BOOST_ACTOR_UNEXPECTED_MSG_CB(self)
     );

@@ -108,7 +108,7 @@ class middleman_event {
  public:
 
     template<typename Arg>
-    middleman_event(Arg&& arg) : next(nullptr), fun(forward<Arg>(arg)) { }
+    middleman_event(Arg&& arg) : next(nullptr), fun(std::forward<Arg>(arg)) { }
 
     inline void operator()() { fun(); }
 
