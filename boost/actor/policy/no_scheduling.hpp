@@ -9,7 +9,7 @@
  *                                                                            *
  *                                                                            *
  * Copyright (C) 2011 - 2014                                                  *
- * Dominik Charousset <dominik.charousset@haw-hamburg.de>                     *
+ * Dominik Charousset <dominik.charousset (at) haw-hamburg.de>                *
  *                                                                            *
  * Distributed under the Boost Software License, Version 1.0. See             *
  * accompanying file LICENSE or copy at http://www.boost.org/LICENSE_1_0.txt  *
@@ -24,16 +24,15 @@
 #include <chrono>
 #include <condition_variable>
 
-#include "boost/actor/logging.hpp"
 #include "boost/actor/duration.hpp"
-#include "boost/actor/singletons.hpp"
 #include "boost/actor/exit_reason.hpp"
-
-#include "boost/actor/detail/cs_thread.hpp"
-#include "boost/actor/detail/scope_guard.hpp"
 
 #include "boost/actor/policy/scheduling_policy.hpp"
 
+#include "boost/actor/detail/logging.hpp"
+#include "boost/actor/detail/cs_thread.hpp"
+#include "boost/actor/detail/singletons.hpp"
+#include "boost/actor/detail/scope_guard.hpp"
 #include "boost/actor/detail/actor_registry.hpp"
 #include "boost/actor/detail/sync_request_bouncer.hpp"
 #include "boost/actor/detail/single_reader_queue.hpp"

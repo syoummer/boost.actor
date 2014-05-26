@@ -7,9 +7,11 @@
 
 #include "test.hpp"
 #include "boost/actor/all.hpp"
+#include "boost/actor_io/all.hpp"
 
 using namespace std;
 using namespace boost::actor;
+using namespace boost::actor_io;
 
 struct ping { std::int32_t value; };
 

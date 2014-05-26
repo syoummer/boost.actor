@@ -93,6 +93,6 @@ int main() {
     spawn(tester, spawn_typed<typed_calculator_class>());
     await_all_actors_done();
     // done
-    shutdown();
+    //shutdown();
     return 0;
 }

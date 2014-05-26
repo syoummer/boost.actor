@@ -88,8 +88,10 @@ int main(int, char**) {
     vd.b.resize(1);
     vd.b.back().push_back(42);
 
-    io::buffer buf;
-    binary_serializer bs(&buf);
+    typedef std::vector<char> buffer_type;
+
+    buffer_type buf;
+    binary_serializer<buffer_type> bs(&buf);
     bs << vd;
 
     binary_deserializer bd(buf.data(), buf.size());
@@ -121,7 +123,5 @@ int main(int, char**) {
         self->send(t, foo_pair2{3, 4});
     }
     await_all_actors_done();
-    shutdown();
-    return 0;
 }
 

@@ -9,7 +9,7 @@
  *                                                                            *
  *                                                                            *
  * Copyright (C) 2011 - 2014                                                  *
- * Dominik Charousset <dominik.charousset@haw-hamburg.de>                     *
+ * Dominik Charousset <dominik.charousset (at) haw-hamburg.de>                *
  *                                                                            *
  * Distributed under the Boost Software License, Version 1.0. See             *
  * accompanying file LICENSE or copy at http://www.boost.org/LICENSE_1_0.txt  *
@@ -23,9 +23,9 @@
 
 #include "boost/actor/message.hpp"
 #include "boost/actor/scheduler.hpp"
-#include "boost/actor/singletons.hpp"
 #include "boost/actor/message_header.hpp"
 
+#include "boost/actor/detail/singletons.hpp"
 #include "boost/actor/detail/yield_interface.hpp"
 #include "boost/actor/detail/single_reader_queue.hpp"
 
@@ -43,7 +43,7 @@ class cooperative_scheduling {
         // detached in scheduler::worker::run
         self->attach_to_scheduler();
         if (host) host->exec_later(self);
-        else get_scheduling_coordinator()->enqueue(self);
+        else detail::singletons::get_scheduling_coordinator()->enqueue(self);
     }
 
     template<class Actor>
@@ -54,7 +54,8 @@ class cooperative_scheduling {
             case detail::enqueue_result::unblocked_reader: {
                 // re-schedule actor
                 if (host) host->exec_later(self);
-                else get_scheduling_coordinator()->enqueue(self);
+                else detail::singletons::get_scheduling_coordinator()
+                     ->enqueue(self);
                 break;
             }
             case detail::enqueue_result::queue_closed: {

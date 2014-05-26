@@ -7,14 +7,16 @@
 
 #include "test.hpp"
 #include "ping_pong.hpp"
-#include "boost/actor/all.hpp"
-#include "boost/actor/logging.hpp"
-#include "boost/actor/exception.hpp"
 
+#include "boost/actor/all.hpp"
+#include "boost/actor_io/all.hpp"
+
+#include "boost/actor/detail/logging.hpp"
 #include "boost/actor/detail/raw_access.hpp"
 
 using namespace std;
 using namespace boost::actor;
+using namespace boost::actor_io;
 
 namespace {
 
@@ -303,7 +305,7 @@ class server : public event_based_actor {
                 auto s5c = spawn<monitored>(spawn5_client);
                 await_down(this, s5c, [=] {
                     BOOST_ACTOR_CHECKPOINT();
-                    test_group_comm_inverted(detail::raw_access::unsafe_cast(cptr));
+                    test_group_comm_inverted(boost::actor::detail::raw_access::unsafe_cast(cptr));
                 });
                 return make_message(atom("GClient"), s5c);
             }

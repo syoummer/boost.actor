@@ -9,7 +9,7 @@
  *                                                                            *
  *                                                                            *
  * Copyright (C) 2011 - 2014                                                  *
- * Dominik Charousset <dominik.charousset@haw-hamburg.de>                     *
+ * Dominik Charousset <dominik.charousset (at) haw-hamburg.de>                *
  *                                                                            *
  * Distributed under the Boost Software License, Version 1.0. See             *
  * accompanying file LICENSE or copy at http://www.boost.org/LICENSE_1_0.txt  *
@@ -85,13 +85,6 @@ class serializer {
      * @param data Raw data.
      */
     virtual void write_raw(size_t num_bytes, const void* data) = 0;
-
-    /**
-     * @brief Writes @p num values as a tuple to the data sink.
-     * @param num Size of the array @p values.
-     * @param values An array of size @p num of primitive data values.
-     */
-    virtual void write_tuple(size_t num, const primitive_variant* values) = 0;
 
     inline actor_namespace* get_namespace() {
         return m_namespace;

@@ -73,38 +73,39 @@ int main() {
     // these types (and only those) are present if
     // the uniform_type_info implementation is correct
     std::set<std::string> expected = {
-        // basic types
+        // local types
+        "$::foo",                           // <anonymous namespace>::foo
+        // primitive types
         "bool",
-        "$::foo",                         // <anonymous namespace>::foo
-        "@i8", "@i16", "@i32", "@i64",    // signed integer names
-        "@u8", "@u16", "@u32", "@u64",    // unsigned integer names
-        "@str", "@u16str", "@u32str",     // strings
-        "@strmap",                        // string containers
-        "float", "double", "@ldouble",    // floating points
-        "@0",                             // cppa::detail::unit_t
-        // default announced cppa types
-        "@ac_hdl",                   // io::accept_handle
-        "@cn_hdl",                   // io::connection_handle
-        "@atom",                     // atom_value
-        "@addr",                     // actor address
-        "@message",                  // message
-        "@header",                   // message_header
-        "@actor",                    // actor_ptr
-        "@group",                    // group
-        "@group_down",               // group_down_msg
-        "@channel",                  // channel
-        "@proc",                     // intrusive_ptr<node_id>
-        "@duration",                 // duration
-        "@buffer",                   // io::buffer
-        "@down",                     // down_msg
-        "@exit",                     // exit_msg
-        "@timeout",                  // timeout_msg
-        "@sync_exited",              // sync_exited_msg
-        "@sync_timeout",             // sync_timeout_msg
-        "@acceptor_closed",          // acceptor_closed_msg
-        "@conn_closed",              // connection_closed_msg
-        "@new_conn",                 // new_connection_msg
-        "@new_data",                 // new_data_msg
+        "@i8", "@i16", "@i32", "@i64",      // signed integer names
+        "@u8", "@u16", "@u32", "@u64",      // unsigned integer names
+        "@str", "@u16str", "@u32str",       // strings
+        "float", "double", "@ldouble",      // floating points
+        // default announced types
+        "@0",                               // unit_t
+        "@accept",                          // accept_handle
+        "@acceptor_closed",                 // acceptor_closed_msg
+        "@actor",                           // actor
+        "@addr",                            // actor_addr
+        "@atom",                            // atom_value
+        "@channel",                         // channel
+        "@charbuf",                         // vector<char>
+        "@connection",                      // connection_handle
+        "@connection_closed",               // connection_closed_msg
+        "@down",                            // down_msg
+        "@duration",                        // duration
+        "@exit",                            // exit_msg
+        "@group",                           // group
+        "@group_down",                      // group_down_msg
+        "@header",                          // message_header
+        "@message",                         // message
+        "@new_connection",                  // new_connection_msg
+        "@new_data",                        // new_data_msg
+        "@proc",                            // intrusive_ptr<node_id>
+        "@strmap",                          // map<string,string>
+        "@sync_exited",                     // sync_exited_msg
+        "@sync_timeout",                    // sync_timeout_msg
+        "@timeout"                          // timeout_msg
     };
     // holds the type names we see at runtime
     std::set<std::string> found;

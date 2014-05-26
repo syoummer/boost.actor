@@ -9,7 +9,7 @@
  *                                                                            *
  *                                                                            *
  * Copyright (C) 2011 - 2014                                                  *
- * Dominik Charousset <dominik.charousset@haw-hamburg.de>                     *
+ * Dominik Charousset <dominik.charousset (at) haw-hamburg.de>                *
  *                                                                            *
  * Distributed under the Boost Software License, Version 1.0. See             *
  * accompanying file LICENSE or copy at http://www.boost.org/LICENSE_1_0.txt  *
@@ -44,7 +44,7 @@ namespace actor {
 
 class resumable;
 
-namespace detail { class singleton_manager; }
+namespace detail { class singletons; }
 
 namespace scheduler {
 
@@ -54,9 +54,9 @@ class coordinator;
 /**
  * @brief A work-stealing scheduling worker.
  *
- * The work-stealing implementation of libcppa minimizes access to the
- * synchronized queue. The reasoning behind this design decision is that
- * it has been shown that stealing actually is very rare for workloads [1].
+ * The work-stealing implementation of Boost.Actor minimizes access to the
+ * synchronized queue. The reasoning behind this design decision is that it
+ * has been shown that stealing actually is very rare for most workloads [1].
  * Hence, implementations should focus on the performance in
  * the non-stealing case. For this reason, each worker has an exposed
  * job queue that can be accessed by the central scheduler instance as
@@ -140,7 +140,7 @@ class worker : public execution_unit {
  */
 class coordinator {
 
-    friend class detail::singleton_manager;
+    friend class detail::singletons;
 
  public:
 

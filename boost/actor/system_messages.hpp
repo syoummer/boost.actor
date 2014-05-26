@@ -9,7 +9,7 @@
  *                                                                            *
  *                                                                            *
  * Copyright (C) 2011 - 2014                                                  *
- * Dominik Charousset <dominik.charousset@haw-hamburg.de>                     *
+ * Dominik Charousset <dominik.charousset (at) haw-hamburg.de>                *
  *                                                                            *
  * Distributed under the Boost Software License, Version 1.0. See             *
  * accompanying file LICENSE or copy at http://www.boost.org/LICENSE_1_0.txt  *
@@ -19,15 +19,14 @@
 #ifndef BOOST_ACTOR_SYSTEM_MESSAGES_HPP
 #define BOOST_ACTOR_SYSTEM_MESSAGES_HPP
 
+#include <vector>
 #include <cstdint>
 #include <type_traits>
 
 #include "boost/actor/group.hpp"
 #include "boost/actor/actor_addr.hpp"
-
-#include "boost/actor/io/buffer.hpp"
-#include "boost/actor/io/accept_handle.hpp"
-#include "boost/actor/io/connection_handle.hpp"
+#include "boost/actor/accept_handle.hpp"
+#include "boost/actor/connection_handle.hpp"
 
 #include "boost/actor/detail/tbind.hpp"
 #include "boost/actor/detail/type_list.hpp"
@@ -49,7 +48,7 @@ struct exit_msg {
     /**
      * @brief The exit reason of the terminated actor.
      */
-    std::uint32_t reason;
+    uint32_t reason;
 };
 
 /**
@@ -63,7 +62,7 @@ struct down_msg {
     /**
      * @brief The exit reason of the terminated actor.
      */
-    std::uint32_t reason;
+    uint32_t reason;
 };
 
 /**
@@ -117,7 +116,7 @@ struct sync_exited_msg {
     /**
      * @brief The exit reason of the terminated actor.
      */
-    std::uint32_t reason;
+    uint32_t reason;
 };
 
 /**
@@ -128,7 +127,7 @@ struct timeout_msg {
     /**
      * @brief Actor-specific timeout ID.
      */
-    std::uint32_t timeout_id;
+    uint32_t timeout_id;
 };
 
 inline bool operator==(const timeout_msg& lhs, const timeout_msg& rhs) {
@@ -136,92 +135,6 @@ inline bool operator==(const timeout_msg& lhs, const timeout_msg& rhs) {
 }
 
 inline bool operator!=(const timeout_msg& lhs, const timeout_msg& rhs) {
-    return !(lhs == rhs);
-}
-
-/**
- * @brief Signalizes a newly accepted connection from a {@link broker}.
- */
-struct new_connection_msg {
-    /**
-     * @brief The handle that accepted the new connection.
-     */
-    io::accept_handle source;
-    /**
-     * @brief The handle for the new connection.
-     */
-    io::connection_handle handle;
-};
-
-inline bool operator==(const new_connection_msg& lhs,
-                       const new_connection_msg& rhs) {
-    return lhs.source == rhs.source && lhs.handle == rhs.handle;
-}
-
-inline bool operator!=(const new_connection_msg& lhs,
-                       const new_connection_msg& rhs) {
-    return !(lhs == rhs);
-}
-
-/**
- * @brief Signalizes newly arrived data for a {@link broker}.
- */
-struct new_data_msg {
-    /**
-     * @brief Handle to the related connection
-     */
-    io::connection_handle handle;
-    /**
-     * @brief Buffer containing the received data.
-     */
-    io::buffer buf;
-};
-
-inline bool operator==(const new_data_msg& lhs, const new_data_msg& rhs) {
-    return lhs.handle == rhs.handle && lhs.buf == rhs.buf;
-}
-
-inline bool operator!=(const new_data_msg& lhs, const new_data_msg& rhs) {
-    return !(lhs == rhs);
-}
-
-/**
- * @brief Signalizes that a {@link broker} connection has been closed.
- */
-struct connection_closed_msg {
-    /**
-     * @brief Handle to the closed connection.
-     */
-    io::connection_handle handle;
-};
-
-inline bool operator==(const connection_closed_msg& lhs,
-                       const connection_closed_msg& rhs) {
-    return lhs.handle == rhs.handle;
-}
-
-inline bool operator!=(const connection_closed_msg& lhs,
-                       const connection_closed_msg& rhs) {
-    return !(lhs == rhs);
-}
-
-/**
- * @brief Signalizes that a {@link broker} acceptor has been closed.
- */
-struct acceptor_closed_msg {
-    /**
-     * @brief Handle to the closed connection.
-     */
-    io::accept_handle handle;
-};
-
-inline bool operator==(const acceptor_closed_msg& lhs,
-                       const acceptor_closed_msg& rhs) {
-    return lhs.handle == rhs.handle;
-}
-
-inline bool operator!=(const acceptor_closed_msg& lhs,
-                       const acceptor_closed_msg& rhs) {
     return !(lhs == rhs);
 }
 
@@ -257,7 +170,94 @@ operator!=(const T& lhs, const T& rhs) {
     return !(lhs == rhs);
 }
 
+/**
+ * @brief Signalizes a newly accepted connection from a {@link broker}.
+ */
+struct new_connection_msg {
+    /**
+     * @brief The handle that accepted the new connection.
+     */
+    accept_handle source;
+    /**
+     * @brief The handle for the new connection.
+     */
+    connection_handle handle;
+};
+
+inline bool operator==(const new_connection_msg& lhs,
+                       const new_connection_msg& rhs) {
+    return lhs.source == rhs.source && lhs.handle == rhs.handle;
+}
+
+inline bool operator!=(const new_connection_msg& lhs,
+                       const new_connection_msg& rhs) {
+    return !(lhs == rhs);
+}
+
+/**
+ * @brief Signalizes newly arrived data for a {@link broker}.
+ */
+struct new_data_msg {
+    /**
+     * @brief Handle to the related connection
+     */
+    connection_handle handle;
+    /**
+     * @brief Buffer containing the received data.
+     */
+    std::vector<char> buf;
+};
+
+inline bool operator==(const new_data_msg& lhs, const new_data_msg& rhs) {
+    return lhs.handle == rhs.handle && lhs.buf == rhs.buf;
+}
+
+inline bool operator!=(const new_data_msg& lhs, const new_data_msg& rhs) {
+    return !(lhs == rhs);
+}
+
+/**
+ * @brief Signalizes that a {@link broker} connection has been closed.
+ */
+struct connection_closed_msg {
+    /**
+     * @brief Handle to the closed connection.
+     */
+    connection_handle handle;
+};
+
+inline bool operator==(const connection_closed_msg& lhs,
+                       const connection_closed_msg& rhs) {
+    return lhs.handle == rhs.handle;
+}
+
+inline bool operator!=(const connection_closed_msg& lhs,
+                       const connection_closed_msg& rhs) {
+    return !(lhs == rhs);
+}
+
+/**
+ * @brief Signalizes that a {@link broker} acceptor has been closed.
+ */
+struct acceptor_closed_msg {
+    /**
+     * @brief Handle to the closed connection.
+     */
+    accept_handle handle;
+};
+
+inline bool operator==(const acceptor_closed_msg& lhs,
+                       const acceptor_closed_msg& rhs) {
+    return lhs.handle == rhs.handle;
+}
+
+inline bool operator!=(const acceptor_closed_msg& lhs,
+                       const acceptor_closed_msg& rhs) {
+    return !(lhs == rhs);
+}
+
 } // namespace actor
 } // namespace boost
 
 #endif // BOOST_ACTOR_SYSTEM_MESSAGES_HPP
+

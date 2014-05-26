@@ -9,7 +9,7 @@
  *                                                                            *
  *                                                                            *
  * Copyright (C) 2011 - 2014                                                  *
- * Dominik Charousset <dominik.charousset@haw-hamburg.de>                     *
+ * Dominik Charousset <dominik.charousset (at) haw-hamburg.de>                *
  *                                                                            *
  * Distributed under the Boost Software License, Version 1.0. See             *
  * accompanying file LICENSE or copy at http://www.boost.org/LICENSE_1_0.txt  *
@@ -162,14 +162,6 @@ class abstract_group : public abstract_channel {
  * @relates group
  */
 typedef intrusive_ptr<abstract_group> abstract_group_ptr;
-
-/**
- * @brief Makes *all* local groups accessible via network on address @p addr
- *        and @p port.
- * @throws bind_failure
- * @throws network_error
- */
-void publish_local_groups(std::uint16_t port, const char* addr = nullptr);
 
 } // namespace actor
 } // namespace boost

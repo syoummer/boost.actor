@@ -929,7 +929,5 @@ int main() {
     BOOST_ACTOR_TEST(test_spawn);
     test_spawn();
     BOOST_ACTOR_CHECKPOINT();
-    shutdown();
-    BOOST_ACTOR_CHECKPOINT();
     return BOOST_ACTOR_TEST_RESULT();
 }

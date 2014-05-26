@@ -9,7 +9,7 @@
  *                                                                            *
  *                                                                            *
  * Copyright (C) 2011 - 2014                                                  *
- * Dominik Charousset <dominik.charousset@haw-hamburg.de>                     *
+ * Dominik Charousset <dominik.charousset (at) haw-hamburg.de>                *
  *                                                                            *
  * Distributed under the Boost Software License, Version 1.0. See             *
  * accompanying file LICENSE or copy at http://www.boost.org/LICENSE_1_0.txt  *
@@ -30,6 +30,8 @@
 #include "boost/actor/detail/comparable.hpp"
 #include "boost/actor/detail/type_traits.hpp"
 
+namespace boost { namespace actor_io { class broker; } }
+
 namespace boost {
 namespace actor {
 
@@ -40,10 +42,6 @@ class blocking_actor;
 class event_based_actor;
 
 struct invalid_actor_addr_t;
-
-namespace io {
-class broker;
-} // namespace io
 
 namespace opencl {
 template <typename Signature>
@@ -64,7 +62,7 @@ constexpr invalid_actor_t invalid_actor = invalid_actor_t{};
 
 template<typename T>
 struct is_convertible_to_actor {
-    static constexpr bool value =  std::is_base_of<io::broker, T>::value
+    static constexpr bool value =  std::is_base_of<actor_io::broker, T>::value
                                 || std::is_base_of<actor_proxy, T>::value
                                 || std::is_base_of<blocking_actor, T>::value
                                 || std::is_base_of<event_based_actor, T>::value;
@@ -185,8 +183,7 @@ class actor : detail::comparable<actor>
 // allow actor to be used in hash maps
 namespace std {
 template<>
-class hash<boost::actor::actor> {
- public:
+struct hash<boost::actor::actor> {
     inline size_t operator()(const boost::actor::actor& ref) const {
         return ref ? static_cast<size_t>(ref->id()) : 0;
     }

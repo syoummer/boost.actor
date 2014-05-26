@@ -9,7 +9,7 @@
  *                                                                            *
  *                                                                            *
  * Copyright (C) 2011 - 2014                                                  *
- * Dominik Charousset <dominik.charousset@haw-hamburg.de>                     *
+ * Dominik Charousset <dominik.charousset (at) haw-hamburg.de>                *
  *                                                                            *
  * Distributed under the Boost Software License, Version 1.0. See             *
  * accompanying file LICENSE or copy at http://www.boost.org/LICENSE_1_0.txt  *
@@ -100,7 +100,11 @@ class deserializer {
         return m_incoming_types;
     }
 
-    void read_raw(size_t num_bytes, io::buffer& storage);
+    template<class Buffer>
+    void read_raw(size_t num_bytes, Buffer& storage) {
+        storage.resize(num_bytes);
+        read_raw(num_bytes, storage.data());
+    }
 
  private:
 

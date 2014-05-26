@@ -210,6 +210,4 @@ int main() {
     }
 
     await_all_actors_done();
-    shutdown();
-    return 0;
 }

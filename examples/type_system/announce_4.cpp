@@ -133,7 +133,5 @@ int main(int, char**) {
         self->send(t, baz{foo{1, 2}, bar{foo{3, 4}, 5}});
     }
     await_all_actors_done();
-    shutdown();
-    return 0;
 }
 

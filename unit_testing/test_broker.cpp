@@ -9,7 +9,7 @@
  *                                                                            *
  *                                                                            *
  * Copyright (C) 2011 - 2014                                                  *
- * Dominik Charousset <dominik.charousset@haw-hamburg.de>                     *
+ * Dominik Charousset <dominik.charousset (at) haw-hamburg.de>                *
  *                                                                            *
  * Distributed under the Boost Software License, Version 1.0. See             *
  * accompanying file LICENSE or copy at http://www.boost.org/LICENSE_1_0.txt  *
@@ -21,9 +21,11 @@
 
 #include "test.hpp"
 #include "boost/actor/all.hpp"
+#include "boost/actor_io/all.hpp"
 
 using namespace std;
 using namespace boost::actor;
+using namespace boost::actor_io;
 
 void ping(event_based_actor* self, size_t num_pings) {
     BOOST_ACTOR_CHECKPOINT();
@@ -69,7 +71,7 @@ void pong(event_based_actor* self) {
     );
 }
 
-void peer(io::broker* self, io::connection_handle hdl, const actor& buddy) {
+void peer_fun(broker* self, connection_handle hdl, const actor& buddy) {
     BOOST_ACTOR_CHECKPOINT();
     BOOST_ACTOR_CHECK(self != nullptr);
     BOOST_ACTOR_CHECK(buddy != invalid_actor);
@@ -92,7 +94,7 @@ void peer(io::broker* self, io::connection_handle hdl, const actor& buddy) {
             atom_value type;
             int value;
             memcpy(&type, msg.buf.data(), sizeof(atom_value));
-            memcpy(&value, msg.buf.offset_data(sizeof(atom_value)), sizeof(int));
+            memcpy(&value, msg.buf.data() + sizeof(atom_value), sizeof(int));
             self->send(buddy, type, value);
         },
         on(atom("ping"), arg_match) >> [=](int value) {
@@ -108,13 +110,13 @@ void peer(io::broker* self, io::connection_handle hdl, const actor& buddy) {
     );
 }
 
-void peer_acceptor(io::broker* self, const actor& buddy) {
+void peer_acceptor_fun(broker* self, const actor& buddy) {
     BOOST_ACTOR_CHECKPOINT();
     self->become (
         [=](const new_connection_msg& msg) {
             BOOST_ACTOR_CHECKPOINT();
             BOOST_ACTOR_PRINT("received new_connection_msg");
-            self->fork(peer, msg.handle, buddy);
+            self->fork(peer_fun, msg.handle, buddy);
             self->quit();
         },
         others() >> BOOST_ACTOR_UNEXPECTED_MSG_CB(self)
@@ -131,7 +133,7 @@ int main(int argc, char** argv) {
                 BOOST_ACTOR_CHECKPOINT();
                 auto p = spawn(ping, 10);
                 BOOST_ACTOR_CHECKPOINT();
-                auto cl = spawn_io_client(peer, "localhost", port, p);
+                auto cl = spawn_io_client(peer_fun, "localhost", port, p);
                 BOOST_ACTOR_CHECKPOINT();
                 anon_send(p, atom("kickoff"), cl);
                 BOOST_ACTOR_CHECKPOINT();
@@ -150,7 +152,7 @@ int main(int argc, char** argv) {
     uint16_t port = 4242;
     for (;;) {
         try {
-            spawn_io_server(peer_acceptor, port, p);
+            spawn_io_server(peer_acceptor_fun, port, p);
             BOOST_ACTOR_CHECKPOINT();
             ostringstream oss;
             oss << app_path << " mode=client port=" << port << to_dev_null;

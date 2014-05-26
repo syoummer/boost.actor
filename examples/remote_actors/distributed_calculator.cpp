@@ -23,12 +23,14 @@
 #include "boost/program_options.hpp"
 
 #include "boost/actor/all.hpp"
+#include "boost/actor_io/all.hpp"
 
 using boost::none;
 using boost::optional;
 
 using namespace std;
 using namespace boost::actor;
+using namespace boost::actor_io;
 using namespace boost::program_options;
 
 // our "service"

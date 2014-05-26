@@ -9,7 +9,7 @@
  *                                                                            *
  *                                                                            *
  * Copyright (C) 2011 - 2014                                                  *
- * Dominik Charousset <dominik.charousset@haw-hamburg.de>                     *
+ * Dominik Charousset <dominik.charousset (at) haw-hamburg.de>                *
  *                                                                            *
  * Distributed under the Boost Software License, Version 1.0. See             *
  * accompanying file LICENSE or copy at http://www.boost.org/LICENSE_1_0.txt  *
@@ -23,14 +23,15 @@
 
 #include "boost/actor/actor.hpp"
 
-#include "boost/actor/io/acceptor.hpp"
-#include "boost/actor/io/tcp_acceptor.hpp"
-
 #include "boost/actor/detail/raw_access.hpp"
-#include "boost/actor/detail/publish_impl.hpp"
+
+#include "boost/actor_io/acceptor.hpp"
+#include "boost/actor_io/tcp_acceptor.hpp"
+
+#include "boost/actor_io/detail/publish_impl.hpp"
 
 namespace boost {
-namespace actor {
+namespace actor_io {
 
 /**
  * @brief Publishes @p whom using @p acceptor to handle incoming connections.
@@ -39,8 +40,9 @@ namespace actor {
  * @param whom Actor that should be published at @p port.
  * @param acceptor Network technology-specific acceptor implementation.
  */
-inline void publish(actor whom, io::acceptor_uptr acceptor) {
-    detail::publish_impl(detail::raw_access::get(whom), std::move(acceptor));
+inline void publish(actor::actor whom, acceptor_uptr acceptor) {
+    detail::publish_impl(actor::detail::raw_access::get(whom),
+                         std::move(acceptor));
 }
 
 /**
@@ -53,33 +55,33 @@ inline void publish(actor whom, io::acceptor_uptr acceptor) {
  *             @p nullptr.
  * @throws bind_failure
  */
-inline void publish(actor whom, uint16_t port, const char* addr = nullptr) {
+inline void publish(actor::actor whom, uint16_t port, const char* addr = nullptr) {
     if (!whom) return;
-    publish(std::move(whom), io::tcp_acceptor::create(port, addr));
+    publish(std::move(whom), tcp_acceptor::create(port, addr));
 }
 
 /**
- * @copydoc publish(actor,io::acceptor_uptr)
+ * @copydoc publish(actor,acceptor_uptr)
  */
 template<typename... Rs>
-void typed_publish(typed_actor<Rs...> whom, io::acceptor_uptr uptr) {
+void typed_publish(actor::typed_actor<Rs...> whom, acceptor_uptr uptr) {
     if (!whom) return;
-    detail::publish_impl(detail::raw_access::get(whom), std::move(uptr));
+    detail::publish_impl(actor::detail::raw_access::get(whom), std::move(uptr));
 }
 
 /**
  * @copydoc publish(actor,std::uint16_t,const char*)
  */
 template<typename... Rs>
-void typed_publish(typed_actor<Rs...> whom,
+void typed_publish(actor::typed_actor<Rs...> whom,
                    std::uint16_t port,
                    const char* addr = nullptr) {
     if (!whom) return;
-    detail::publish_impl(detail::raw_access::get(whom),
-                         io::tcp_acceptor::create(port, addr));
+    detail::publish_impl(actor::detail::raw_access::get(whom),
+                         tcp_acceptor::create(port, addr));
 }
 
-} // namespace actor
+} // namespace actor_io
 } // namespace boost
 
 

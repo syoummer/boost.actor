@@ -9,7 +9,7 @@
  *                                                                            *
  *                                                                            *
  * Copyright (C) 2011 - 2014                                                  *
- * Dominik Charousset <dominik.charousset@haw-hamburg.de>                     *
+ * Dominik Charousset <dominik.charousset (at) haw-hamburg.de>                *
  *                                                                            *
  * Distributed under the Boost Software License, Version 1.0. See             *
  * accompanying file LICENSE or copy at http://www.boost.org/LICENSE_1_0.txt  *
@@ -25,13 +25,13 @@ namespace boost {
 namespace actor {
 namespace detail {
 
-class singleton_manager;
+class singletons;
 
 // a mixin for simple singleton classes
 template<class Derived, class Base = void>
 class singleton_mixin : public Base {
 
-    friend class singleton_manager;
+    friend class singletons;
 
     inline static Derived* create_singleton() { return new Derived; }
     inline void dispose() { delete this; }
@@ -50,7 +50,7 @@ class singleton_mixin : public Base {
 template<class Derived>
 class singleton_mixin<Derived, void> {
 
-    friend class singleton_manager;
+    friend class singletons;
 
     inline static Derived* create_singleton() { return new Derived; }
     inline void dispose() { delete this; }

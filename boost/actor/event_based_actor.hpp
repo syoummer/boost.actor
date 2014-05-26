@@ -9,7 +9,7 @@
  *                                                                            *
  *                                                                            *
  * Copyright (C) 2011 - 2014                                                  *
- * Dominik Charousset <dominik.charousset@haw-hamburg.de>                     *
+ * Dominik Charousset <dominik.charousset (at) haw-hamburg.de>                *
  *                                                                            *
  * Distributed under the Boost Software License, Version 1.0. See             *
  * accompanying file LICENSE or copy at http://www.boost.org/LICENSE_1_0.txt  *
@@ -21,7 +21,6 @@
 
 #include "boost/actor/on.hpp"
 #include "boost/actor/extend.hpp"
-#include "boost/actor/logging.hpp"
 #include "boost/actor/local_actor.hpp"
 #include "boost/actor/response_handle.hpp"
 
@@ -29,6 +28,7 @@
 #include "boost/actor/mixin/mailbox_based.hpp"
 #include "boost/actor/mixin/behavior_stack_based.hpp"
 
+#include "boost/actor/detail/logging.hpp"
 #include "boost/actor/detail/response_handle_util.hpp"
 
 namespace boost {

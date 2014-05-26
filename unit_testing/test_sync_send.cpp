@@ -346,7 +346,6 @@ int main() {
     test_sync_send();
     await_all_actors_done();
     BOOST_ACTOR_CHECKPOINT();
-    shutdown();
     // shutdown warning about unused function (only performs compile-time check)
     static_cast<void>(compile_time_optional_variant_check);
     return BOOST_ACTOR_TEST_RESULT();

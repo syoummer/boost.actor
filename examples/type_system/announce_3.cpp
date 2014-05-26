@@ -83,7 +83,5 @@ int main(int, char**) {
         self->send(spawn(testee), foo{1, 2});
     }
     await_all_actors_done();
-    shutdown();
-    return 0;
 }
 

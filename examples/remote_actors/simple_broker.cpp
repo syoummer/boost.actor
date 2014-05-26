@@ -19,12 +19,13 @@
 
 #include "boost/optional.hpp"
 #include "boost/actor/all.hpp"
+#include "boost/actor_io/all.hpp"
 
 using namespace std;
 
 using boost::optional;
 using namespace boost::actor;
-using namespace boost::actor::io;
+using namespace boost::actor_io;
 
 // utility function to print an exit message with custom name
 void print_on_exit(const actor& ptr, const std::string& name) {
@@ -114,9 +115,8 @@ behavior broker_impl(broker* self, connection_handle hdl, const actor& buddy) {
             auto atm_val = read_int<uint64_t>(msg.buf.data());
             // cast to original type
             auto atm = static_cast<atom_value>(atm_val);
-            // read integer value from buffer, jumping to the correct
-            // position via offset_data(...)
-            auto ival = read_int<int32_t>(msg.buf.offset_data(sizeof(uint64_t)));
+            // read integer value from buffer, jumping to the correct position
+            auto ival = read_int<int32_t>(msg.buf.data() + sizeof(uint64_t));
             // show some output
             aout(self) << "received {" << to_string(atm) << ", " << ival << "}"
                        << endl;

@@ -14,9 +14,11 @@
 #include "boost/program_options.hpp"
 
 #include "boost/actor/all.hpp"
+#include "boost/actor_io/all.hpp"
 
 using namespace std;
 using namespace boost::actor;
+using namespace boost::actor_io;
 using namespace boost::program_options;
 
 int main(int argc, char** argv) {
@@ -60,6 +62,6 @@ int main(int argc, char** argv) {
         if (line == "quit") return 0;
         else cout << "illegal command" << endl;
     }
-    shutdown();
+    //shutdown();
     return 0;
 }

@@ -9,7 +9,7 @@
  *                                                                            *
  *                                                                            *
  * Copyright (C) 2011 - 2014                                                  *
- * Dominik Charousset <dominik.charousset@haw-hamburg.de>                     *
+ * Dominik Charousset <dominik.charousset (at) haw-hamburg.de>                *
  *                                                                            *
  * Distributed under the Boost Software License, Version 1.0. See             *
  * accompanying file LICENSE or copy at http://www.boost.org/LICENSE_1_0.txt  *
@@ -22,16 +22,15 @@
 #include <type_traits>
 
 #include "boost/actor/policy.hpp"
-#include "boost/actor/logging.hpp"
 #include "boost/actor/scheduler.hpp"
 #include "boost/actor/spawn_fwd.hpp"
 #include "boost/actor/typed_actor.hpp"
 #include "boost/actor/spawn_options.hpp"
 #include "boost/actor/typed_event_based_actor.hpp"
 
-#include "boost/actor/detail/type_traits.hpp"
-
+#include "boost/actor/detail/logging.hpp"
 #include "boost/actor/detail/cs_thread.hpp"
+#include "boost/actor/detail/type_traits.hpp"
 #include "boost/actor/detail/make_counted.hpp"
 #include "boost/actor/detail/proper_actor.hpp"
 #include "boost/actor/detail/typed_actor_util.hpp"

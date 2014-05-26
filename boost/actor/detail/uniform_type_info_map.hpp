@@ -9,7 +9,7 @@
  *                                                                            *
  *                                                                            *
  * Copyright (C) 2011 - 2014                                                  *
- * Dominik Charousset <dominik.charousset@haw-hamburg.de>                     *
+ * Dominik Charousset <dominik.charousset (at) haw-hamburg.de>                *
  *                                                                            *
  * Distributed under the Boost Software License, Version 1.0. See             *
  * accompanying file LICENSE or copy at http://www.boost.org/LICENSE_1_0.txt  *
@@ -31,15 +31,13 @@
 #include "boost/actor/unit.hpp"
 #include "boost/actor/node_id.hpp"
 #include "boost/actor/duration.hpp"
+#include "boost/actor/accept_handle.hpp"
 #include "boost/actor/system_messages.hpp"
+#include "boost/actor/connection_handle.hpp"
 
 #include "boost/actor/detail/type_list.hpp"
 
 #include "boost/actor/detail/singleton_mixin.hpp"
-
-#include "boost/actor/io/buffer.hpp"
-#include "boost/actor/io/accept_handle.hpp"
-#include "boost/actor/io/connection_handle.hpp"
 
 namespace boost { namespace actor { class uniform_type_info; } }
 
@@ -50,20 +48,19 @@ namespace detail {
 // ordered according to demangled type name (see uniform_type_info_map.cpp)
 using mapped_type_list = detail::type_list<
     bool,
+    accept_handle,
     acceptor_closed_msg,
     actor,
     actor_addr,
     atom_value,
     channel,
     connection_closed_msg,
+    connection_handle,
     down_msg,
     duration,
     exit_msg,
     group,
     group_down_msg,
-    io::accept_handle,
-    io::buffer,
-    io::connection_handle,
     message,
     message_header,
     new_connection_msg,
@@ -81,7 +78,8 @@ using mapped_type_list = detail::type_list<
     std::string,
     std::u16string,
     std::u32string,
-    std::map<std::string, std::string>
+    std::map<std::string, std::string>,
+    std::vector<char>
 >;
 
 using zipped_type_list = detail::tl_zip_with_index<mapped_type_list>::type;

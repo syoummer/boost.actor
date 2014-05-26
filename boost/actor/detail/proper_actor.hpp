@@ -3,10 +3,11 @@
 
 #include <type_traits>
 
-#include "boost/actor/logging.hpp"
 #include "boost/actor/duration.hpp"
 #include "boost/actor/blocking_actor.hpp"
 #include "boost/actor/mailbox_element.hpp"
+
+#include "boost/actor/detail/logging.hpp"
 
 #include "boost/actor/policy/scheduling_policy.hpp"
 
@@ -129,7 +130,7 @@ class proper_actor_base : public Policies::resume_policy::template mixin<Base, D
 
     void cleanup(std::uint32_t reason) override {
         BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_ARG(reason));
-        if (!hidden()) get_actor_registry()->dec_running();
+        if (!hidden()) detail::singletons::get_actor_registry()->dec_running();
         super::cleanup(reason);
     }
 
@@ -158,8 +159,8 @@ class proper_actor_base : public Policies::resume_policy::template mixin<Base, D
 
     inline void hidden(bool value) {
         if (this->m_hidden == value) return;
-        if (value) get_actor_registry()->dec_running();
-        else get_actor_registry()->inc_running();
+        if (value) detail::singletons::get_actor_registry()->dec_running();
+        else detail::singletons::get_actor_registry()->inc_running();
         this->m_hidden = value;
     }
 

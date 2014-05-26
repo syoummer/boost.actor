@@ -17,7 +17,7 @@ add_custom_target(all_examples)
 
 macro(add name folder)
   add_executable(${name} ${folder}/${name}.cpp ${ARGN})
-  target_link_libraries(${name} ${LD_FLAGS} ${CMAKE_DL_LIBS} ${BOOST_ACTOR_LIBRARY} ${PTHREAD_LIBRARIES})
+  target_link_libraries(${name} ${LD_FLAGS} ${CMAKE_DL_LIBS} ${BOOST_ACTOR_LIBRARY} ${BOOST_ACTOR_IO_LIBRARY} ${PTHREAD_LIBRARIES})
   add_dependencies(${name} all_examples)
 endmacro()
 

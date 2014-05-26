@@ -112,100 +112,6 @@ if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
   set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif ("${CMAKE_BUILD_TYPE}" STREQUAL "")
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  set(LIBBOOST_ACTOR_PLATFORM_SRC src/middleman_event_handler_epoll.cpp)
-elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  set(LIBBOOST_ACTOR_PLATFORM_SRC src/middleman_event_handler_poll.cpp)
-elseif (${CMAKE_SYSTEM_NAME} MATCHES "Window")
-  set(LIBBOOST_ACTOR_PLATFORM_SRC src/middleman_event_handler_poll.cpp src/execinfo_windows.cpp)
-else ()
-  message(FATAL_ERROR "This platform is not supported by libboost_actor")
-endif()
-
-# list cpp files including platform-dependent files
-set(LIBBOOST_ACTOR_SRC
-    ${LIBBOOST_ACTOR_PLATFORM_SRC}
-    src/abstract_actor.cpp
-    src/abstract_channel.cpp
-    src/abstract_group.cpp
-    src/abstract_tuple.cpp
-    src/acceptor.cpp
-    src/actor.cpp
-    src/actor_addr.cpp
-    src/actor_namespace.cpp
-    src/actor_proxy.cpp
-    src/actor_registry.cpp
-    src/actor_ostream.cpp
-    src/atom.cpp
-    src/attachable.cpp
-    src/behavior.cpp
-    src/behavior_stack.cpp
-    src/binary_deserializer.cpp
-    src/binary_serializer.cpp
-    src/broker.cpp
-    src/buffer.cpp
-    src/blocking_actor.cpp
-    src/channel.cpp
-    src/context_switching_resume.cpp
-    src/continuable.cpp
-    src/continue_helper.cpp
-    src/cs_thread.cpp
-    src/decorated_tuple.cpp
-    src/default_message_queue.cpp
-    src/actor_proxy.cpp
-    src/peer.cpp
-    src/peer_acceptor.cpp
-    src/demangle.cpp
-    src/deserializer.cpp
-    src/duration.cpp
-    src/event_based_actor.cpp
-    src/exception.cpp
-    src/execution_unit.cpp
-    src/exit_reason.cpp
-    src/fd_util.cpp
-    src/functor_based_actor.cpp
-    src/functor_based_blocking_actor.cpp
-    src/get_root_uuid.cpp
-    src/get_mac_addresses.cpp
-    src/group.cpp
-    src/group_manager.cpp
-    src/input_stream.cpp
-    src/local_actor.cpp
-    src/logging.cpp
-    src/mailbox_element.cpp
-    src/max_msg_size.cpp
-    src/memory.cpp
-    src/memory_managed.cpp
-    src/message.cpp
-    src/message_builder.cpp
-    src/message_header.cpp
-    src/middleman.cpp
-    src/middleman_event_handler.cpp
-    src/node_id.cpp
-    src/output_stream.cpp
-    src/partial_function.cpp
-    src/ref_counted.cpp
-    src/resumable.cpp
-    src/remote_actor_proxy.cpp
-    src/response_promise.cpp
-    src/ripemd_160.cpp
-    src/scheduler.cpp
-    src/scoped_actor.cpp
-    src/serializer.cpp
-    src/shared_spinlock.cpp
-    src/singleton_manager.cpp
-    src/stream.cpp
-    src/string_serialization.cpp
-    src/sync_request_bouncer.cpp
-    src/tcp_acceptor.cpp
-    src/tcp_io_stream.cpp
-    src/to_uniform_name.cpp
-    src/type_lookup_table.cpp
-    src/unicast_network.cpp
-    src/uniform_type_info.cpp
-    src/uniform_type_info_map.cpp
-    src/yield_interface.cpp)
-
 if (BOOST_ROOT)
   # Prevent falling back to system paths when using a custom Boost prefix.
   set(Boost_NO_SYSTEM_PATHS true)
@@ -251,29 +157,6 @@ set(LD_DIRS ${LD_DIRS} ${Boost_LIBRARY_DIRS})
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_ACTOR_DISABLE_CONTEXT_SWITCHING")
 #endif ()
 
-# build shared library if not compiling static only
-if (NOT "${BOOST_ACTOR_BUILD_STATIC_ONLY}" STREQUAL "yes")
-  add_library(libboost_actor SHARED ${LIBBOOST_ACTOR_SRC} ${LIBBOOST_ACTOR_HDRS})
-  target_link_libraries(libboost_actor ${LD_FLAGS})
-  set(LIBRARY_VERSION ${LIBBOOST_ACTOR_VERSION_MAJOR}.${LIBBOOST_ACTOR_VERSION_MINOR}.${LIBBOOST_ACTOR_VERSION_PATCH})
-  set(LIBRARY_SOVERSION ${LIBBOOST_ACTOR_VERSION_MAJOR})
-  set_target_properties(libboost_actor
-                        PROPERTIES
-                        SOVERSION 0
-                        VERSION 0
-                        OUTPUT_NAME boost_actor)
-  if(NOT MINGW)
-    install(TARGETS libboost_actor LIBRARY DESTINATION lib)
-  endif()
-endif ()
-
-# build static library only if --build-static or --build-static-only was set
-if ("${BOOST_ACTOR_BUILD_STATIC_ONLY}" STREQUAL "yes" OR "${BOOST_ACTOR_BUILD_STATIC}" STREQUAL "yes")
-  add_library(libboost_actorStatic STATIC ${LIBBOOST_ACTOR_HDRS} ${LIBBOOST_ACTOR_SRC})
-  set_target_properties(libboost_actorStatic PROPERTIES OUTPUT_NAME boost_actor_static)
-  install(TARGETS libboost_actorStatic ARCHIVE DESTINATION lib)
-endif ()
-
 link_directories(${LD_DIRS})
 include_directories(${INCLUDE_DIRS})
 
@@ -294,6 +177,15 @@ add_custom_target(uninstall
 set (BOOST_ACTOR_INCLUDE_PATH ${CMAKE_SOURCE_DIR}/boost.actor)
 set (BOOST_ACTOR_INCLUDE ${BOOST_ACTOR_INCLUDE_PATH})
 
+# set for Boost.Actor
+add_subdirectory(src/actor)
+link_directories(${LD_DIRS})
+include_directories(${INCLUDE_DIRS})
+
+# setting path to boost_actor headers and libboost_actor
+set (BOOST_ACTOR_INCLUDE_PATH ${CMAKE_SOURCE_DIR}/boost.actor)
+set (BOOST_ACTOR_INCLUDE ${BOOST_ACTOR_INCLUDE_PATH})
+
 if ("${BOOST_ACTOR_BUILD_STATIC_ONLY}" STREQUAL "yes")
   set (BOOST_ACTOR_LIBRARY ${LIBRARY_OUTPUT_PATH}/libboost_actor_static.a ${LD_FLAGS})
 else ()
@@ -303,7 +195,6 @@ else ()
     else ()
       set (BOOST_ACTOR_LIBRARY ${LIBRARY_OUTPUT_PATH}/libboost_actor.dylib)
     endif ()
-    #set (BOOST_ACTOR_LIBRARY -L${LIBRARY_OUTPUT_PATH} -lboost_actor)
   elseif (UNIX)
     set (BOOST_ACTOR_LIBRARY ${LIBRARY_OUTPUT_PATH}/libboost_actor.so)
   elseif (MINGW)
@@ -313,22 +204,50 @@ else ()
   endif ()
 endif ()
 
+# setup for Boost.ActorIO
+add_subdirectory(src/actor_io)
+
+# setting path to boost_actor headers and libboost_actor_io
+set (BOOST_ACTOR_IO_INCLUDE_PATH ${CMAKE_SOURCE_DIR}/boost.actor)
+set (BOOST_ACTOR_IO_INCLUDE ${BOOST_ACTOR_INCLUDE_PATH})
+
+if ("${BOOST_ACTOR_BUILD_STATIC_ONLY}" STREQUAL "yes")
+  set (BOOST_ACTOR_IO_LIBRARY ${LIBRARY_OUTPUT_PATH}/libboost_actor_io_static.a ${LD_FLAGS})
+else ()
+  if (APPLE)
+    if ("${CMAKE_GENERATOR}" STREQUAL "Xcode")
+      set (BOOST_ACTOR_IO_LIBRARY "-lboost_actor")
+    else ()
+      set (BOOST_ACTOR_IO_LIBRARY ${LIBRARY_OUTPUT_PATH}/libboost_actor_io.dylib) 
+    endif ()
+    #set (BOOST_ACTOR_IO_LIBRARY -L${LIBRARY_OUTPUT_PATH} -lboost_actor)
+  elseif (UNIX)
+    set (BOOST_ACTOR_IO_LIBRARY ${LIBRARY_OUTPUT_PATH}/libboost_actor_io.so)
+  elseif (MINGW)
+    set (BOOST_ACTOR_IO_LIBRARY ${LIBRARY_OUTPUT_PATH}/libboost_actor_io.dll)
+  else ()
+    message (SEND_FATAL "Host platform not supported ...")
+  endif ()
+endif ()
+
+add_dependencies(libboost_actor_io libboost_actor)
+
 # set up subdirectories
 if (NOT "${BOOST_ACTOR_NO_UNIT_TESTS}" STREQUAL "yes")
   enable_testing()
   add_subdirectory(unit_testing)
   if ("${BOOST_ACTOR_BUILD_STATIC_ONLY}" STREQUAL "yes")
-    add_dependencies(all_unit_tests libboost_actorStatic)
+    add_dependencies(all_unit_tests libboost_actorStatic libboost_actor_ioStatic)
   else ()
-    add_dependencies(all_unit_tests libboost_actor)
+    add_dependencies(all_unit_tests libboost_actor libboost_actor_io)
   endif ()
 endif ()
 if (NOT "${BOOST_ACTOR_NO_EXAMPLES}" STREQUAL "yes")
   add_subdirectory(examples)
   if ("${BOOST_ACTOR_BUILD_STATIC_ONLY}" STREQUAL "yes")
-    add_dependencies(all_examples libboost_actorStatic)
+    add_dependencies(all_examples libboost_actorStatic libboost_actor_ioStatic)
   else ()
-    add_dependencies(all_examples libboost_actor)
+    add_dependencies(all_examples libboost_actor libboost_actor_io)
   endif ()
 endif ()
 
