@@ -125,7 +125,7 @@ void remote_actor_proxy::forward_msg(msg_hdr_cref hdr, message msg) {
         BOOST_ACTOR_LOGC_TRACE("cppa::io::remote_actor_proxy",
                         "forward_msg$forwarder",
                         "");
-        mm->deliver(*node, hdr, msg);
+        mm->dispatch(*node, hdr, msg);
     });
 }
 

@@ -16,12 +16,20 @@
 \******************************************************************************/
 
 
-#include "boost/actor_io/output_stream.hpp"
+#include "boost/actor_io/network.hpp"
 
 namespace boost {
 namespace actor_io {
+namespace network {
 
-output_stream::~output_stream() { }
+manager::~manager() {
+    // nop
+}
 
+stream_manager::~stream_manager() {
+    // nop
+}
+
+} // namespace network
 } // namespace actor_io
 } // namespace boost

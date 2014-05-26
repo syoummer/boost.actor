@@ -29,7 +29,7 @@ using namespace boost::actor_io;
 
 // utility function to print an exit message with custom name
 void print_on_exit(const actor& ptr, const std::string& name) {
-    ptr->attach_functor([=](std::uint32_t reason) {
+    ptr->attach_functor([=](uint32_t reason) {
         aout(ptr) << name << " exited with reason " << reason << endl;
     });
 }
@@ -58,10 +58,12 @@ behavior pong() {
 }
 
 // utility function for sending an integer type
-template<typename T>
-void write_int(broker* self, connection_handle hdl, T value) {
+template<class Buffer, typename T>
+void write_int(Buffer buf, T value) {
     auto cpy = static_cast<T>(htonl(value));
-    self->write(hdl, sizeof(T), &cpy);
+    auto first = reinterpret_cast<char*>(&cpy);
+    auto last = first + sizeof(T);
+    buf.insert(buf.end(), first, last);
 }
 
 // utility function for reading an ingeger from incoming data
@@ -81,8 +83,8 @@ behavior broker_impl(broker* self, connection_handle hdl, const actor& buddy) {
     self->monitor(buddy);
     // setup: we are exchanging only messages consisting of an atom
     // (as uint64_t) and an integer value (int32_t)
-    self->receive_policy(hdl, broker::exactly,
-                         sizeof(uint64_t) + sizeof(int32_t));
+    self->configure_read(hdl, receive_policy::exactly(  sizeof(uint64_t)
+                                                      + sizeof(int32_t)));
     // our message handlers
     return {
         [=](const connection_closed_msg& msg) {
@@ -99,9 +101,10 @@ behavior broker_impl(broker* self, connection_handle hdl, const actor& buddy) {
             assert(av == atom("ping") || av == atom("pong"));
             aout(self) << "send {" << to_string(av) << ", " << i << "}"
                        << endl;
-            // cast atom to its underlying type, i.e., uint64_t
-            write_int(self, hdl, static_cast<uint64_t>(av));
-            write_int(self, hdl, i);
+            auto& buf = self->wr_buf(hdl);
+            write_int(buf, static_cast<uint64_t>(av));
+            write_int(buf, i);
+            self->flush(hdl);
         },
         [=](const down_msg& dm) {
             if (dm.source == buddy) {
@@ -136,10 +139,12 @@ behavior server(broker* self, const actor& buddy) {
             aout(self) << "server accepted new connection" << endl;
             // by forking into a new broker, we are no longer
             // responsible for the connection
+            /*
             auto impl = self->fork(broker_impl, msg.handle, buddy);
             print_on_exit(impl, "broker_impl");
             aout(self) << "quit server (only accept 1 connection)" << endl;
             self->quit();
+            */
         },
         others() >> [=] {
             cout << "unexpected: " << to_string(self->last_dequeued()) << endl;

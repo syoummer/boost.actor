@@ -29,7 +29,7 @@ namespace actor {
 /**
  * @brief The value type of atoms.
  */
-enum class atom_value : std::uint64_t {
+enum class atom_value : uint64_t {
     /** @cond PRIVATE */
     dirty_little_hack = 37337
     /** @endcond */

@@ -45,7 +45,7 @@ namespace scheduler {
 
 namespace {
 
-typedef std::uint32_t ui32;
+typedef uint32_t ui32;
 
 typedef std::chrono::high_resolution_clock hrc;
 

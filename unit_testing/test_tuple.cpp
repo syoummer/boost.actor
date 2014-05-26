@@ -357,7 +357,7 @@ void check_wildcards() {
         BOOST_ACTOR_CHECK(&get<0>(t0) != &get<0>(v0));         // no longer the same
         // check operator==
         auto lhs = make_message(1, 2, 3, 4);
-        auto rhs = make_message(static_cast<std::uint8_t>(1), 2.0, 3, 4);
+        auto rhs = make_message(static_cast<uint8_t>(1), 2.0, 3, 4);
         BOOST_ACTOR_CHECK(lhs == rhs);
         BOOST_ACTOR_CHECK(rhs == lhs);
     }

@@ -75,7 +75,7 @@ namespace detail {
 /**
  * @brief Creates a hash from @p data using the RIPEMD-160 algorithm.
  */
-void ripemd_160(std::array<std::uint8_t, 20>& storage, const std::string& data);
+void ripemd_160(std::array<uint8_t, 20>& storage, const std::string& data);
 
 } // namespace detail
 } // namespace actor

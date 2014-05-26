@@ -117,7 +117,7 @@ class behavior_stack_based_impl : public single_timeout<Base, Subtype> {
      *           extended timeout handling (handle_timeout mem fun)           *
      **************************************************************************/
 
-    void handle_timeout(behavior& bhvr, std::uint32_t timeout_id) {
+    void handle_timeout(behavior& bhvr, uint32_t timeout_id) {
         if (this->is_active_timeout(timeout_id)) {
             this->reset_timeout();
             bhvr.handle_timeout();

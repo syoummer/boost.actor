@@ -22,42 +22,25 @@
 #include <map>
 #include <vector>
 #include <memory>
-#include <functional>
+#include <thread>
 
-#include "boost/actor/node_id.hpp"
+#include "boost/asio.hpp"
+
 #include "boost/actor/fwd.hpp"
+#include "boost/actor/node_id.hpp"
 #include "boost/actor/actor_namespace.hpp"
+#include "boost/actor/detail/singletons.hpp"
 
-namespace boost { namespace actor { namespace detail { class singletons; } } }
-
-namespace boost {
-namespace actor {
-
-class actor_proxy;
-typedef intrusive_ptr<actor_proxy> actor_proxy_ptr;
-
-} // namespace actor
-} // namespace boost
+#include "boost/actor_io/peer.hpp"
+#include "boost/actor_io/peer_acceptor.hpp"
 
 namespace boost {
 namespace actor_io {
 
-class peer;
-class continuable;
-class input_stream;
-class peer_acceptor;
-class output_stream;
-class middleman_event_handler;
-
-typedef intrusive_ptr<input_stream> input_stream_ptr;
-typedef intrusive_ptr<output_stream> output_stream_ptr;
-
 /**
  * @brief Multiplexes asynchronous IO.
- * @note No member function except for @p run_later is safe to call from
- *       outside the event loop.
  */
-class middleman {
+class middleman : public actor::actor_namespace::backend {
 
     friend class boost::actor::detail::singletons;
 
@@ -68,99 +51,60 @@ class middleman {
      */
     static middleman* instance();
 
-    virtual ~middleman();
+    middleman();
+
+    ~middleman();
 
     /**
      * @brief Runs @p fun in the event loop of the middleman.
      * @note This member function is thread-safe.
      */
-    virtual void run_later(std::function<void()> fun) = 0;
+    template<typename F>
+    void run_later(F fun) {
+        if (m_thread.get_id() == std::this_thread::get_id()) fun();
+        else m_backend.dispatch(fun);
+    }
 
     /**
-     * @brief Removes @p ptr from the list of active writers.
+     * @brief Adds @p mgr to the list of known network IO device managers.
      */
-    void stop_writer(continuable* ptr);
+    void add(const network::manager_ptr& mgr);
 
     /**
-     * @brief Adds @p ptr to the list of active writers.
+     * @brief Removes @p mgr from the list of known network IO device managers.
      */
-    void continue_writer(continuable* ptr);
-
-    /**
-     * @brief Checks wheter @p ptr is an active writer.
-     * @warning This member function is not thread-safe.
-     */
-    bool has_writer(continuable* ptr);
-
-    /**
-     * @brief Removes @p ptr from the list of active readers.
-     * @warning This member function is not thread-safe.
-     */
-    void stop_reader(continuable* ptr);
-
-    /**
-     * @brief Adds @p ptr to the list of active readers.
-     * @warning This member function is not thread-safe.
-     */
-    void continue_reader(continuable* ptr);
-
-    /**
-     * @brief Checks wheter @p ptr is an active reader.
-     * @warning This member function is not thread-safe.
-     */
-    bool has_reader(continuable* ptr);
+    void remove(const network::manager_ptr& mgr);
 
     /**
      * @brief Tries to register a new peer, i.e., a new node in the network.
      *        Returns false if there is already a connection to @p node,
      *        otherwise true.
      */
-    virtual bool register_peer(const actor::node_id& node, peer* ptr) = 0;
+    bool register_peer(const actor::node_id& node, const peer_ptr& ptr);
 
     /**
      * @brief Returns the peer associated with given node id.
      */
-    virtual peer* get_peer(const actor::node_id& node) = 0;
-
-    /**
-     * @brief This callback is used by peer_acceptor implementations to
-     *        invoke cleanup code when disposed.
-     */
-    virtual void del_acceptor(peer_acceptor* ptr) = 0;
+    peer_ptr get_peer(const actor::node_id& node);
 
     /**
      * @brief This callback is used by peer implementations to
      *        invoke cleanup code when disposed.
      */
-    virtual void del_peer(peer* ptr) = 0;
+    void del_peer(const peer_ptr& pptr);
 
     /**
      * @brief Delivers a message to given node.
      */
-    virtual void deliver(const actor::node_id& node,
-                         actor::msg_hdr_cref hdr,
-                         actor::message msg         ) = 0;
+    void dispatch(const actor::node_id& node,
+                  actor::msg_hdr_cref hdr,
+                  actor::message msg);
 
     /**
      * @brief This callback is invoked by {@link peer} implementations
      *        and causes the middleman to disconnect from the node.
      */
-    virtual void last_proxy_exited(peer* ptr) = 0;
-
-    /**
-     *
-     */
-    virtual void new_peer(const input_stream_ptr& in,
-                          const output_stream_ptr& out,
-                          const actor::node_id_ptr& node = nullptr) = 0;
-
-    /**
-     * @brief Adds a new acceptor for incoming connections to @p pa
-     *        to the event loop of the middleman.
-     * @note This member function is thread-safe.
-     */
-    virtual void register_acceptor(const actor::actor_addr& pa,
-                                   peer_acceptor* ptr) = 0;
+    void last_proxy_exited(const peer_ptr& pptr);
 
     /**
      * @brief Returns the namespace that contains all remote actors
@@ -169,23 +113,69 @@ class middleman {
     inline actor::actor_namespace& get_namespace();
 
     /**
+     * @brief Creates a new proxy instance.
+     */
+    actor::actor_proxy_ptr make_proxy(const actor::node_id_ptr&,
+                                      actor::actor_id) override;
+
+    /**
+     * @brief Registers a proxy instance.
+     */
+    void register_proxy(const actor::node_id&, actor::actor_id) override;
+
+    /**
      * @brief Returns the node of this middleman.
      */
-    inline const actor::node_id_ptr& node() const;
+    const actor::node_id_ptr& node() const override;
 
- protected:
+    /**
+     * @brief Returns the IO backend used by this middleman.
+     */
+    inline boost::asio::io_service& backend() {
+        return m_backend;
+    }
+
+    /**
+     * @brief Buffer type used for asynchronous IO.
+     */
+    typedef std::vector<char> buffer_type;
+
+    /**
+     * @brief Returns a buffer for asynchronous IO. This buffer is owned by
+     *        the middleman and must not be deleted.
+     * @warning Call *only* from completion handlers invoked from the backend.
+     */
+    buffer_type* acquire_buffer();
+
+    /**
+     * @brief Allows the middleman to re-use @p buf in a subsequent
+     *        in a subsequent call to @p acquire_buffer.
+     * @warning Call *only* from completion handlers invoked from the backend.
+     */
+    void release_buffer(buffer_type* buf);
+
+    inline std::thread::id thread_id() {
+        return m_thread.get_id();
+    }
+
+ private:
+
+    network::multiplexer m_backend;
+    network::supervisor* m_supervisor;
 
     // creates a middleman instance
-    static middleman* create_singleton();
+    static inline middleman* create_singleton() {
+        return new middleman;
+    }
 
     // destroys uninitialized instances
     inline void dispose() { delete this; }
 
     // destroys an initialized singleton
-    virtual void destroy() = 0;
+    void destroy();
 
     // initializes a singleton
-    virtual void initialize() = 0;
+    void initialize();
 
     // each middleman defines its own namespace
     actor::actor_namespace m_namespace;
@@ -193,17 +183,16 @@ class middleman {
     // the node id of this middleman
     actor::node_id_ptr m_node;
 
-    std::unique_ptr<middleman_event_handler> m_handler;
+    std::set<network::manager_ptr> m_managers;
+
+    std::map<boost::actor::node_id, peer_ptr> m_peers;
+
+    std::thread m_thread;
 
 };
 
 inline actor::actor_namespace& middleman::get_namespace() {
     return m_namespace;
-}
-
-const actor::node_id_ptr& middleman::node() const {
-    BOOST_ACTOR_REQUIRE(m_node != nullptr);
-    return m_node;
 }
 
 } // namespace actor_io

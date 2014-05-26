@@ -54,10 +54,32 @@ bool isbuiltin(const string& type_name) {
     return type_name == "@str" || type_name == "@atom" || type_name == "@tuple";
 }
 
+class dummy_backend : public actor_namespace::backend {
+
+ public:
+
+    actor_proxy_ptr make_proxy(const node_id_ptr&, actor_id) override {
+        return nullptr;
+    }
+
+    void register_proxy(const node_id&, actor_id) override {
+        // ignore proxy
+    }
+
+    const node_id_ptr& node() const override {
+        return m_ptr;
+    }
+
+ private:
+
+    node_id_ptr m_ptr;
+
+};
+
 // serializes types as type_name(...) except:
 // - strings are serialized "..."
 // - atoms are serialized '...'
-class string_serializer : public serializer {
+class string_serializer : public serializer, public dummy_backend {
 
     typedef serializer super;
 
@@ -127,7 +149,7 @@ class string_serializer : public serializer {
  public:
 
     string_serializer(ostream& mout)
-    : super(&m_namespace), out(mout), m_after_value(false)
+    : super(&m_namespace), out(mout), m_namespace(*this), m_after_value(false)
     , m_obj_just_opened(false) { }
 
     void begin_object(const uniform_type_info* uti) {
@@ -203,7 +225,7 @@ class string_serializer : public serializer {
 
 };
 
-class string_deserializer : public deserializer {
+class string_deserializer : public deserializer, public dummy_backend {
 
     typedef deserializer super;
 
@@ -282,9 +304,12 @@ class string_deserializer : public deserializer {
 
  public:
 
-    string_deserializer(string str) : super(&m_namespace), m_str(std::move(str)) {
+    string_deserializer(string str)
+    : super(&m_namespace), m_str(std::move(str)), m_namespace(*this) {
         m_pos = m_str.begin();
     }
+
+
 
     const uniform_type_info* begin_object() override {
         skip_space_and_comma();

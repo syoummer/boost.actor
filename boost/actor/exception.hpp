@@ -75,7 +75,7 @@ class actor_exited : public cppa_exception {
 
     ~actor_exited();
 
-    actor_exited(std::uint32_t exit_reason);
+    actor_exited(uint32_t exit_reason);
 
     actor_exited(const actor_exited&) = default;
     actor_exited& operator=(const actor_exited&) = default;
@@ -85,11 +85,11 @@ class actor_exited : public cppa_exception {
      * @returns The exit reason of the terminating actor either set via
      *          {@link quit} or by a special (exit) message.
      */
-    inline std::uint32_t reason() const noexcept;
+    inline uint32_t reason() const noexcept;
 
  private:
 
-    std::uint32_t m_reason;
+    uint32_t m_reason;
 
 };
 
@@ -98,6 +98,8 @@ class actor_exited : public cppa_exception {
  *        the middleman was unable to connect to a remote host.
  */
 class network_error : public cppa_exception {
+
+    using super = cppa_exception;
 
  public:
 
@@ -115,32 +117,21 @@ class network_error : public cppa_exception {
  */
 class bind_failure : public network_error {
 
+    using super = network_error;
+
  public:
 
     ~bind_failure();
 
-    bind_failure(int bind_errno);
+    bind_failure(std::string&& what_str);
+    bind_failure(const std::string& what_str);
     bind_failure(const bind_failure&) = default;
     bind_failure& operator=(const bind_failure&) = default;
 
-    /**
-     * @brief Gets the socket API error code.
-     * @returns The errno set by <tt>bind()</tt>.
-     */
-    inline int error_code() const noexcept;
-
- private:
-
-    int m_errno;
-
 };
 
-inline std::uint32_t actor_exited::reason() const noexcept {
+inline uint32_t actor_exited::reason() const noexcept {
     return m_reason;
-}
-
-inline int bind_failure::error_code() const noexcept {
-    return m_errno;
 }
 
 } // namespace actor

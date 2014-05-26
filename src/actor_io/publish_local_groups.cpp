@@ -40,7 +40,7 @@ struct group_nameserver : event_based_actor {
 };
 } // namespace <anonymous>
 
-void publish_local_groups(std::uint16_t port, const char* addr) {
+void publish_local_groups(uint16_t port, const char* addr) {
     auto gn = spawn<group_nameserver, hidden>();
     try {
         publish(gn, port, addr);

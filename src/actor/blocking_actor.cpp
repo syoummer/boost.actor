@@ -31,7 +31,7 @@ void blocking_actor::await_all_other_actors_done() {
     detail::singletons::get_actor_registry()->await_running_count_equal(1);
 }
 
-void blocking_actor::quit(std::uint32_t reason) {
+void blocking_actor::quit(uint32_t reason) {
     planned_exit_reason(reason);
     throw actor_exited(reason);
 }

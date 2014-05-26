@@ -197,7 +197,7 @@ void run_client_part(const std::map<std::string, std::string>& args, F fun) {
         BOOST_ACTOR_LOGF_ERROR("no port specified");
         throw std::logic_error("no port specified");
     }
-    auto port = static_cast<std::uint16_t>(stoi(i->second));
+    auto port = static_cast<uint16_t>(stoi(i->second));
     fun(port);
     boost::actor::await_all_actors_done();
     boost::actor_io::shutdown();

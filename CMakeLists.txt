@@ -138,7 +138,15 @@ if (STANDALONE_BUILD)
   add_definitions(-DBOOST_ACTOR_STANDALONE_BUILD)
 endif (STANDALONE_BUILD)
 
-find_package(Boost 1.53.0 REQUIRED) # we only have header-only dependencies
+find_package(Boost 1.53.0 REQUIRED system) # system is required for ASIO
+set(LD_FLAGS ${LD_FLAGS} ${Boost_SYSTEM_LIBRARY})
+# This hack fixes a problem when the linker search path is the same as
+# the one provided by the compiler. In this case, CMake replaces the absolute
+# path (e.g., /path/to/lib.so) with -l<lib>, which may cause it to pick up the wrong
+# library. So when this replacement happens, we ensure that the right
+# library gets picked by adding a -L directive for the affected libraries
+# (which is just Boost Context here).
+set(CMAKE_EXE_LINKER_FLAGS -L${Boost_LIBRARY_DIRS})
 set(INCLUDE_DIRS ${INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 set(LD_DIRS ${LD_DIRS} ${Boost_LIBRARY_DIRS})
 

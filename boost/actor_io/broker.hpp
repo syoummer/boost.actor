@@ -27,13 +27,8 @@
 #include "boost/actor/accept_handle.hpp"
 #include "boost/actor/connection_handle.hpp"
 
-#include "boost/actor_io/stream.hpp"
-#include "boost/actor_io/broker.hpp"
-#include "boost/actor_io/acceptor.hpp"
-#include "boost/actor_io/input_stream.hpp"
-#include "boost/actor_io/tcp_acceptor.hpp"
-#include "boost/actor_io/tcp_io_stream.hpp"
-#include "boost/actor_io/output_stream.hpp"
+#include "boost/actor_io/network.hpp"
+#include "boost/actor_io/middleman.hpp"
 
 #include "boost/actor/mixin/behavior_stack_based.hpp"
 
@@ -61,10 +56,110 @@ class broker : public actor::extend<actor::local_actor>::
 
     typedef combined_type super;
 
-    // implementation relies on several helper classes ...
-    class scribe;
-    class servant;
-    class doorman;
+ public:
+
+    typedef std::vector<char> buffer_type;
+
+    class servant {
+
+        friend class broker;
+
+     public:
+
+        virtual ~servant();
+
+        virtual void launch() = 0;
+
+     protected:
+
+        virtual actor::message disconnect_message() = 0;
+
+        servant(broker* ptr);
+
+        void set_broker(broker* ptr);
+
+        void disconnect();
+
+        bool m_disconnected;
+
+        broker* m_broker;
+
+    };
+
+    class scribe : public network::stream_manager, public servant {
+
+        typedef servant super;
+
+     public:
+
+        ~scribe();
+
+        scribe(broker* parent, actor::connection_handle hdl);
+
+        virtual void configure_read(receive_policy::config config) = 0;
+
+        virtual buffer_type& wr_buf() = 0;
+
+        virtual void flush() = 0;
+
+        inline actor::connection_handle id() const {
+            return read_msg().handle;
+        }
+
+        void io_failure(network::operation op, const std::string& msg) override;
+
+     protected:
+
+        virtual buffer_type& rd_buf() = 0;
+
+        inline actor::new_data_msg& read_msg() {
+            return m_read_msg.get_as_mutable<actor::new_data_msg>(0);
+        }
+
+        inline const actor::new_data_msg& read_msg() const{
+            return m_read_msg.get_as<actor::new_data_msg>(0);
+        }
+
+        actor::message disconnect_message() override;
+
+        void consume(const void* data, size_t num_bytes) override;
+
+        actor::message m_read_msg;
+
+    };
+
+    class doorman : public network::acceptor_manager, public servant {
+
+        typedef servant super;
+
+     public:
+
+        ~doorman();
+
+        doorman(broker* parent, actor::accept_handle hdl);
+
+        inline actor::accept_handle id() const {
+            return accept_msg().source;
+        }
+
+        actor::message disconnect_message() override;
+
+        void io_failure(network::operation op, const std::string& msg) override;
+
+     protected:
+
+        inline actor::new_connection_msg& accept_msg() {
+            return m_accept_msg.get_as_mutable<actor::new_connection_msg>(0);
+        }
+
+        inline const actor::new_connection_msg& accept_msg() const {
+            return m_accept_msg.get_as<actor::new_connection_msg>(0);
+        }
+
+        actor::message m_accept_msg;
+
+    };
+
     class continuation;
 
     // ... and some helpers need friendship
@@ -74,45 +169,37 @@ class broker : public actor::extend<actor::local_actor>::
 
     friend broker_ptr init_and_launch(broker_ptr);
 
- public:
-
-    typedef std::vector<char> charbuf;
-
     ~broker();
 
     /**
-     * @brief Used to configure {@link receive_policy()}.
-     */
-    enum policy_flag { at_least, at_most, exactly };
-
-    /**
-     * @brief Modifies the receive policy for this broker.
+     * @brief Modifies the receive policy for given connection.
      * @param hdl Identifies the affected connection.
-     * @param policy Sets the policy for given buffer size.
-     * @param buffer_size Sets the minimal, maximum, or exact number of bytes
-     *                    the middleman should read on this connection
-     *                    before sending the next {@link new_data_msg}.
+     * @param config Contains the new receive policy.
      */
-    void receive_policy(const boost::actor::connection_handle& hdl,
-                        broker::policy_flag policy,
-                        size_t buffer_size);
+    void configure_read(const actor::connection_handle& hdl,
+                        receive_policy::config config);
 
     /**
-     * @brief Sends data.
+     * @brief Returns the write buffer for given connection.
      */
-    void write(const boost::actor::connection_handle& hdl,
-               size_t num_bytes,
-               const void* buf);
+    buffer_type& wr_buf(const actor::connection_handle& hdl);
 
     /**
-     * @brief Sends data.
+     * @brief Sends the content of the buffer for given connection.
      */
-    void write(const boost::actor::connection_handle& hdl, const charbuf& buf);
+    void flush(const actor::connection_handle& hdl);
+
+    /**
+     * @brief Returns the number of open connections.
+     */
+    inline size_t num_connections() const {
+        return m_scribes.size();
+    }
 
     /** @cond PRIVATE */
 
     template<typename F, typename... Ts>
-    actor::actor fork(F fun, boost::actor::connection_handle hdl, Ts&&... vs) {
+    actor::actor fork(F fun, actor::connection_handle hdl, Ts&&... vs) {
         auto f = std::bind(std::move(fun),
                            std::placeholders::_1,
                            hdl,
@@ -124,32 +211,94 @@ class broker : public actor::extend<actor::local_actor>::
         return this->fork_impl(std::move(stdfun), hdl);
     }
 
-    inline size_t num_connections() const {
-        return m_io.size();
+    template<class Socket>
+    actor::connection_handle add_connection(Socket sock) {
+        class impl : public scribe {
+
+            using super = scribe;
+
+         public:
+
+            impl(broker* parent, Socket&& s)
+            : super(parent,
+                    actor::connection_handle::from_int(s.native_handle()))
+            , m_stream(s.get_io_service()) {
+                m_stream.init(std::move(s));
+            }
+
+            void configure_read(receive_policy::config config) override {
+                m_stream.configure_read(config);
+            }
+
+            buffer_type& wr_buf() override {
+                return m_stream.wr_buf();
+            }
+
+            buffer_type& rd_buf() override {
+                return m_stream.rd_buf();
+            }
+
+            void stop_reading() override {
+                m_stream.stop_reading();
+            }
+
+            void flush() override {
+                m_stream.flush(this);
+            }
+
+            void launch() override {
+                m_stream.start(this);
+            }
+
+            network::stream<Socket> m_stream;
+
+        };
+        intrusive_ptr<impl> ptr{new impl{this, std::move(sock)}};
+        m_scribes.emplace(ptr->id(), ptr);
+        if (initialized()) ptr->launch();
+        return ptr->id();
     }
 
-    boost::actor::connection_handle add_connection(input_stream_ptr in,
-                                                   output_stream_ptr out);
+    template<class SocketAcceptor>
+    actor::accept_handle add_acceptor(SocketAcceptor fd) {
+        class impl : public doorman {
 
-    inline boost::actor::connection_handle add_connection(stream_ptr sptr) {
-        return add_connection(sptr, sptr);
+            using super = doorman;
+
+         public:
+
+            impl(broker* parent, SocketAcceptor&& s)
+            : super(parent,
+                    actor::accept_handle::from_int(s.native_handle()))
+            , m_acceptor(s.get_io_service()) {
+                m_acceptor.init(std::move(s));
+            }
+
+            void new_connection() override {
+                accept_msg().handle = m_broker->add_connection(std::move(m_acceptor.accepted_socket()));
+                m_broker->invoke_message({}, m_accept_msg);
+            }
+
+            void stop_reading() override {
+                m_acceptor.stop();
+            }
+
+            void launch() override {
+                m_acceptor.start(this);
+            }
+
+            network::acceptor<SocketAcceptor> m_acceptor;
+
+        };
+        intrusive_ptr<impl> ptr{new impl{this, std::move(fd)}};
+        m_doormen.emplace(ptr->id(), ptr);
+        if (initialized()) ptr->launch();
+        return ptr->id();
     }
 
-    inline boost::actor::connection_handle
-    add_tcp_connection(native_socket_type tcp_sockfd) {
-        return add_connection(tcp_io_stream::from_sockfd(tcp_sockfd));
-    }
-
-    boost::actor::accept_handle add_acceptor(acceptor_uptr ptr);
-
-    inline boost::actor::accept_handle
-    add_tcp_acceptor(native_socket_type tcp_sockfd) {
-        return add_acceptor(tcp_acceptor::from_sockfd(tcp_sockfd));
-    }
-
-    void enqueue(boost::actor::msg_hdr_cref,
-                 boost::actor::message,
-                 boost::actor::execution_unit*) override;
+    void enqueue(actor::msg_hdr_cref,
+                 actor::message,
+                 actor::execution_unit*) override;
 
     template<typename F>
     static broker_ptr from(F fun) {
@@ -162,7 +311,8 @@ class broker : public actor::extend<actor::local_actor>::
 
     template<typename F, typename T, typename... Ts>
     static broker_ptr from(F fun, T&& v, Ts&&... vs) {
-        return from(std::bind(fun, std::placeholders::_1,
+        return from(std::bind(fun,
+                              std::placeholders::_1,
                               std::forward<T>(v),
                               std::forward<Ts>(vs)...));
     }
@@ -171,11 +321,11 @@ class broker : public actor::extend<actor::local_actor>::
 
     broker();
 
-    void cleanup(std::uint32_t reason) override;
+    void cleanup(uint32_t reason) override;
 
-    typedef std::unique_ptr<broker::scribe> scribe_pointer;
+    typedef intrusive_ptr<scribe> scribe_pointer;
 
-    typedef std::unique_ptr<broker::doorman> doorman_pointer;
+    typedef intrusive_ptr<doorman> doorman_pointer;
 
     bool initialized() const;
 
@@ -185,18 +335,21 @@ class broker : public actor::extend<actor::local_actor>::
 
  private:
 
-    boost::actor::actor fork_impl(std::function<void (broker*)> fun,
-                                  boost::actor::connection_handle hdl);
+    // throws on error
+    scribe& by_id(const actor::connection_handle& hdl);
 
-    boost::actor::actor fork_impl(std::function<actor::behavior (broker*)> fun,
-                                  boost::actor::connection_handle hdl);
+    actor::actor fork_impl(std::function<void (broker*)> fun,
+                           actor::connection_handle hdl);
+
+    actor::actor fork_impl(std::function<actor::behavior (broker*)> fun,
+                           actor::connection_handle hdl);
 
     static broker_ptr from_impl(std::function<void (broker*)> fun);
 
-    static broker_ptr from_impl(std::function<boost::actor::behavior (broker*)> fun);
+    static broker_ptr from_impl(std::function<actor::behavior (broker*)> fun);
 
-    void invoke_message(boost::actor::msg_hdr_cref hdr,
-                        boost::actor::message msg);
+    void invoke_message(actor::msg_hdr_cref hdr,
+                        actor::message& msg);
 
     bool invoke_message_from_cache();
 
@@ -204,8 +357,8 @@ class broker : public actor::extend<actor::local_actor>::
 
     void erase_acceptor(int id);
 
-    std::map<boost::actor::accept_handle, doorman_pointer> m_accept;
-    std::map<boost::actor::connection_handle, scribe_pointer> m_io;
+    std::map<actor::accept_handle, doorman_pointer> m_doormen;
+    std::map<actor::connection_handle, scribe_pointer> m_scribes;
 
     actor::policy::not_prioritizing  m_priority_policy;
     actor::policy::sequential_invoke m_invoke_policy;

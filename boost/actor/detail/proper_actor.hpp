@@ -128,7 +128,7 @@ class proper_actor_base : public Policies::resume_policy::template mixin<Base, D
         return this->m_hidden;
     }
 
-    void cleanup(std::uint32_t reason) override {
+    void cleanup(uint32_t reason) override {
         BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_ARG(reason));
         if (!hidden()) detail::singletons::get_actor_registry()->dec_running();
         super::cleanup(reason);
@@ -271,7 +271,7 @@ class proper_actor<Base, Policies, true> : public proper_actor_base<Base,
             restore_cache();
         }
         bool has_timeout = false;
-        std::uint32_t timeout_id;
+        uint32_t timeout_id;
         // request timeout if needed
         if (bhvr.timeout().valid()) {
             has_timeout = true;
@@ -302,7 +302,7 @@ class proper_actor<Base, Policies, true> : public proper_actor_base<Base,
 
     // timeout handling
 
-    std::uint32_t request_timeout(const duration& d) {
+    uint32_t request_timeout(const duration& d) {
         BOOST_ACTOR_REQUIRE(d.valid());
         auto tid = ++m_next_timeout_id;
         auto msg = make_message(timeout_msg{tid});
@@ -318,7 +318,7 @@ class proper_actor<Base, Policies, true> : public proper_actor_base<Base,
         return tid;
     }
 
-    inline void handle_timeout(behavior& bhvr, std::uint32_t timeout_id) {
+    inline void handle_timeout(behavior& bhvr, uint32_t timeout_id) {
         auto e = m_pending_timeouts.end();
         auto i = std::find(m_pending_timeouts.begin(), e, timeout_id);
         BOOST_ACTOR_LOG_WARNING_IF(i == e, "ignored unexpected timeout");
@@ -340,20 +340,20 @@ class proper_actor<Base, Policies, true> : public proper_actor_base<Base,
         m_pending_timeouts.push_back(++m_next_timeout_id);
     }
 
-    inline bool waits_for_timeout(std::uint32_t timeout_id) const {
+    inline bool waits_for_timeout(uint32_t timeout_id) const {
         auto e = m_pending_timeouts.end();
         auto i = std::find(m_pending_timeouts.begin(), e, timeout_id);
         return i != e;
     }
 
-    inline bool is_active_timeout(std::uint32_t tid) const {
+    inline bool is_active_timeout(uint32_t tid) const {
         return !m_pending_timeouts.empty() && m_pending_timeouts.back() == tid;
     }
 
  private:
 
-    std::vector<std::uint32_t> m_pending_timeouts;
-    std::uint32_t m_next_timeout_id;
+    std::vector<uint32_t> m_pending_timeouts;
+    uint32_t m_next_timeout_id;
 
 };
 

@@ -49,30 +49,30 @@ class type_lookup_table {
 
     type_lookup_table();
 
-    pointer by_id(std::uint32_t id) const;
+    pointer by_id(uint32_t id) const;
 
     pointer by_name(const std::string& name) const;
 
-    std::uint32_t id_of(const std::string& name) const;
+    uint32_t id_of(const std::string& name) const;
 
-    std::uint32_t id_of(pointer uti) const;
+    uint32_t id_of(pointer uti) const;
 
-    void emplace(std::uint32_t id, pointer instance);
+    void emplace(uint32_t id, pointer instance);
 
-    std::uint32_t max_id() const;
+    uint32_t max_id() const;
 
  private:
 
-    typedef std::vector<std::pair<std::uint32_t, pointer>> container;
+    typedef std::vector<std::pair<uint32_t, pointer>> container;
     typedef container::value_type value_type;
     typedef container::iterator iterator;
     typedef container::const_iterator const_iterator;
 
     container m_data;
 
-    const_iterator find(std::uint32_t) const;
+    const_iterator find(uint32_t) const;
 
-    iterator find(std::uint32_t);
+    iterator find(uint32_t);
 
 };
 

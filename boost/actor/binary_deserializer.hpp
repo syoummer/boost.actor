@@ -49,12 +49,28 @@ class binary_deserializer : public deserializer {
     void read_value(primitive_variant& storage) override;
     void read_raw(size_t num_bytes, void* storage) override;
 
+    /**
+     * @brief Replaces the current read buffer.
+     */
+    void set_rdbuf(const void* buf, size_t buf_size);
+
+    /**
+     * @brief Replaces the current read buffer.
+     */
+    void set_rdbuf(const void* begin, const void* m_end);
+
  private:
 
     const void* m_pos;
     const void* m_end;
 
 };
+
+template<typename T>
+inline binary_deserializer& operator>>(binary_deserializer& lhs, T& rhs) {
+    rhs = lhs.read<T>();
+    return lhs;
+}
 
 } // namespace actor
 } // namespace boost

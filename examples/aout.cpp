@@ -2,6 +2,10 @@
  * This example illustrates how to use aout.                                  *
 \******************************************************************************/
 
+#include <set>
+#include <string>
+#include <algorithm>
+
 #include <chrono>
 #include <cstdlib>
 #include <iostream>
@@ -11,6 +15,12 @@ using namespace boost::actor;
 using std::endl;
 
 int main() {
+
+    std::set<std::string> commands{ "abc", "def", "ghj" };
+    if (std::binary_search(commands.begin(), commands.end(), "abc")) {
+        std::cout << "JUP" << endl;
+    }
+
     std::srand(static_cast<unsigned>(std::time(0)));
     for (int i = 1; i <= 50; ++i) {
         spawn<blocking_api>([i](blocking_actor* self) {

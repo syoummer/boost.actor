@@ -67,7 +67,7 @@ class attachable {
      * The default implementation does nothing.
      * @param reason The exit rason of the observed actor.
      */
-    virtual void actor_exited(std::uint32_t reason) = 0;
+    virtual void actor_exited(uint32_t reason) = 0;
 
     /**
      * @brief Selects a group of @c attachable instances by @p what.

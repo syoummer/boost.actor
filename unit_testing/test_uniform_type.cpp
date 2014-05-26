@@ -149,8 +149,8 @@ int main() {
     /*
     // check if static types are identical to runtime types
     auto& sarr = detail::static_types_array<
-                    std::int8_t, std::int16_t, std::int32_t, std::int64_t,
-                    std::uint8_t, std::uint16_t, std::uint32_t, std::uint64_t,
+                    int8_t, int16_t, int32_t, int64_t,
+                    uint8_t, uint16_t, uint32_t, uint64_t,
                     std::string, std::u16string, std::u32string,
                     float, double,
                     atom_value, message, message_header,
@@ -161,14 +161,14 @@ int main() {
     BOOST_ACTOR_CHECK(sarr.is_pure());
 
     std::vector<const uniform_type_info*> rarr{
-        uniform_typeid<std::int8_t>(),
-        uniform_typeid<std::int16_t>(),
-        uniform_typeid<std::int32_t>(),
-        uniform_typeid<std::int64_t>(),
-        uniform_typeid<std::uint8_t>(),
-        uniform_typeid<std::uint16_t>(),
-        uniform_typeid<std::uint32_t>(),
-        uniform_typeid<std::uint64_t>(),
+        uniform_typeid<int8_t>(),
+        uniform_typeid<int16_t>(),
+        uniform_typeid<int32_t>(),
+        uniform_typeid<int64_t>(),
+        uniform_typeid<uint8_t>(),
+        uniform_typeid<uint16_t>(),
+        uniform_typeid<uint32_t>(),
+        uniform_typeid<uint64_t>(),
         uniform_typeid<std::string>(),
         uniform_typeid<std::u16string>(),
         uniform_typeid<std::u32string>(),
@@ -188,32 +188,32 @@ int main() {
         BOOST_ACTOR_CHECK(sarr[i] == rarr[i]);
     }
 
-    auto& arr0 = detail::static_types_array<atom_value, std::uint32_t>::arr;
+    auto& arr0 = detail::static_types_array<atom_value, uint32_t>::arr;
     BOOST_ACTOR_CHECK(arr0.is_pure());
     BOOST_ACTOR_CHECK(arr0[0] == uniform_typeid<atom_value>());
     BOOST_ACTOR_CHECK(arr0[0] == uniform_type_info::from("@atom"));
-    BOOST_ACTOR_CHECK(arr0[1] == uniform_typeid<std::uint32_t>());
+    BOOST_ACTOR_CHECK(arr0[1] == uniform_typeid<uint32_t>());
     BOOST_ACTOR_CHECK(arr0[1] == uniform_type_info::from("@u32"));
-    BOOST_ACTOR_CHECK(uniform_type_info::from("@u32") == uniform_typeid<std::uint32_t>());
+    BOOST_ACTOR_CHECK(uniform_type_info::from("@u32") == uniform_typeid<uint32_t>());
 
-    auto& arr1 = detail::static_types_array<std::string, std::int8_t>::arr;
+    auto& arr1 = detail::static_types_array<std::string, int8_t>::arr;
     BOOST_ACTOR_CHECK(arr1[0] == uniform_typeid<std::string>());
     BOOST_ACTOR_CHECK(arr1[0] == uniform_type_info::from("@str"));
-    BOOST_ACTOR_CHECK(arr1[1] == uniform_typeid<std::int8_t>());
+    BOOST_ACTOR_CHECK(arr1[1] == uniform_typeid<int8_t>());
     BOOST_ACTOR_CHECK(arr1[1] == uniform_type_info::from("@i8"));
 
-    auto& arr2 = detail::static_types_array<std::uint8_t, std::int8_t>::arr;
-    BOOST_ACTOR_CHECK(arr2[0] == uniform_typeid<std::uint8_t>());
+    auto& arr2 = detail::static_types_array<uint8_t, int8_t>::arr;
+    BOOST_ACTOR_CHECK(arr2[0] == uniform_typeid<uint8_t>());
     BOOST_ACTOR_CHECK(arr2[0] == uniform_type_info::from("@u8"));
-    BOOST_ACTOR_CHECK(arr2[1] == uniform_typeid<std::int8_t>());
+    BOOST_ACTOR_CHECK(arr2[1] == uniform_typeid<int8_t>());
     BOOST_ACTOR_CHECK(arr2[1] == uniform_type_info::from("@i8"));
 
-    auto& arr3 = detail::static_types_array<atom_value, std::uint16_t>::arr;
+    auto& arr3 = detail::static_types_array<atom_value, uint16_t>::arr;
     BOOST_ACTOR_CHECK(arr3[0] == uniform_typeid<atom_value>());
     BOOST_ACTOR_CHECK(arr3[0] == uniform_type_info::from("@atom"));
-    BOOST_ACTOR_CHECK(arr3[1] == uniform_typeid<std::uint16_t>());
+    BOOST_ACTOR_CHECK(arr3[1] == uniform_typeid<uint16_t>());
     BOOST_ACTOR_CHECK(arr3[1] == uniform_type_info::from("@u16"));
-    BOOST_ACTOR_CHECK(uniform_type_info::from("@u16") == uniform_typeid<std::uint16_t>());
+    BOOST_ACTOR_CHECK(uniform_type_info::from("@u16") == uniform_typeid<uint16_t>());
     */
 
     return BOOST_ACTOR_TEST_RESULT();

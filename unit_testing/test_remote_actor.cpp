@@ -355,8 +355,7 @@ int main(int argc, char** argv) {
                 {
                     auto server2 = remote_actor("localhost", port);
                     BOOST_ACTOR_CHECK(serv == server2);
-                    std::string localhost("127.0.0.1");
-                    auto server3 = remote_actor(localhost, port);
+                    auto server3 = remote_actor("127.0.0.1", port);
                     BOOST_ACTOR_CHECK(serv == server3);
                 }
                 auto c = self->spawn<client, monitored>(serv);

@@ -46,157 +46,65 @@ using namespace std;
 namespace boost {
 namespace actor_io {
 
-using boost::actor::detail::demangle;
-using boost::actor::detail::raw_access;
-using boost::actor::detail::singletons;
+using namespace boost::actor;
+using namespace boost::actor::detail;
 
-using namespace actor;
-
-peer::peer(middleman* parent,
-           const input_stream_ptr& in,
-           const output_stream_ptr& out,
-           node_id_ptr peer_ptr)
-: super(parent, out, in->read_handle(), out->write_handle())
-, m_in(in), m_state((peer_ptr) ? wait_for_msg_size : wait_for_process_info)
-, m_node(peer_ptr) {
-    m_rd_buf.resize( m_state == wait_for_process_info
-                    ? sizeof(uint32_t) + node_id::host_id_size
-                    : sizeof(uint32_t));
-    m_rd_buf_pos = 0;
-    // state == wait_for_msg_size iff peer was created using remote_peer()
-    // in this case, this peer must be erased if no proxy of it remains
-    m_stop_on_last_proxy_exited = m_state == wait_for_msg_size;
-    m_meta_hdr = uniform_typeid<message_header>();
-    m_meta_msg = uniform_typeid<message>();
+peer::peer(middleman* parent, node_id_ptr peer_ptr)
+: m_parent(parent), m_node(peer_ptr)
+, m_stop_on_last_proxy_exited(false)
+, m_meta_hdr(uniform_typeid<message_header>())
+, m_meta_msg(uniform_typeid<message>())
+, m_handshake_data(nullptr) {
+    m_handle_control_messages = message_handler{
+        on(atom("MONITOR"), arg_match) >> [=](const node_id_ptr& node,
+                                              actor_id aid) {
+            monitor(node, aid);
+        },
+        on(atom("KILL_PROXY"), arg_match) >> [=](const node_id_ptr& node,
+                                                 actor_id aid,
+                                                 uint32_t reason) {
+            kill_proxy(node, aid, reason);
+        },
+        on(atom("LINK"), arg_match) >> [=](const actor_addr& sender,
+                                           const actor_addr& addr) {
+            link(sender, addr);
+        },
+        on(atom("UNLINK"), arg_match) >> [=](const actor_addr& sender,
+                                             const actor_addr& addr) {
+            unlink(sender, addr);
+        },
+        on(atom("ADD_TYPE"), arg_match) >> [=](uint32_t id,
+                                               const std::string& name) {
+            auto imap = singletons::get_uniform_type_info_map();
+            auto uti = imap->by_uniform_name(name);
+            m_incoming_types.emplace(id, uti);
+        }
+    };
 }
 
-void peer::io_failed(event_bitmask mask) {
+void peer::handle_write_failure(const std::string& err) {
     BOOST_ACTOR_LOG_TRACE("node = " << (m_node ? to_string(*m_node) : "nullptr")
-                   << " mask = " << mask);
-    // make sure this code is executed only once by filtering for read failure
-    if (mask == event::read && m_node) {
-        // kill all proxies
-        auto& children = parent()->get_namespace().proxies(*m_node);
-        for (auto& kvp : children) {
-            auto ptr = kvp.second;
-            send_as(ptr, ptr, atom("KILL_PROXY"),
-                           exit_reason::remote_link_unreachable);
-        }
-        parent()->get_namespace().erase(*m_node);
-    }
+                          << " error = " << err);
+    static_cast<void>(err);
 }
 
-continue_reading_result peer::continue_reading() {
-    BOOST_ACTOR_LOG_TRACE("");
-    for (;;) {
-        try {
-            auto read = m_in->read_some(m_rd_buf.data() + m_rd_buf_pos,
-                                        m_rd_buf.size() - m_rd_buf_pos);
-            m_rd_buf_pos += read;
-        }
-        catch (std::exception&) {
-            return continue_reading_result::failure;
-        }
-        if (m_rd_buf_pos < m_rd_buf.size()) {
-            // try again later
-            return continue_reading_result::continue_later;
-        }
-        switch (m_state) {
-            case wait_for_process_info: {
-                //DEBUG("peer_connection::continue_reading: "
-                //      "wait_for_process_info");
-                uint32_t process_id;
-                node_id::host_id_type host_id;
-                memcpy(&process_id, m_rd_buf.data(), sizeof(uint32_t));
-                memcpy(host_id.data(), m_rd_buf.data() + sizeof(uint32_t),
-                       node_id::host_id_size);
-                m_node.reset(new node_id(process_id, host_id));
-                if (*parent()->node() == *m_node) {
-                    std::cerr << "*** middleman warning: "
-                                 "incoming connection from self"
-                              << std::endl;
-                    return continue_reading_result::failure;
-                }
-                BOOST_ACTOR_LOG_DEBUG("read process info: " << to_string(*m_node));
-                if (!parent()->register_peer(*m_node, this)) {
-                    BOOST_ACTOR_LOG_ERROR("multiple incoming connections "
-                                   "from the same node");
-                    return continue_reading_result::failure;
-                }
-                // initialization done
-                m_state = wait_for_msg_size;
-                // "reset" buffer
-                m_rd_buf_pos = 0;
-                m_rd_buf.resize(sizeof(uint32_t));
-                break;
-            }
-            case wait_for_msg_size: {
-                //DEBUG("peer_connection::continue_reading: wait_for_msg_size");
-                uint32_t msg_size;
-                memcpy(&msg_size, m_rd_buf.data(), sizeof(uint32_t));
-                // "reset" buffer
-                m_rd_buf_pos = 0;
-                m_rd_buf.resize(msg_size);
-                m_state = read_message;
-                break;
-            }
-            case read_message: {
-                //DEBUG("peer_connection::continue_reading: read_message");
-                message_header hdr;
-                message msg;
-                binary_deserializer bd(m_rd_buf.data(), m_rd_buf.size(),
-                                       &(parent()->get_namespace()), &m_incoming_types);
-                try {
-                    m_meta_hdr->deserialize(&hdr, &bd);
-                    m_meta_msg->deserialize(&msg, &bd);
-                }
-                catch (std::exception& e) {
-                    BOOST_ACTOR_LOG_ERROR("exception during read_message: "
-                                   << demangle(typeid(e))
-                                   << ", what(): " << e.what());
-                    return continue_reading_result::failure;
-                }
-                BOOST_ACTOR_LOG_DEBUG("deserialized: " << to_string(hdr) << " " << to_string(msg));
-                message_handler pf {
-                    // monitor messages are sent automatically whenever
-                    // actor_proxy_cache creates a new proxy
-                    // note: aid is the *original* actor id
-                    on(atom("MONITOR"), arg_match) >> [&](const node_id_ptr& node, actor_id aid) {
-                        monitor(hdr.sender, node, aid);
-                    },
-                    on(atom("KILL_PROXY"), arg_match) >> [&](const node_id_ptr& node, actor_id aid, std::uint32_t reason) {
-                        kill_proxy(hdr.sender, node, aid, reason);
-                    },
-                    on(atom("LINK"), arg_match) >> [&](const actor_addr& ptr) {
-                        link(hdr.sender, ptr);
-                    },
-                    on(atom("UNLINK"), arg_match) >> [&](const actor_addr& ptr) {
-                        unlink(hdr.sender, ptr);
-                    },
-                    on(atom("ADD_TYPE"), arg_match) >> [&](std::uint32_t id, const std::string& name) {
-                        auto imap = singletons::get_uniform_type_info_map();
-                        auto uti = imap->by_uniform_name(name);
-                        m_incoming_types.emplace(id, uti);
-                    },
-                    others() >> [&] {
-                        deliver(hdr, move(msg));
-                    }
-                };
-                pf(msg);
-                // "reset" buffer
-                m_rd_buf_pos = 0;
-                m_rd_buf.resize(sizeof(uint32_t));
-                m_state = wait_for_msg_size;
-                break;
-            }
-        }
-        // try to read more (next iteration)
+void peer::cleanup() {
+    if (m_node) {
+        parent()->get_namespace().erase(node());
+        parent()->del_peer(this);
+        m_node.reset();
     }
+    parent()->remove(this);
 }
 
-void peer::monitor(const actor_addr&,
-                   const node_id_ptr& node,
-                   actor_id aid) {
+void peer::handle_read_failure(const std::string& err) {
+    BOOST_ACTOR_LOG_TRACE("node = " << (m_node ? to_string(*m_node) : "nullptr")
+                          << " error = " << err);
+    static_cast<void>(err);
+    cleanup();
+}
+
+void peer::monitor(const node_id_ptr& node, actor_id aid) {
     BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_MARG(node, get) << ", " << BOOST_ACTOR_ARG(aid));
     if (!node) {
         BOOST_ACTOR_LOG_ERROR("received MONITOR from invalid peer");
@@ -204,7 +112,6 @@ void peer::monitor(const actor_addr&,
     }
     auto entry = singletons::get_actor_registry()->get_entry(aid);
     auto pself = parent()->node();
-
     if (*node == *pself) {
         BOOST_ACTOR_LOG_ERROR("received 'MONITOR' from pself");
     }
@@ -228,30 +135,174 @@ void peer::monitor(const actor_addr&,
         auto mm = parent();
         entry.first->attach_functor([=](uint32_t reason) {
             mm->run_later([=] {
-                BOOST_ACTOR_LOGC_TRACE("cppa::io::peer",
-                                "monitor$kill_proxy_helper",
-                                "reason = " << reason);
-                auto p = mm->get_peer(*node);
-                if (p) p->enqueue(make_message(atom("KILL_PROXY"), pself, aid, reason));
+                BOOST_ACTOR_LOGC_TRACE("boost::actor_io::peer",
+                                       "monitor$kill_proxy_helper",
+                                       "reason = " << reason);
+                m_parent->dispatch(*node,
+                                  {},
+                                  make_message(atom("KILL_PROXY"),
+                                               pself,
+                                               aid,
+                                               reason));
             });
         });
     }
 }
 
-void peer::kill_proxy(const actor_addr& sender,
-                      const node_id_ptr& node,
+void peer::consume(const void* buf, size_t buf_len) {
+    BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_ARG(buf_len) << ", "
+                          << BOOST_ACTOR_TARG(m_state, static_cast<int>));
+    boost::actor::binary_deserializer bd{buf, buf_len,
+                                         &(parent()->get_namespace()),
+                                         &m_incoming_types};
+    switch (m_state) {
+        case state::await_server_response_size: {
+            auto rsize = bd.read<std::uint32_t>();
+            configure_read(receive_policy::exactly(rsize));
+            m_state = state::await_server_response;
+            break;
+        }
+        case state::await_server_response: {
+            BOOST_ACTOR_REQUIRE(m_handshake_data != nullptr);
+            auto remote_aid = bd.read<actor_id>();
+            auto peer_pid = bd.read<uint32_t>();
+            node_id::host_id_type peer_node_id;
+            bd.read_raw(node_id::host_id_size, peer_node_id.data());
+            auto remote_ifs_size = bd.read<uint32_t>();
+            std::set<std::string> remote_ifs;
+            for (uint32_t i = 0; i < remote_ifs_size; ++i) {
+                auto str = bd.read<std::string>();
+                remote_ifs.emplace(std::move(str));
+            }
+            auto& ifs = *(m_handshake_data->expected_ifs);
+            if (!std::includes(ifs.begin(), ifs.end(),
+                               remote_ifs.begin(), remote_ifs.end())) {
+                auto tostr = [](const std::set<string>& what) -> string {
+                    if (what.empty()) return "actor";
+                    string tmp;
+                    tmp = "typed_actor<";
+                    auto i = what.begin();
+                    auto e = what.end();
+                    tmp += *i++;
+                    while (i != e) tmp += *i++;
+                    tmp += ">";
+                    return tmp;
+                };
+                auto iface_str = tostr(remote_ifs);
+                auto expected_str = tostr(ifs);
+                auto& error_msg = *(m_handshake_data->error_msg);
+                if (ifs.empty()) {
+                    error_msg = "expected remote actor to be a "
+                                "dynamically typed actor but found "
+                                "a strongly typed actor of type "
+                                + iface_str;
+                }
+                else if (remote_ifs.empty()) {
+                    error_msg = "expected remote actor to be a "
+                                "strongly typed actor of type "
+                                + expected_str +
+                                " but found a dynamically typed actor";
+                }
+                else {
+                    error_msg = "expected remote actor to be a "
+                                "strongly typed actor of type "
+                                + expected_str +
+                                " but found a strongly typed actor of type "
+                                + iface_str;
+                }
+                // abort with error
+                m_handshake_data->result->set_value(nullptr);
+                stop();
+            }
+            else {
+                m_node = make_counted<node_id>(peer_pid, peer_node_id);
+                auto ptr = m_parent->get_peer(*m_node);
+                abstract_actor_ptr proxy;
+                if (ptr) {
+                    BOOST_ACTOR_LOG_INFO("multiple connections to "
+                                         << to_string(*m_node)
+                                         << " (re-use old one)");
+                    proxy = m_parent->get_namespace().get(*m_node, remote_aid);
+                    BOOST_ACTOR_LOG_WARNING_IF(!proxy,
+                                               "no proxy for published actor "
+                                               "found although an open "
+                                               "connection exists");
+                    // discard this peer; there's already an open connection
+                    m_node.reset();
+                    stop();
+                }
+                else {
+                    // register this peer at middleman
+                    m_parent->register_peer(*m_node, this);
+                    // complete handshake to server
+                    binary_serializer<buffer_type> bs(&wr_buf());
+                    auto& pinf = m_parent->node();
+                    bs.write_value(pinf->process_id());
+                    bs.write_raw(pinf->host_id().size(), pinf->host_id().data());
+                    flush();
+                    // prepare to receive messages
+                    configure_read(receive_policy::exactly(sizeof(uint32_t)));
+                    m_state = state::await_msg_size;
+                    proxy = m_parent->get_namespace().get_or_put(m_node,
+                                                                 remote_aid);
+                }
+                m_handshake_data->result->set_value(std::move(proxy));
+            }
+            m_handshake_data = nullptr;
+            break;
+        }
+        case state::await_client_process_info: {
+            auto process_id = bd.read<uint32_t>();
+            node_id::host_id_type host_id;
+            bd.read_raw(node_id::host_id_size, host_id.data());
+            m_node.reset(new node_id(process_id, host_id));
+            BOOST_ACTOR_LOG_DEBUG("read process info: " << to_string(*m_node));
+            if (*parent()->node() == *m_node) {
+                BOOST_ACTOR_LOG_WARNING("*** middleman warning: "
+                                        "incoming connection from self");
+                stop();
+            }
+            else if (!parent()->register_peer(*m_node, this)) {
+                BOOST_ACTOR_LOG_WARNING("multiple incoming connections "
+                                        "from the same node");
+                stop();
+            }
+            else {
+                // initialization done
+                m_state = state::await_msg_size;
+                configure_read(receive_policy::exactly(sizeof(uint32_t)));
+            }
+            break;
+        }
+        case state::await_msg_size: {
+            auto msg_size = bd.read<uint32_t>();
+            configure_read(receive_policy::exactly(msg_size));
+            m_state = state::await_msg;
+            break;
+        }
+        case state::await_msg: {
+            message_header hdr;
+            message msg;
+            m_meta_hdr->deserialize(&hdr, &bd);
+            m_meta_msg->deserialize(&msg, &bd);
+            BOOST_ACTOR_LOG_DEBUG("deserialized: " << to_string(hdr)
+                                  << " " << to_string(msg));
+            if (!m_handle_control_messages(msg)) deliver(hdr, std::move(msg));
+            configure_read(receive_policy::exactly(sizeof(uint32_t)));
+            m_state = state::await_msg_size;
+            break;
+        }
+    }
+}
+
+void peer::kill_proxy(const node_id_ptr& node,
                       actor_id aid,
-                      std::uint32_t reason) {
-    BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_TARG(sender, to_string)
-                   << ", node = " << (node ? to_string(*node) : "-invalid-")
-                   << ", " << BOOST_ACTOR_ARG(aid)
-                   << ", " << BOOST_ACTOR_ARG(reason));
+                      uint32_t reason) {
+    BOOST_ACTOR_LOG_TRACE("node = " << (node ? to_string(*node) : "-invalid-")
+                          << ", " << BOOST_ACTOR_ARG(aid)
+                          << ", " << BOOST_ACTOR_ARG(reason));
     if (!node) {
         BOOST_ACTOR_LOG_ERROR("node = nullptr");
-        return;
-    }
-    if (sender != nullptr) {
-        BOOST_ACTOR_LOG_ERROR("sender != nullptr");
         return;
     }
     auto proxy = parent()->get_namespace().get(*node, aid);
@@ -335,45 +386,33 @@ void peer::unlink(const actor_addr& lhs, const actor_addr& rhs) {
     }
 }
 
-continue_writing_result peer::continue_writing() {
-    BOOST_ACTOR_LOG_TRACE("");
-    auto result = super::continue_writing();
-    while (result == continue_writing_result::done && !queue().empty()) {
-        auto tmp = queue().pop();
-        enqueue(tmp.first, tmp.second);
-        result = super::continue_writing();
-    }
-    if (result == continue_writing_result::done
-            && stop_on_last_proxy_exited()
-            && !has_unwritten_data()) {
-        if (parent()->get_namespace().count_proxies(*m_node) == 0) {
-            parent()->last_proxy_exited(this);
-        }
-    }
-    return result;
-}
-
 void peer::add_type_if_needed(const std::string& tname) {
     if (m_outgoing_types.id_of(tname) == 0) {
         auto id = m_outgoing_types.max_id() + 1;
         auto imap = singletons::get_uniform_type_info_map();
         auto uti = imap->by_uniform_name(tname);
         m_outgoing_types.emplace(id, uti);
-        enqueue_impl({invalid_actor_addr, nullptr}, make_message(atom("ADD_TYPE"), id, tname));
+        enqueue({invalid_actor_addr, nullptr}, make_message(atom("ADD_TYPE"), id, tname));
     }
 }
 
-void peer::enqueue_impl(msg_hdr_cref hdr, const message& msg) {
+void peer::serialize_msg(msg_hdr_cref hdr,
+                         const message& msg,
+                         std::vector<char>& wr_buf) {
     BOOST_ACTOR_LOG_TRACE("");
+    auto before = static_cast<uint32_t>(wr_buf.size());
+    binary_serializer<buffer_type> bs{&wr_buf,
+                                      &(parent()->get_namespace()),
+                                      &m_outgoing_types};
     auto tname = msg.tuple_type_names();
     add_type_if_needed((tname) ? *tname
-                               : boost::actor::detail::get_tuple_type_names(*msg.vals()));
-    uint32_t size = 0;
-    auto& wbuf = write_buffer();
-    auto before = static_cast<uint32_t>(wbuf.size());
-    binary_serializer<std::vector<char>> bs(&wbuf, &(parent()->get_namespace()), &m_outgoing_types);
-    bs.write_value(size);
-    try { bs << hdr << msg; }
+                               : get_tuple_type_names(*msg.vals()));
+    uint32_t data_size = 0;
+    try {
+        bs << data_size;
+        m_meta_hdr->serialize(&hdr, &bs);
+        m_meta_msg->serialize(&msg, &bs);
+    }
     catch (std::exception& e) {
         BOOST_ACTOR_LOG_ERROR(to_verbose_string(e));
         cerr << "*** exception in peer::enqueue; "
@@ -381,23 +420,47 @@ void peer::enqueue_impl(msg_hdr_cref hdr, const message& msg) {
              << endl;
         return;
     }
-    BOOST_ACTOR_LOG_DEBUG("serialized: " << to_string(hdr) << " " << to_string(msg));
-    size =   static_cast<std::uint32_t>((wbuf.size() - before))
-           - static_cast<std::uint32_t>(sizeof(std::uint32_t));
+    BOOST_ACTOR_LOG_DEBUG("serialized: " << to_string(hdr)
+                          << " " << to_string(msg));
+    data_size =   static_cast<uint32_t>((wr_buf.size() - before))
+           - static_cast<uint32_t>(sizeof(uint32_t));
     // update size in buffer
-    memcpy(wbuf.data() + before, &size, sizeof(std::uint32_t));
+    memcpy(wr_buf.data() + before, &data_size, sizeof(uint32_t));
 }
 
-void peer::enqueue(msg_hdr_cref hdr, const message& msg) {
-    enqueue_impl(hdr, msg);
-    register_for_writing();
+network::multiplexer& peer::backend() {
+    return m_parent->backend();
 }
 
-void peer::dispose() {
+void peer::register_at_parent() {
+    parent()->add(this);
+}
+
+void peer::init_handshake_as_client(client_handshake_data* ptr) {
     BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_ARG(this));
-    parent()->get_namespace().erase(*m_node);
-    parent()->del_peer(this);
-    delete this;
+    configure_read(receive_policy::exactly(sizeof(uint32_t)));
+    m_state = state::await_server_response_size;
+    m_handshake_data = ptr;
+}
+
+void peer::init_handshake_as_sever(const actor_addr& addr) {
+    BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_ARG(this));
+    auto& pself = m_parent->node();
+    auto& buf = wr_buf();
+    binary_serializer<std::vector<char>> bs(&buf);
+    bs << uint32_t{0}; // size of the message (updated later on)
+    bs << addr.id() << pself->process_id();
+    bs.write_raw(pself->host_id().size(), pself->host_id().data());
+    auto sigs = addr.interface();
+    bs << static_cast<uint32_t>(sigs.size());
+    for (auto& sig : sigs) bs << sig;
+    // update size in buffer
+    auto real_size = static_cast<uint32_t>(buf.size() - sizeof(uint32_t));
+    memcpy(buf.data(), &real_size, sizeof(uint32_t));
+    flush();
+    configure_read(receive_policy::exactly(  sizeof(uint32_t)
+                                           + node_id::host_id_size));
+    m_state = state::await_client_process_info;
 }
 
 } // namespace actor_io

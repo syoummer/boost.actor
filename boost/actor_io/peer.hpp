@@ -19,50 +19,54 @@
 #ifndef BOOST_ACTOR_peer_IMPL_HPP
 #define BOOST_ACTOR_peer_IMPL_HPP
 
+#include <set>
 #include <map>
+#include <mutex>
+#include <string>
+#include <future>
 #include <vector>
 #include <cstdint>
+#include <functional>
 
-#include "boost/actor/extend.hpp"
+#include "boost/asio.hpp"
+
+#include "boost/system/error_code.hpp"
+
 #include "boost/actor/node_id.hpp"
 #include "boost/actor/actor_proxy.hpp"
+#include "boost/actor/ref_counted.hpp"
+#include "boost/actor/mailbox_element.hpp"
 #include "boost/actor/message_handler.hpp"
 #include "boost/actor/type_lookup_table.hpp"
 
-#include "boost/actor_io/input_stream.hpp"
-#include "boost/actor_io/output_stream.hpp"
-#include "boost/actor_io/buffered_writing.hpp"
-#include "boost/actor_io/default_message_queue.hpp"
+#include "boost/actor/detail/memory.hpp"
+#include "boost/actor/detail/single_reader_queue.hpp"
+
+#include "boost/actor_io/network.hpp"
 
 namespace boost {
 namespace actor_io {
 
-class middleman_impl;
+class middleman;
+class peer_acceptor;
 
-class peer : public actor::extend<continuable>::with<buffered_writing> {
+class peer : public network::stream_manager {
 
-    typedef combined_type super;
-
-    friend class middleman_impl;
+    friend class middleman;
+    friend class peer_acceptor;
 
  public:
 
     typedef std::vector<char> buffer_type;
 
-    peer(middleman* parent,
-         const input_stream_ptr& in,
-         const output_stream_ptr& out,
-         actor::node_id_ptr peer_ptr = nullptr);
+    typedef boost::actor::detail::single_reader_queue<
+                boost::actor::mailbox_element,
+                boost::actor::detail::disposer
+            >
+            mailbox_type;
 
-    continue_reading_result continue_reading() override;
-
-    continue_writing_result continue_writing() override;
-
-    void dispose() override;
-
-    void io_failed(event_bitmask mask) override;
-
-    void enqueue(actor::msg_hdr_cref hdr, const actor::message& msg);
+    virtual void enqueue(boost::actor::msg_hdr_cref hdr,
+                         boost::actor::message msg) = 0;
 
     inline bool stop_on_last_proxy_exited() const {
         return m_stop_on_last_proxy_exited;
@@ -72,56 +76,61 @@ class peer : public actor::extend<continuable>::with<buffered_writing> {
         return *m_node;
     }
 
- private:
+    void consume(const void* data, size_t num_bytes) override;
 
-    enum read_state {
-        // connection just established; waiting for process information
-        wait_for_process_info,
-        // wait for the size of the next message
-        wait_for_msg_size,
-        // currently reading a message
-        read_message
+    /**
+     * @brief Creates and starts a new peer connection.
+     */
+    template<class Stream>
+    class impl;
+
+    template<class Socket>
+    static intrusive_ptr<impl<network::stream<Socket>>> make(middleman* parent,
+                                                             Socket fd);
+
+    void register_at_parent();
+
+    struct client_handshake_data {
+        std::promise<actor::abstract_actor_ptr>* result;
+        std::string* error_msg;
+        const std::set<std::string>* expected_ifs;
     };
 
-    input_stream_ptr m_in;
-    read_state m_state;
-    actor::node_id_ptr m_node;
+ protected:
 
-    const actor::uniform_type_info* m_meta_hdr;
-    const actor::uniform_type_info* m_meta_msg;
+    virtual void stop() = 0;
 
-    buffer_type m_rd_buf;
-    size_t m_rd_buf_pos;
-    buffer_type m_wr_buf;
+    virtual void configure_read(receive_policy::config config) = 0;
 
-    default_message_queue_ptr m_queue;
+    // get write buffer
+    virtual buffer_type& wr_buf() = 0;
 
-    inline default_message_queue& queue() {
-        BOOST_ACTOR_REQUIRE(m_queue != nullptr);
-        return *m_queue;
+    // flush write buffer
+    virtual void flush() = 0;
+
+    inline middleman* parent() {
+        return m_parent;
     }
 
-    inline void set_queue(const default_message_queue_ptr& queue) {
-        m_queue = queue;
+    network::multiplexer& backend();
+
+    void enqueue(actor::message msg) {
+        enqueue({}, std::move(msg));
     }
 
-    // if this peer was created using remote_actor(), then m_doorman will
-    // point to the published actor of the remote node
-    bool m_stop_on_last_proxy_exited;
+    void cleanup();
 
-    actor::message_handler m_content_handler;
+    void handle_write_failure(const std::string& ec);
 
-    actor::type_lookup_table m_incoming_types;
-    actor::type_lookup_table m_outgoing_types;
+    void handle_read_failure(const std::string& ec);
 
-    void monitor(const actor::actor_addr& sender,
-                 const actor::node_id_ptr& node,
-                 actor::actor_id aid);
+    peer(middleman* parent, actor::node_id_ptr peer_ptr = nullptr);
 
-    void kill_proxy(const actor::actor_addr& sender,
-                    const actor::node_id_ptr& node,
+    void monitor(const actor::node_id_ptr& node, actor::actor_id aid);
+
+    void kill_proxy(const actor::node_id_ptr& node,
                     actor::actor_id aid,
-                    std::uint32_t reason);
+                    uint32_t reason);
 
     void link(const actor::actor_addr& sender, const actor::actor_addr& ptr);
 
@@ -129,15 +138,138 @@ class peer : public actor::extend<continuable>::with<buffered_writing> {
 
     void deliver(actor::msg_hdr_cref hdr, actor::message msg);
 
-    inline void enqueue(const actor::message& msg) {
-        enqueue({actor::invalid_actor_addr, nullptr}, msg);
-    }
-
-    void enqueue_impl(actor::msg_hdr_cref hdr, const actor::message& msg);
+    void serialize_msg(boost::actor::msg_hdr_cref hdr,
+                       const boost::actor::message& msg,
+                       std::vector<char>& wr_buf);
 
     void add_type_if_needed(const std::string& tname);
 
+    // handshake handling
+
+    void init_handshake_as_client(client_handshake_data* ptr);
+
+    void init_handshake_as_sever(const actor::actor_addr& published_actor);
+
+    // member variables
+
+    enum class state {
+        //
+        await_server_response_size,
+        //
+        await_server_response,
+        //
+        await_client_process_info,
+        // wait for the size of the next message
+        await_msg_size,
+        // currently reading a message
+        await_msg
+    };
+
+    middleman*                              m_parent;
+    actor::node_id_ptr                      m_node;
+    state                                   m_state;
+    bool                                    m_stop_on_last_proxy_exited;
+    const boost::actor::uniform_type_info*  m_meta_hdr;
+    const boost::actor::uniform_type_info*  m_meta_msg;
+    boost::actor::type_lookup_table         m_incoming_types;
+    boost::actor::type_lookup_table         m_outgoing_types;
+    boost::actor::message_handler           m_handle_control_messages;
+    client_handshake_data*                  m_handshake_data;
+
 };
+
+/**
+ * @brief Convenience typedef for peer smart pointers.
+ * @relates peer
+ */
+using peer_ptr = intrusive_ptr<peer>;
+
+template<class Stream>
+class peer::impl : public peer {
+
+    typedef peer super;
+
+ public:
+
+    impl(middleman* mm) : super(mm), m_stream(backend()) { }
+
+    inline Stream& get_stream() {
+        return m_stream;
+    }
+
+    void stop_reading() override {
+        m_stream.stop_reading();
+        cleanup();
+    }
+
+    actor::abstract_actor_ptr start_client(const std::set<std::string>& ifs) {
+        std::promise<actor::abstract_actor_ptr> result_promise;
+        std::string err;
+        client_handshake_data data{&result_promise, &err, &ifs};
+        init_handshake_as_client(&data);
+        m_stream.start(this);
+        auto result = result_promise.get_future().get();
+        if (!err.empty()) throw std::runtime_error(err);
+        return result;
+    }
+
+    void start_server(const actor::actor_addr& published_actor) {
+        init_handshake_as_sever(published_actor);
+        m_stream.start(this);
+    }
+
+ protected:
+
+    void stop() override {
+        m_stream.stop();
+        cleanup();
+    }
+
+    buffer_type& wr_buf() override {
+        return get_stream().wr_buf();
+    }
+
+    void flush() override {
+        get_stream().flush(this);
+    }
+
+    void configure_read(receive_policy::config config) override {
+        m_stream.configure_read(config);
+    }
+
+    void enqueue(actor::msg_hdr_cref hdr, actor::message msg) override {
+        m_stream.backend().dispatch([=] {
+            BOOST_ACTOR_LOGM_TRACE("boost.actor_io.peer$enqueue_lambda", "");
+            serialize_msg(hdr, msg, m_stream.wr_buf());
+            m_stream.flush(this);
+        });
+    }
+
+    void io_failure(network::operation op, const std::string& err) override {
+        switch (op) {
+            case network::operation::read:
+                handle_read_failure(err);
+                break;
+            case network::operation::write:
+                handle_write_failure(err);
+                break;
+        }
+    }
+
+ private:
+
+    Stream m_stream;
+
+};
+
+template<class Socket>
+intrusive_ptr<peer::impl<network::stream<Socket>>> peer::make(middleman* mm,
+                                                              Socket fd) {
+    auto result = new impl<network::stream<Socket>>{mm};
+    result->register_at_parent();
+    result->get_stream().init(std::move(fd));
+    return result;
+}
 
 } // namespace actor_io
 } // namespace boost

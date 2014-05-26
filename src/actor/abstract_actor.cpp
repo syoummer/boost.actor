@@ -81,7 +81,7 @@ bool abstract_actor::attach(attachable_ptr ptr) {
         guard_type guard{m_mtx};
         return m_exit_reason == exit_reason::not_exited;
     }
-    std::uint32_t reason;
+    uint32_t reason;
     { // lifetime scope of guard
         guard_type guard{m_mtx};
         reason = m_exit_reason;
@@ -131,7 +131,7 @@ bool abstract_actor::remove_backlink(const actor_addr& other) {
 }
 
 bool abstract_actor::establish_backlink(const actor_addr& other) {
-    std::uint32_t reason = exit_reason::not_exited;
+    uint32_t reason = exit_reason::not_exited;
     if (other && other != this) {
         guard_type guard{m_mtx};
         reason = m_exit_reason;
@@ -171,7 +171,7 @@ actor_addr abstract_actor::address() const {
     return actor_addr{const_cast<abstract_actor*>(this)};
 }
 
-void abstract_actor::cleanup(std::uint32_t reason) {
+void abstract_actor::cleanup(uint32_t reason) {
     // log as 'actor'
     BOOST_ACTOR_LOGM_TRACE("cppa::actor", BOOST_ACTOR_ARG(m_id) << ", " << BOOST_ACTOR_ARG(reason)
                     << ", " << BOOST_ACTOR_ARG(m_is_proxy));

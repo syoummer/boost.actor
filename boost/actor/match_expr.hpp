@@ -513,14 +513,14 @@ inline T& unroll_expr_result_unbox(optional<T>& opt) {
 }
 
 template<typename Result, class PPFPs, typename PtrType, class Tuple>
-Result unroll_expr(PPFPs&, std::uint64_t, minus1l, const std::type_info&,
+Result unroll_expr(PPFPs&, uint64_t, minus1l, const std::type_info&,
                    bool, PtrType*, Tuple&) {
     return none;
 }
 
 template<typename Result, class PPFPs, long N, typename PtrType, class Tuple>
 Result unroll_expr(PPFPs& fs,
-                   std::uint64_t bitmask,
+                   uint64_t bitmask,
                    long_constant<N>,
                    const std::type_info& type_token,
                    bool is_dynamic,
@@ -548,7 +548,7 @@ Result unroll_expr(PPFPs& fs,
 }
 
 template<class PPFPs, class Tuple>
-inline std::uint64_t calc_bitmask(PPFPs&,
+inline uint64_t calc_bitmask(PPFPs&,
                                   minus1l,
                                   const std::type_info&,
                                   const Tuple&) {
@@ -556,7 +556,7 @@ inline std::uint64_t calc_bitmask(PPFPs&,
 }
 
 template<class Case, long N, class Tuple>
-inline std::uint64_t calc_bitmask(Case& fs,
+inline uint64_t calc_bitmask(Case& fs,
                                   long_constant<N>,
                                   const std::type_info& tinf,
                                   const Tuple& tup) {
@@ -564,7 +564,7 @@ inline std::uint64_t calc_bitmask(Case& fs,
     typedef typename detail::rm_const_and_ref<decltype(f)>::type Fun;
     typedef typename Fun::pattern_type pattern_type;
     typedef detail::invoke_util<pattern_type> policy;
-    std::uint64_t result = policy::can_invoke(tinf, tup) ? (0x01 << N) : 0x00;
+    uint64_t result = policy::can_invoke(tinf, tup) ? (0x01 << N) : 0x00;
     return result | calc_bitmask(fs, long_constant<N-1l>(), tinf, tup);
 }
 
@@ -737,7 +737,7 @@ class match_expr {
 
     static constexpr size_t cache_size = 10;
 
-    typedef std::pair<const std::type_info*, std::uint64_t> cache_element;
+    typedef std::pair<const std::type_info*, uint64_t> cache_element;
 
     std::vector<cache_element> m_cache;
 
@@ -759,7 +759,7 @@ class match_expr {
     }
 
     template<class Tuple>
-    std::uint64_t get_cache_entry(const std::type_info* type_token,
+    uint64_t get_cache_entry(const std::type_info* type_token,
                                   const Tuple& value) {
         BOOST_ACTOR_REQUIRE(type_token != nullptr);
         if (value.dynamically_typed()) {
@@ -781,7 +781,7 @@ class match_expr {
     }
 
     void init() {
-        m_dummy.second = std::numeric_limits<std::uint64_t>::max();
+        m_dummy.second = std::numeric_limits<uint64_t>::max();
         m_cache.resize(cache_size);
         for (auto& entry : m_cache) { entry.first = nullptr; }
         m_cache_begin = m_cache_end = 0;

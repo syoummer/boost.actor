@@ -28,7 +28,7 @@ using namespace boost::actor;
 using namespace boost::actor_io;
 
 void ping(event_based_actor* self, size_t num_pings) {
-    BOOST_ACTOR_CHECKPOINT();
+    BOOST_ACTOR_PRINT("num_pings: " << num_pings);
     auto count = std::make_shared<size_t>(0);
     self->become (
         on(atom("kickoff"), arg_match) >> [=](const actor& pong) {
@@ -37,7 +37,11 @@ void ping(event_based_actor* self, size_t num_pings) {
             self->become (
                 on(atom("pong"), arg_match)
                 >> [=](int value) -> std::tuple<atom_value, int> {
-                    if (++*count >= num_pings) self->quit();
+                    if (++*count >= num_pings) {
+                        BOOST_ACTOR_PRINT("received " << num_pings
+                                          << " pings, call self->quit");
+                        self->quit();
+                    }
                     return std::make_tuple(atom("ping"), value + 1);
                 },
                 others() >> BOOST_ACTOR_UNEXPECTED_MSG_CB(self)
@@ -60,6 +64,7 @@ void pong(event_based_actor* self) {
                     return std::make_tuple(atom("pong"), val);
                 },
                 on_arg_match >> [=](const down_msg& dm) {
+                    BOOST_ACTOR_PRINT("received down_msg{" << dm.reason << "}");
                     self->quit(dm.reason);
                 },
                 others() >> BOOST_ACTOR_UNEXPECTED_MSG_CB(self)
@@ -82,8 +87,12 @@ void peer_fun(broker* self, connection_handle hdl, const actor& buddy) {
     }
     auto write = [=](atom_value type, int value) {
         BOOST_ACTOR_LOGF_DEBUG("write: " << value);
-        self->write(hdl, sizeof(type), &type);
-        self->write(hdl, sizeof(value), &value);
+        auto& buf = self->wr_buf(hdl);
+        auto first = reinterpret_cast<char*>(&type);
+        buf.insert(buf.end(), first, first + sizeof(atom_value));
+        first = reinterpret_cast<char*>(&value);
+        buf.insert(buf.end(), first, first + sizeof(int));
+        self->flush(hdl);
     };
     self->become (
         [=](const connection_closed_msg&) {
@@ -91,6 +100,7 @@ void peer_fun(broker* self, connection_handle hdl, const actor& buddy) {
             self->quit();
         },
         [=](const new_data_msg& msg) {
+            BOOST_ACTOR_PRINT("received new_data_msg");
             atom_value type;
             int value;
             memcpy(&type, msg.buf.data(), sizeof(atom_value));
@@ -98,12 +108,15 @@ void peer_fun(broker* self, connection_handle hdl, const actor& buddy) {
             self->send(buddy, type, value);
         },
         on(atom("ping"), arg_match) >> [=](int value) {
+            BOOST_ACTOR_PRINT("received ping{" << value << "}");
             write(atom("ping"), value);
         },
         on(atom("pong"), arg_match) >> [=](int value) {
+            BOOST_ACTOR_PRINT("received pong{" << value << "}");
             write(atom("pong"), value);
         },
         [=](const down_msg& dm) {
+            BOOST_ACTOR_PRINT("received down_msg");
             if (dm.source == buddy) self->quit(dm.reason);
         },
         others() >> BOOST_ACTOR_UNEXPECTED_MSG_CB(self)
@@ -178,4 +191,3 @@ int main(int argc, char** argv) {
         }
     }
 }
-

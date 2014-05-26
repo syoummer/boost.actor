@@ -21,12 +21,11 @@
 
 #include <cstdint>
 
+#include "boost/asio.hpp"
+
 #include "boost/actor/actor.hpp"
 
 #include "boost/actor/detail/raw_access.hpp"
-
-#include "boost/actor_io/acceptor.hpp"
-#include "boost/actor_io/tcp_acceptor.hpp"
 
 #include "boost/actor_io/detail/publish_impl.hpp"
 
@@ -40,9 +39,12 @@ namespace actor_io {
  * @param whom Actor that should be published at @p port.
  * @param acceptor Network technology-specific acceptor implementation.
  */
-inline void publish(actor::actor whom, acceptor_uptr acceptor) {
-    detail::publish_impl(actor::detail::raw_access::get(whom),
-                         std::move(acceptor));
+template<class Protocol>
+inline void publish(boost::actor::actor whom,
+                    asio::basic_socket_acceptor<Protocol> acceptor) {
+    typedef asio::basic_stream_socket<Protocol> sock_type;
+    detail::publish_impl<sock_type>(boost::actor::detail::raw_access::get(whom),
+                                    std::move(acceptor));
 }
 
 /**
@@ -55,34 +57,34 @@ inline void publish(actor::actor whom, acceptor_uptr acceptor) {
  *             @p nullptr.
  * @throws bind_failure
  */
-inline void publish(actor::actor whom, uint16_t port, const char* addr = nullptr) {
+inline void publish(boost::actor::actor whom, uint16_t port, const char* addr = nullptr) {
     if (!whom) return;
-    publish(std::move(whom), tcp_acceptor::create(port, addr));
+    detail::publish_impl(boost::actor::detail::raw_access::get(whom), port, addr);
 }
 
 /**
  * @copydoc publish(actor,acceptor_uptr)
  */
-template<typename... Rs>
-void typed_publish(actor::typed_actor<Rs...> whom, acceptor_uptr uptr) {
+template<class Protocol, typename... Rs>
+void typed_publish(boost::actor::typed_actor<Rs...> whom,
+                   asio::basic_socket_acceptor<Protocol> acceptor) {
     if (!whom) return;
-    detail::publish_impl(actor::detail::raw_access::get(whom), std::move(uptr));
+    detail::publish_impl(boost::actor::detail::raw_access::get(whom),
+                         std::move(acceptor));
 }
 
 /**
- * @copydoc publish(actor,std::uint16_t,const char*)
+ * @copydoc publish(actor,uint16_t,const char*)
  */
 template<typename... Rs>
 void typed_publish(actor::typed_actor<Rs...> whom,
-                   std::uint16_t port,
+                   uint16_t port,
                    const char* addr = nullptr) {
     if (!whom) return;
-    detail::publish_impl(actor::detail::raw_access::get(whom),
-                         tcp_acceptor::create(port, addr));
+    detail::publish_impl(actor::detail::raw_access::get(whom), port, addr);
 }
 
 } // namespace actor_io
 } // namespace boost
-
 
 #endif // BOOST_ACTOR_PUBLISH_HPP

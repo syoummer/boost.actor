@@ -50,7 +50,7 @@ class execution_unit;
  * @brief A unique actor ID.
  * @relates abstract_actor
  */
-typedef std::uint32_t actor_id;
+typedef uint32_t actor_id;
 
 class actor;
 class abstract_actor;
@@ -177,7 +177,7 @@ class abstract_actor : public abstract_channel {
      * @brief Returns the actor's exit reason of
      *        <tt>exit_reason::not_exited</tt> if it's still alive.
      */
-    inline std::uint32_t exit_reason() const;
+    inline uint32_t exit_reason() const;
 
     /**
      * @brief Returns the type interface as set of strings.
@@ -196,7 +196,7 @@ class abstract_actor : public abstract_channel {
      * @note Default implementation sets 'exit_reason' accordingly.
      * @note Overridden functions should always call super::cleanup().
      */
-    virtual void cleanup(std::uint32_t reason);
+    virtual void cleanup(uint32_t reason);
 
     /**
      * @brief The default implementation for {@link link_to()}.
@@ -222,7 +222,7 @@ class abstract_actor : public abstract_channel {
  private:
 
     // initially exit_reason::not_exited
-    std::atomic<std::uint32_t> m_exit_reason;
+    std::atomic<uint32_t> m_exit_reason;
 
     // guards access to m_exit_reason, m_attachables, and m_links
     std::mutex m_mtx;
@@ -247,7 +247,7 @@ class abstract_actor : public abstract_channel {
  *             inline and template member function implementations            *
  ******************************************************************************/
 
-inline std::uint32_t abstract_actor::id() const {
+inline uint32_t abstract_actor::id() const {
     return m_id;
 }
 
@@ -255,7 +255,7 @@ inline bool abstract_actor::is_proxy() const {
     return m_is_proxy;
 }
 
-inline std::uint32_t abstract_actor::exit_reason() const {
+inline uint32_t abstract_actor::exit_reason() const {
     return m_exit_reason;
 }
 
@@ -275,7 +275,7 @@ struct functor_attachable : attachable {
     template<typename T>
     inline functor_attachable(T&& arg) : m_functor(std::forward<T>(arg)) { }
 
-    void actor_exited(std::uint32_t reason) { m_functor(reason); }
+    void actor_exited(uint32_t reason) { m_functor(reason); }
 
     bool matches(const attachable::token&) { return false; }
 

@@ -17,6 +17,7 @@
 
 
 #include <utility>
+#include <algorithm>
 
 #include "boost/actor/node_id.hpp"
 #include "boost/actor/serializer.hpp"
@@ -34,12 +35,20 @@
 namespace boost {
 namespace actor {
 
+actor_namespace::backend::~backend() {
+    // nop
+}
+
+actor_namespace::actor_namespace(backend& be) : m_backend(be) {
+    // nop
+}
+
 void actor_namespace::write(serializer* sink, const actor_addr& addr) {
     BOOST_ACTOR_REQUIRE(sink != nullptr);
     if (!addr) {
         node_id::host_id_type zero;
         std::fill(zero.begin(), zero.end(), 0);
-        sink->write_value(static_cast<uint32_t>(0));         // actor id
+        sink->write_value(static_cast<actor_id>(0));         // actor id
         sink->write_value(static_cast<uint32_t>(0));         // process id
         sink->write_raw(node_id::host_id_size, zero.data()); // host id
     }
@@ -97,8 +106,8 @@ actor_proxy_ptr actor_namespace::get(const node_id& node, actor_id aid) {
 
 actor_proxy_ptr actor_namespace::get_or_put(node_id_ptr node, actor_id aid) {
     auto result = get(*node, aid);
-    if (result == nullptr && m_factory) {
-        auto ptr = m_factory(aid, node);
+    if (result == nullptr) {
+        auto ptr = m_backend.make_proxy(node, aid);
         put(*node, aid, ptr);
         result = ptr;
     }
@@ -112,7 +121,7 @@ void actor_namespace::put(const node_id& node,
     auto i = submap.find(aid);
     if (i == submap.end()) {
         submap.insert(std::make_pair(aid, proxy));
-        if (m_new_element_callback) m_new_element_callback(aid, node);
+        m_backend.register_proxy(node, aid);
     }
     else {
         BOOST_ACTOR_LOG_ERROR("proxy for " << aid << ":"
@@ -132,7 +141,7 @@ void actor_namespace::erase(const actor_proxy_ptr& proxy) {
     }
 }
 
-void actor_namespace::erase(node_id& inf) {
+void actor_namespace::erase(const node_id& inf) {
     BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_TARG(inf, to_string));
     m_proxies.erase(inf);
 }

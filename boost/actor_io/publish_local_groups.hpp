@@ -30,7 +30,7 @@ namespace actor_io {
  * @throws bind_failure
  * @throws network_error
  */
-void publish_local_groups(std::uint16_t port, const char* addr = nullptr);
+void publish_local_groups(uint16_t port, const char* addr = nullptr);
 
 } // namespace actor_io
 } // namespace boost

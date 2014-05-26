@@ -30,7 +30,7 @@ namespace boost {
 namespace actor {
 namespace detail {
 
-sync_request_bouncer::sync_request_bouncer(std::uint32_t r)
+sync_request_bouncer::sync_request_bouncer(uint32_t r)
 : rsn(r == exit_reason::not_exited ? exit_reason::normal : r) { }
 
 void sync_request_bouncer::operator()(const actor_addr& sender,

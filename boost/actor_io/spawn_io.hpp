@@ -19,10 +19,11 @@
 #ifndef BOOST_ACTOR_SPAWN_IO_HPP
 #define BOOST_ACTOR_SPAWN_IO_HPP
 
+#include "boost/asio.hpp"
+
 #include "boost/actor/connection_handle.hpp"
 
 #include "boost/actor_io/broker.hpp"
-#include "boost/actor_io/tcp_io_stream.hpp"
 
 namespace boost {
 namespace actor_io {
@@ -44,14 +45,16 @@ actor::actor spawn_io(F fun, Ts&&... args) {
  */
 template<actor::spawn_options Os = actor::no_spawn_options,
          typename F = std::function<void (broker*)>,
+         typename Socket = network::default_socket,
          typename... Ts>
-actor::actor spawn_io_client(F fun,
-                      input_stream_ptr in,
-                      output_stream_ptr out,
-                      Ts&&... args) {
-    auto hdl = boost::actor::connection_handle::from_int(in->read_handle());
+typename std::enable_if<
+    !std::is_convertible<Socket, std::string>::value,
+    actor::actor
+>::type
+spawn_io_client(F fun, Socket fd, Ts&&... args) {
+    auto hdl = actor::connection_handle::from_int(fd.native_handle());
     auto ptr = broker::from(std::move(fun), hdl, std::forward<Ts>(args)...);
-    ptr->add_connection(std::move(in), std::move(out));
+    ptr->add_connection(std::move(fd));
     return {init_and_launch(std::move(ptr))};
 }
 
@@ -62,8 +65,22 @@ template<actor::spawn_options Os = actor::no_spawn_options,
          typename F = std::function<void (broker*)>,
          typename... Ts>
 actor::actor spawn_io_client(F fun, const std::string& host, uint16_t port, Ts&&... args) {
-    auto ptr = tcp_io_stream::connect_to(host.c_str(), port);
-    return spawn_io_client(std::move(fun), ptr, ptr, std::forward<Ts>(args)...);
+    network::default_socket fd{middleman::instance()->backend()};
+    network::connect_ipv4_socket(fd, host, port);
+    return spawn_io_client(std::move(fun), std::move(fd), std::forward<Ts>(args)...);
+}
+
+/**
+ * @brief Spawns a new broker as server running on given @p port.
+ */
+template<actor::spawn_options Os = actor::no_spawn_options,
+         typename F = std::function<void (broker*)>,
+         typename Socket = network::default_socket_acceptor,
+         typename... Ts>
+actor::actor spawn_io_server(F fun, Socket fd, Ts&&... args) {
+    auto ptr = broker::from(std::move(fun), std::forward<Ts>(args)...);
+    ptr->add_acceptor(std::move(fd));
+    return {init_and_launch(std::move(ptr))};
 }
 
 /**
@@ -73,6 +90,10 @@ template<actor::spawn_options Os = actor::no_spawn_options,
          typename F = std::function<void (broker*)>,
          typename... Ts>
 actor::actor spawn_io_server(F fun, uint16_t port, Ts&&... args) {
+    network::default_socket_acceptor fd{middleman::instance()->backend()};
+    network::bind_ipv4_socket_acceptor(fd, port);
+    return spawn_io_server(std::move(fun), std::move(fd), std::forward<Ts>(args)...);
+    /*
     static_assert(!has_detach_flag(Os),
                   "brokers cannot be detached");
     static_assert(is_unbound(Os),
@@ -82,6 +103,7 @@ actor::actor spawn_io_server(F fun, uint16_t port, Ts&&... args) {
     auto ptr = broker::from(move(fun), forward<Ts>(args)...);
     ptr->add_acceptor(std::move(aptr));
     return {init_and_launch(move(ptr))};
+    */
 }
 
 } // namespace actor_io

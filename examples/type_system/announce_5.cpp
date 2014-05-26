@@ -24,13 +24,13 @@ namespace {
 
 // a node containing an integer and a vector of children
 struct tree_node {
-    std::uint32_t value;
+    uint32_t value;
     std::vector<tree_node> children;
 
-    tree_node(std::uint32_t v = 0) : value(v) {
+    tree_node(uint32_t v = 0) : value(v) {
     }
 
-    tree_node& add_child(std::uint32_t v = 0) {
+    tree_node& add_child(uint32_t v = 0) {
         children.push_back({ v });
         return *this;
     }
@@ -118,7 +118,7 @@ class tree_type_info : public detail::abstract_uniform_type_info<tree> {
 
     void deserialize_node(tree_node& node, deserializer* source) const {
         // value, ... children ...
-        auto value = source->read<std::uint32_t>();
+        auto value = source->read<uint32_t>();
         node.value = value;
         auto num_children = source->begin_sequence();
         for (size_t i = 0; i < num_children; ++i) {

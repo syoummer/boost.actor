@@ -35,7 +35,7 @@ class no_resume {
         }
 
         inline resumable::resume_result resume(execution_unit*) {
-            auto done_cb = [=](std::uint32_t reason) {
+            auto done_cb = [=](uint32_t reason) {
                 this->planned_exit_reason(reason);
                 this->on_exit();
                 this->cleanup(reason);

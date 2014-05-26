@@ -75,7 +75,7 @@ void actor_registry::put(actor_id key, const abstract_actor_ptr& value) {
             actor_id m_id;
             actor_registry* m_registry;
             eraser(actor_id id, actor_registry* s) : m_id(id), m_registry(s) { }
-            void actor_exited(std::uint32_t reason) {
+            void actor_exited(uint32_t reason) {
                 m_registry->erase(m_id, reason);
             }
             bool matches(const token&) {
@@ -86,7 +86,7 @@ void actor_registry::put(actor_id key, const abstract_actor_ptr& value) {
     }
 }
 
-void actor_registry::erase(actor_id key, std::uint32_t reason) {
+void actor_registry::erase(actor_id key, uint32_t reason) {
     exclusive_guard guard(m_instances_mtx);
     auto i = m_entries.find(key);
     if (i != m_entries.end()) {
@@ -97,7 +97,7 @@ void actor_registry::erase(actor_id key, std::uint32_t reason) {
     }
 }
 
-std::uint32_t actor_registry::next_id() {
+uint32_t actor_registry::next_id() {
     return m_ids.fetch_add(1);
 }
 

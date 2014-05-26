@@ -19,9 +19,10 @@
 #ifndef BOOST_ACTOR_TYPED_ACTOR_HPP
 #define BOOST_ACTOR_TYPED_ACTOR_HPP
 
+#include "boost/intrusive_ptr.hpp"
+
 #include "boost/actor/actor_addr.hpp"
 #include "boost/actor/replies_to.hpp"
-#include "boost/intrusive_ptr.hpp"
 #include "boost/actor/abstract_actor.hpp"
 #include "boost/actor/typed_behavior.hpp"
 

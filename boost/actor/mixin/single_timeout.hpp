@@ -61,11 +61,11 @@ class single_timeout : public Base {
         else m_has_timeout = false;
     }
 
-    inline bool waits_for_timeout(std::uint32_t timeout_id) const {
+    inline bool waits_for_timeout(uint32_t timeout_id) const {
         return m_has_timeout && m_timeout_id == timeout_id;
     }
 
-    inline bool is_active_timeout(std::uint32_t tid) const {
+    inline bool is_active_timeout(uint32_t tid) const {
         return waits_for_timeout(tid);
     }
 
@@ -80,7 +80,7 @@ class single_timeout : public Base {
  protected:
 
     bool m_has_timeout;
-    std::uint32_t m_timeout_id;
+    uint32_t m_timeout_id;
 
 };
 

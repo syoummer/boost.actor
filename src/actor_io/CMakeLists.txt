@@ -1,36 +1,15 @@
 cmake_minimum_required(VERSION 2.8)
 project(boost_actor_io_lib C CXX)
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  set(LIBBOOST_ACTOR_IO_PLATFORM_SRC middleman_event_handler_epoll.cpp)
-elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  set(LIBBOOST_ACTOR_IO_PLATFORM_SRC middleman_event_handler_poll.cpp)
-elseif (${CMAKE_SYSTEM_NAME} MATCHES "Window")
-  set(LIBBOOST_ACTOR_IO_PLATFORM_SRC middleman_event_handler_poll.cpp execinfo_windows.cpp)
-else ()
-  message(FATAL_ERROR "This platform is not supported by libboost_actor_io")
-endif()
-
 # list cpp files including platform-dependent files
 set(LIBBOOST_ACTOR_IO_SRC
-    ${LIBBOOST_ACTOR_IO_PLATFORM_SRC}
-    acceptor.cpp
     broker.cpp
-    continuable.cpp
-    default_message_queue.cpp
-    fd_util.cpp
-    input_stream.cpp
     middleman.cpp
-    middleman_event_handler.cpp
-    output_stream.cpp
+    network.cpp
     peer.cpp
     peer_acceptor.cpp
     publish_local_groups.cpp
-    remote_actor_proxy.cpp
-    stream.cpp
-    tcp_acceptor.cpp
-    tcp_io_stream.cpp
-    unicast_network.cpp)
+    remote_actor_proxy.cpp)
 
 message(STATUS "boost actor library: ${BOOST_ACTOR_LIBRARY}")
 

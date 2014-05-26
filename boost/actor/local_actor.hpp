@@ -39,9 +39,9 @@
 #include "boost/actor/abstract_actor.hpp"
 #include "boost/actor/abstract_group.hpp"
 #include "boost/actor/mailbox_element.hpp"
+#include "boost/actor/message_handler.hpp"
 #include "boost/actor/response_promise.hpp"
 #include "boost/actor/message_priority.hpp"
-#include "boost/actor/message_handler.hpp"
 
 #include "boost/actor/mixin/memory_cached.hpp"
 
@@ -203,12 +203,12 @@ class local_actor : public extend<abstract_actor>::with<mixin::memory_cached> {
     /**
      * @brief Sends an exit message to @p whom.
      */
-    void send_exit(const actor_addr& whom, std::uint32_t reason);
+    void send_exit(const actor_addr& whom, uint32_t reason);
 
     /**
      * @brief Sends an exit message to @p whom.
      */
-    inline void send_exit(const actor& whom, std::uint32_t reason) {
+    inline void send_exit(const actor& whom, uint32_t reason) {
         send_exit(whom.address(), reason);
     }
 
@@ -216,7 +216,7 @@ class local_actor : public extend<abstract_actor>::with<mixin::memory_cached> {
      * @brief Sends an exit message to @p whom.
      */
     template<typename... Rs>
-    void send_exit(const typed_actor<Rs...>& whom, std::uint32_t reason) {
+    void send_exit(const typed_actor<Rs...>& whom, uint32_t reason) {
         send_exit(whom.address(), reason);
     }
 
@@ -320,7 +320,7 @@ class local_actor : public extend<abstract_actor>::with<mixin::memory_cached> {
      *          that do not use the behavior stack, i.e., actors that use
      *          blocking API calls such as {@link receive()}.
      */
-    virtual void quit(std::uint32_t reason = exit_reason::normal);
+    virtual void quit(uint32_t reason = exit_reason::normal);
 
     /**
      * @brief Checks whether this actor traps exit messages.
@@ -353,11 +353,17 @@ class local_actor : public extend<abstract_actor>::with<mixin::memory_cached> {
     void monitor(const actor_addr& whom);
 
     /**
-     * @brief Adds a unidirectional @p monitor to @p whom.
-     * @param whom The actor that should be monitored by this actor.
-     * @note Each call to @p monitor creates a new, independent monitor.
+     * @copydoc monitor(const actor_addr&)
      */
     inline void monitor(const actor& whom) {
+        monitor(whom.address());
+    }
+
+    /**
+     * @copydoc monitor(const actor_addr&)
+     */
+    template<typename... Rs>
+    inline void monitor(const typed_actor<Rs...>& whom) {
         monitor(whom.address());
     }
 
@@ -495,11 +501,11 @@ class local_actor : public extend<abstract_actor>::with<mixin::memory_cached> {
 
     inline void mark_arrived(message_id response_id);
 
-    inline std::uint32_t planned_exit_reason() const;
+    inline uint32_t planned_exit_reason() const;
 
-    inline void planned_exit_reason(std::uint32_t value);
+    inline void planned_exit_reason(uint32_t value);
 
-    void cleanup(std::uint32_t reason) override;
+    void cleanup(uint32_t reason) override;
 
     mailbox_element* dummy_node() {
         return &m_dummy_node;
@@ -546,7 +552,7 @@ class local_actor : public extend<abstract_actor>::with<mixin::memory_cached> {
     std::map<group, abstract_group::subscription> m_subscriptions;
 
     // set by quit
-    std::uint32_t m_planned_exit_reason;
+    uint32_t m_planned_exit_reason;
 
     /** @endcond */
 
@@ -606,11 +612,11 @@ inline void local_actor::mark_arrived(message_id response_id) {
     if (i != last) m_pending_responses.erase(i);
 }
 
-inline std::uint32_t local_actor::planned_exit_reason() const {
+inline uint32_t local_actor::planned_exit_reason() const {
     return m_planned_exit_reason;
 }
 
-inline void local_actor::planned_exit_reason(std::uint32_t value) {
+inline void local_actor::planned_exit_reason(uint32_t value) {
     m_planned_exit_reason = value;
 }
 

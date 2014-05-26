@@ -52,7 +52,7 @@ struct anything;
 
 // enums
 enum primitive_type : unsigned char;
-enum class atom_value : std::uint64_t;
+enum class atom_value : uint64_t;
 
 // intrusive pointer typedefs
 typedef intrusive_ptr<abstract_group>      abstract_group_ptr;

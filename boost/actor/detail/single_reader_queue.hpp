@@ -39,19 +39,19 @@ enum class enqueue_result {
     /**
      * @brief Indicates that the enqueue operation succeeded and
      *        the reader is ready to receive the data.
-     **/
+     */
     success,
 
     /**
      * @brief Indicates that the enqueue operation succeeded and
      *        the reader is currently blocked, i.e., needs to be re-scheduled.
-     **/
+     */
     unblocked_reader,
 
     /**
      * @brief Indicates that the enqueue operation failed because the
      *        queue has been closed by the reader.
-     **/
+     */
     queue_closed
 
 };
@@ -358,7 +358,7 @@ class single_reader_queue {
 
     inline pointer reader_blocked_dummy() {
         // we are not going to dereference this pointer either
-        return reinterpret_cast<pointer>(reinterpret_cast<std::intptr_t>(this) + sizeof(void*));
+        return reinterpret_cast<pointer>(reinterpret_cast<intptr_t>(this) + sizeof(void*));
     }
 
     inline bool is_dummy(pointer ptr) {

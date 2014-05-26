@@ -206,7 +206,7 @@ class blocking_actor
      * @brief Unwinds the stack by throwing an actor_exited exception.
      * @throws actor_exited
      */
-    virtual void quit(std::uint32_t reason = exit_reason::normal);
+    virtual void quit(uint32_t reason = exit_reason::normal);
 
     /** @cond PRIVATE */
 

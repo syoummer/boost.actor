@@ -330,8 +330,10 @@ struct slave : event_based_actor {
 void test_serial_reply() {
     auto mirror_behavior = [=](event_based_actor* self) {
         self->become(others() >> [=]() -> message {
-            BOOST_ACTOR_PRINT("return self->last_dequeued()");
-            return self->last_dequeued();
+            auto msg = self->last_dequeued();
+            BOOST_ACTOR_PRINT("return self->last_dequeued() => "
+                              << to_string(msg));
+            return msg;
         });
     };
     auto master = spawn([=](event_based_actor* self) {

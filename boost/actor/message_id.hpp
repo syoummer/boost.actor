@@ -35,10 +35,10 @@ struct invalid_message_id { constexpr invalid_message_id() { } };
  */
 class message_id : detail::comparable<message_id> {
 
-    static constexpr std::uint64_t response_flag_mask     = 0x8000000000000000;
-    static constexpr std::uint64_t answered_flag_mask     = 0x4000000000000000;
-    static constexpr std::uint64_t high_prioity_flag_mask = 0x2000000000000000;
-    static constexpr std::uint64_t request_id_mask        = 0x1FFFFFFFFFFFFFFF;
+    static constexpr uint64_t response_flag_mask     = 0x8000000000000000;
+    static constexpr uint64_t answered_flag_mask     = 0x4000000000000000;
+    static constexpr uint64_t high_prioity_flag_mask = 0x2000000000000000;
+    static constexpr uint64_t request_id_mask        = 0x1FFFFFFFFFFFFFFF;
 
  public:
 
@@ -96,11 +96,11 @@ class message_id : detail::comparable<message_id> {
         m_value |= answered_flag_mask;
     }
 
-    inline std::uint64_t integer_value() const {
+    inline uint64_t integer_value() const {
         return m_value;
     }
 
-    static inline message_id from_integer_value(std::uint64_t value) {
+    static inline message_id from_integer_value(uint64_t value) {
         message_id result;
         result.m_value = value;
         return result;
@@ -117,9 +117,9 @@ class message_id : detail::comparable<message_id> {
 
  private:
 
-    explicit constexpr message_id(std::uint64_t value) : m_value(value) { }
+    explicit constexpr message_id(uint64_t value) : m_value(value) { }
 
-    std::uint64_t m_value;
+    uint64_t m_value;
 
 };
 

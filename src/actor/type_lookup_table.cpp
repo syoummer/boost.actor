@@ -40,7 +40,7 @@ type_lookup_table::type_lookup_table() {
     emplace(7, get("@<>+@atom+@u32+@str"));
 }
 
-auto type_lookup_table::by_id(std::uint32_t id) const -> pointer {
+auto type_lookup_table::by_id(uint32_t id) const -> pointer {
     auto i = find(id);
     return (i == m_data.end() || i->first != id) ? nullptr : i->second;
 }
@@ -53,7 +53,7 @@ auto type_lookup_table::by_name(const std::string& name) const -> pointer {
     return (i != e) ? i->second : nullptr;
 }
 
-std::uint32_t type_lookup_table::id_of(const std::string& name) const {
+uint32_t type_lookup_table::id_of(const std::string& name) const {
     auto e = m_data.end();
     auto i = std::find_if(m_data.begin(), e, [&](const value_type& val) {
         return val.second->name() == name;
@@ -61,7 +61,7 @@ std::uint32_t type_lookup_table::id_of(const std::string& name) const {
     return (i != e) ? i->first : 0;
 }
 
-std::uint32_t type_lookup_table::id_of(pointer uti) const {
+uint32_t type_lookup_table::id_of(pointer uti) const {
     auto e = m_data.end();
     auto i = std::find_if(m_data.begin(), e, [&](const value_type& val) {
         return val.second == uti;
@@ -70,7 +70,7 @@ std::uint32_t type_lookup_table::id_of(pointer uti) const {
 }
 
 
-void type_lookup_table::emplace(std::uint32_t id, pointer instance) {
+void type_lookup_table::emplace(uint32_t id, pointer instance) {
     BOOST_ACTOR_REQUIRE(instance != nullptr);
     value_type kvp{id, instance};
     auto i = find(id);
@@ -79,19 +79,19 @@ void type_lookup_table::emplace(std::uint32_t id, pointer instance) {
     else m_data.insert(i, std::move(kvp));
 }
 
-auto type_lookup_table::find(std::uint32_t arg) const -> const_iterator {
-    return std::lower_bound(m_data.begin(), m_data.end(), arg, [](const value_type& lhs, std::uint32_t id) {
+auto type_lookup_table::find(uint32_t arg) const -> const_iterator {
+    return std::lower_bound(m_data.begin(), m_data.end(), arg, [](const value_type& lhs, uint32_t id) {
         return lhs.first < id;
     });
 }
 
-auto type_lookup_table::find(std::uint32_t arg) -> iterator {
-    return std::lower_bound(m_data.begin(), m_data.end(), arg, [](const value_type& lhs, std::uint32_t id) {
+auto type_lookup_table::find(uint32_t arg) -> iterator {
+    return std::lower_bound(m_data.begin(), m_data.end(), arg, [](const value_type& lhs, uint32_t id) {
         return lhs.first < id;
     });
 }
 
-std::uint32_t type_lookup_table::max_id() const {
+uint32_t type_lookup_table::max_id() const {
     return m_data.empty() ? 0 : m_data.back().first;
 }
 

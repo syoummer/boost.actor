@@ -25,8 +25,8 @@ namespace actor {
 
 namespace {
 
-inline std::uint64_t ui64_val(const duration& d) {
-    return static_cast<std::uint64_t>(d.unit) * d.count;
+inline uint64_t ui64_val(const duration& d) {
+    return static_cast<uint64_t>(d.unit) * d.count;
 }
 
 } // namespace <anonmyous>

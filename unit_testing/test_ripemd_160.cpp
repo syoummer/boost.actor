@@ -10,14 +10,14 @@ using boost::actor::detail::ripemd_160;
 namespace {
 
 std::string str_hash(const std::string& what) {
-    std::array<std::uint8_t, 20> hash;
+    std::array<uint8_t, 20> hash;
     ripemd_160(hash, what);
     std::ostringstream oss;
     oss << std::hex;
     for (auto i : hash) {
         oss.width(2);
         oss.fill('0');
-        oss << static_cast<std::uint32_t>(i);
+        oss << static_cast<uint32_t>(i);
     }
     return oss.str();
 }

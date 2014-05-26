@@ -40,6 +40,10 @@ class ref_counted : public memory_managed {
 
     ref_counted();
 
+    ref_counted(const ref_counted&);
+
+    ref_counted& operator=(const ref_counted&);
+
     ~ref_counted();
 
     /**

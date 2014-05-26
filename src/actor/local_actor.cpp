@@ -43,7 +43,7 @@ class down_observer : public attachable {
         BOOST_ACTOR_REQUIRE(m_observed != nullptr);
     }
 
-    void actor_exited(std::uint32_t reason) {
+    void actor_exited(uint32_t reason) {
         auto ptr = detail::raw_access::get(m_observer);
         message_header hdr{m_observed, ptr, message_id{}.with_high_priority()};
         hdr.deliver(make_message(down_msg{m_observed, reason}));
@@ -137,7 +137,7 @@ void local_actor::send_tuple(message_priority prio, const channel& dest, message
     dest->enqueue({address(), dest, id}, std::move(what), m_host);
 }
 
-void local_actor::send_exit(const actor_addr& whom, std::uint32_t reason) {
+void local_actor::send_exit(const actor_addr& whom, uint32_t reason) {
     send(detail::raw_access::get(whom), exit_msg{address(), reason});
 }
 
@@ -158,13 +158,13 @@ response_promise local_actor::make_response_promise() {
     return result;
 }
 
-void local_actor::cleanup(std::uint32_t reason) {
+void local_actor::cleanup(uint32_t reason) {
     BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_ARG(reason));
     m_subscriptions.clear();
     super::cleanup(reason);
 }
 
-void local_actor::quit(std::uint32_t reason) {
+void local_actor::quit(uint32_t reason) {
     BOOST_ACTOR_LOG_TRACE("reason = " << reason
                    << ", class " << detail::demangle(typeid(*this)));
     if (reason == exit_reason::unallowed_function_call) {
@@ -213,7 +213,7 @@ message_id local_actor::sync_send_tuple_impl(message_priority mp,
     return nri.response_id();
 }
 
-void anon_send_exit(const actor_addr& whom, std::uint32_t reason) {
+void anon_send_exit(const actor_addr& whom, uint32_t reason) {
     if (!whom) return;
     auto ptr = detail::raw_access::get(whom);
     ptr->enqueue({invalid_actor_addr, ptr, message_id{}.with_high_priority()},

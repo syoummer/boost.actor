@@ -43,7 +43,7 @@ class message_header {
 
     /**
      * @brief An invalid message header without receiver or sender;
-     **/
+     */
     message_header() = default;
 
     /**

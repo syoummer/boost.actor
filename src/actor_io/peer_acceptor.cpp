@@ -16,80 +16,48 @@
 \******************************************************************************/
 
 
+#include <cstring>
 #include <iostream>
 #include <exception>
 
 #include "boost/actor/node_id.hpp"
 #include "boost/actor/to_string.hpp"
-
-#include "boost/actor_io/peer.hpp"
-#include "boost/actor_io/peer_acceptor.hpp"
+#include "boost/actor/binary_serializer.hpp"
 
 #include "boost/actor/detail/logging.hpp"
 #include "boost/actor/detail/demangle.hpp"
+
+#include "boost/actor_io/peer.hpp"
+#include "boost/actor_io/middleman.hpp"
+#include "boost/actor_io/peer_acceptor.hpp"
 
 using namespace std;
 
 namespace boost {
 namespace actor_io {
 
-peer_acceptor::peer_acceptor(middleman* parent,
-                             acceptor_uptr aur,
-                             const actor::actor_addr& addr,
-                             string_set sigs)
-        : super(aur->file_handle()), m_parent(parent), m_ptr(std::move(aur))
-        , m_aa(addr), m_sigs(std::move(sigs)) { }
+peer_acceptor::peer_acceptor(middleman* parent, actor::actor_addr&& addr)
+: m_parent(parent), m_aa(std::move(addr)) { }
 
-continue_reading_result peer_acceptor::continue_reading() {
-    BOOST_ACTOR_LOG_TRACE("");
-    for (;;) {
-        optional<stream_ptr_pair> opt{none};
-        try { opt = m_ptr->try_accept_connection(); }
-        catch (std::exception& e) {
-            BOOST_ACTOR_LOG_ERROR(actor::to_verbose_string(e));
-            static_cast<void>(e); // keep compiler happy
-            return continue_reading_result::failure;
-        }
-        if (opt) {
-            auto& pair = *opt;
-            auto& pself = m_parent->node();
-            uint32_t process_id = pself->process_id();
-            try {
-                auto& out = pair.second;
-                actor::actor_id aid = published_actor().id();
-                // serialize: actor id, process id, node id, interface
-                out->write(&aid, sizeof(actor::actor_id));
-                out->write(&process_id, sizeof(uint32_t));
-                out->write(pself->host_id().data(),
-                                   pself->host_id().size());
-                auto u32_size = static_cast<std::uint32_t>(m_sigs.size());
-                out->write(&u32_size, sizeof(uint32_t));
-                for (auto& sig : m_sigs) {
-                    u32_size = static_cast<std::uint32_t>(sig.size());
-                    out->write(&u32_size, sizeof(uint32_t));
-                    out->write(sig.c_str(), sig.size());
-                }
-                m_parent->new_peer(pair.first, pair.second);
-            }
-            catch (std::exception& e) {
-                BOOST_ACTOR_LOG_ERROR(actor::to_verbose_string(e));
-                cerr << "*** exception while sending actor and process id; "
-                     << actor::to_verbose_string(e)
-                     << endl;
-            }
-        }
-        else return continue_reading_result::continue_later;
-   }
+peer_acceptor::~peer_acceptor() {
+    // nop
 }
 
-void peer_acceptor::io_failed(event_bitmask) {
+void peer_acceptor::handle_io_failure(const network::manager_ptr& self,
+                                      const std::string& error_description) {
     BOOST_ACTOR_LOG_INFO("removed peer_acceptor "
-                  << this << " due to an IO failure");
+                         << this << " due to an IO failure: "
+                         << error_description);
+    static_cast<void>(error_description);
+    parent()->remove(self);
 }
 
-void peer_acceptor::dispose() {
-    m_parent->del_acceptor(this);
-    delete this;
+network::multiplexer& peer_acceptor::backend() {
+    return parent()->backend();
+}
+
+void peer_acceptor::register_at_parent(const network::manager_ptr& self) {
+    parent()->add(self);
 }
 
 } // namespace actor_io

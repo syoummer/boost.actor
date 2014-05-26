@@ -24,7 +24,7 @@
 namespace boost {
 namespace actor {
 
-enum class message_priority : std::uint32_t {
+enum class message_priority : uint32_t {
     normal,
     high
 };

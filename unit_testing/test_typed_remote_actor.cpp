@@ -13,13 +13,13 @@ using namespace std;
 using namespace boost::actor;
 using namespace boost::actor_io;
 
-struct ping { std::int32_t value; };
+struct ping { int32_t value; };
 
 bool operator==(const ping& lhs, const ping& rhs) {
     return lhs.value == rhs.value;
 }
 
-struct pong { std::int32_t value; };
+struct pong { int32_t value; };
 
 bool operator==(const pong& lhs, const pong& rhs) {
     return lhs.value == rhs.value;
@@ -40,7 +40,7 @@ server_type::behavior_type server() {
     };
 }
 
-void run_client(const char* host, std::uint16_t port) {
+void run_client(const char* host, uint16_t port) {
     // check whether invalid_argument is thrown
     // when trying to connect to get an untyped
     // handle to the server
@@ -64,9 +64,16 @@ void run_client(const char* host, std::uint16_t port) {
         }
     );
     anon_send_exit(serv, exit_reason::user_shutdown);
+    self->monitor(serv);
+    self->receive(
+        [&](const down_msg& dm) {
+            BOOST_ACTOR_CHECK_EQUAL(dm.reason, exit_reason::user_shutdown);
+            BOOST_ACTOR_CHECK(dm.source == serv);
+        }
+    );
 }
 
-std::uint16_t run_server() {
+uint16_t run_server() {
     auto ref = spawn_typed(server);
     uint16_t port = 4242;
     for (;;) {
@@ -97,7 +104,7 @@ int main(int argc, char** argv) {
                 throw std::invalid_argument("no port given");
             }
             run_client("localhost",
-                       static_cast<std::uint16_t>(std::stoi(kvp["port"])));
+                       static_cast<uint16_t>(std::stoi(kvp["port"])));
             BOOST_ACTOR_CHECKPOINT();
             await_all_actors_done();
             shutdown();
@@ -128,8 +135,8 @@ int main(int argc, char** argv) {
     else {
         BOOST_ACTOR_PRINT("actor published at port " << port);
     }
-    BOOST_ACTOR_CHECKPOINT();
     await_all_actors_done();
+    BOOST_ACTOR_CHECKPOINT();
     shutdown();
     return BOOST_ACTOR_TEST_RESULT();
 }

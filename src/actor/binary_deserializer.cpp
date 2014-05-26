@@ -110,7 +110,7 @@ pointer read_unicode_string(pointer begin, pointer end, StringType& str) {
 }
 
 pointer read_range(pointer begin, pointer end, atom_value& storage) {
-    std::uint64_t tmp;
+    uint64_t tmp;
     auto result = read_range(begin, end, tmp);
     storage = static_cast<atom_value>(tmp);
     return result;
@@ -157,7 +157,7 @@ binary_deserializer::binary_deserializer(const void* bbegin, const void* bend,
 : super(ns, tbl), m_pos(bbegin), m_end(bend) { }
 
 const uniform_type_info* binary_deserializer::begin_object() {
-    std::uint8_t flag;
+    uint8_t flag;
     m_pos = read_range(m_pos, m_end, flag);
     if (flag == 1) {
         std::string tname;
@@ -173,7 +173,7 @@ const uniform_type_info* binary_deserializer::begin_object() {
         return uti;
     }
     else {
-        std::uint32_t type_id;
+        uint32_t type_id;
         m_pos = read_range(m_pos, m_end, type_id);
         auto it = incoming_types();
         if (!it) {

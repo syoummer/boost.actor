@@ -40,16 +40,16 @@
 
 namespace {
 
-std::uint8_t hex_char_value(char c) {
+uint8_t hex_char_value(char c) {
     if (isdigit(c)) {
-        return static_cast<std::uint8_t>(c - '0');
+        return static_cast<uint8_t>(c - '0');
     }
     else if (isalpha(c)) {
         if (c >= 'a' && c <= 'f') {
-            return static_cast<std::uint8_t>((c - 'a') + 10);
+            return static_cast<uint8_t>((c - 'a') + 10);
         }
         else if (c >= 'A' && c <= 'F') {
-            return static_cast<std::uint8_t>((c - 'A') + 10);
+            return static_cast<uint8_t>((c - 'A') + 10);
         }
     }
     throw std::invalid_argument(std::string("illegal character: ") + c);
@@ -83,7 +83,7 @@ bool equal(const std::string& hash,
     try {
         for (size_t i = 0; i < node_id.size(); ++i) {
             // read two characters, each representing 4 bytes
-            std::uint8_t val;
+            uint8_t val;
             val  = static_cast<uint8_t>(hex_char_value(*j++) << 4);
             val |= hex_char_value(*j++);
             if (val != node_id[i]) {
@@ -102,12 +102,12 @@ node_id::~node_id() { }
 node_id::node_id(const node_id& other)
 : super(), m_process_id(other.process_id()), m_host_id(other.host_id()) { }
 
-node_id::node_id(std::uint32_t a, const std::string& b)
+node_id::node_id(uint32_t a, const std::string& b)
 : m_process_id(a) {
     host_id_from_string(b, m_host_id);
 }
 
-node_id::node_id(std::uint32_t a, const host_id_type& b)
+node_id::node_id(uint32_t a, const host_id_type& b)
 : m_process_id(a), m_host_id(b) { }
 
 std::string to_string(const node_id::host_id_type& node_id) {
@@ -116,7 +116,7 @@ std::string to_string(const node_id::host_id_type& node_id) {
     oss.fill('0');
     for (size_t i = 0; i < node_id::host_id_size; ++i) {
         oss.width(2);
-        oss << static_cast<std::uint32_t>(node_id[i]);
+        oss << static_cast<uint32_t>(node_id[i]);
     }
     return oss.str();
 }

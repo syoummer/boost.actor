@@ -239,7 +239,7 @@ oss_wr operator<<(oss_wr&& lhs, T rhs) {
 /**
  * @def BOOST_ACTOR_LOGC
  * @brief Logs a message with custom class and function names.
- **/
+ */
 #define BOOST_ACTOR_LOGC(level, classname, funname, msg)                       \
     BOOST_ACTOR_CAT(BOOST_ACTOR_PRINT, level)                                  \
     (BOOST_ACTOR_CAT(BOOST_ACTOR_LVL_NAME, level)(), classname, funname, msg)
@@ -247,21 +247,21 @@ oss_wr operator<<(oss_wr&& lhs, T rhs) {
 /**
  * @def BOOST_ACTOR_LOGF
  * @brief Logs a message inside a free function.
- **/
+ */
 #define BOOST_ACTOR_LOGF(level, msg)                                           \
     BOOST_ACTOR_LOGC(level, "NONE", __func__, msg)
 
 /**
  * @def BOOST_ACTOR_LOGMF
  * @brief Logs a message inside a member function.
- **/
+ */
 #define BOOST_ACTOR_LOGMF(level, msg)                                          \
     BOOST_ACTOR_LOGC(level, BOOST_ACTOR_CLASS_NAME, __func__, msg)
 
 /**
  * @def BOOST_ACTOR_LOGC
  * @brief Logs a message with custom class and function names.
- **/
+ */
 #define BOOST_ACTOR_LOGC_IF(stmt, level, classname, funname, msg)              \
     BOOST_ACTOR_CAT(BOOST_ACTOR_PRINT_IF, level)                               \
     (stmt, BOOST_ACTOR_CAT(BOOST_ACTOR_LVL_NAME, level)(), classname,          \
@@ -270,14 +270,14 @@ oss_wr operator<<(oss_wr&& lhs, T rhs) {
 /**
  * @def BOOST_ACTOR_LOGF
  * @brief Logs a message inside a free function.
- **/
+ */
 #define BOOST_ACTOR_LOGF_IF(stmt, level, msg)                                  \
     BOOST_ACTOR_LOGC_IF(stmt, level, "NONE", __func__, msg)
 
 /**
  * @def BOOST_ACTOR_LOGMF
  * @brief Logs a message inside a member function.
- **/
+ */
 #define BOOST_ACTOR_LOGMF_IF(stmt, level, msg)                                 \
     BOOST_ACTOR_LOGC_IF(stmt, level, BOOST_ACTOR_CLASS_NAME, __func__, msg)
 

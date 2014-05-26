@@ -30,7 +30,7 @@ namespace actor {
 /**
  * @brief SI time units to specify timeouts.
  */
-enum class time_unit : std::uint32_t {
+enum class time_unit : uint32_t {
     invalid = 0,
     seconds = 1,
     milliseconds = 1000,
@@ -38,7 +38,7 @@ enum class time_unit : std::uint32_t {
 };
 
 // minutes are implicitly converted to seconds
-template<std::intmax_t Num, std::intmax_t Denom>
+template<intmax_t Num, intmax_t Denom>
 struct ratio_to_time_unit_helper {
     static constexpr time_unit value = time_unit::invalid;
 };
@@ -78,7 +78,7 @@ class duration {
 
     constexpr duration() : unit(time_unit::invalid), count(0) { }
 
-    constexpr duration(time_unit u, std::uint32_t v) : unit(u), count(v) { }
+    constexpr duration(time_unit u, uint32_t v) : unit(u), count(v) { }
 
     /**
      * @brief Creates a new instance from an STL duration.
@@ -114,22 +114,22 @@ class duration {
 
     time_unit unit;
 
-    std::uint64_t count;
+    uint64_t count;
 
  private:
 
     // reads d.count and throws invalid_argument if d.count < 0
     template<class Rep, class Period>
-    static inline std::uint64_t
+    static inline uint64_t
     rd(const std::chrono::duration<Rep, Period>& d) {
         if (d.count() < 0) {
             throw std::invalid_argument("negative durations are not supported");
         }
-        return static_cast<std::uint64_t>(d.count());
+        return static_cast<uint64_t>(d.count());
     }
 
     template<class Rep>
-    static inline std::uint64_t
+    static inline uint64_t
     rd(const std::chrono::duration<Rep, std::ratio<60, 1>>& d) {
         // convert minutes to seconds on-the-fly
         return rd(std::chrono::duration<Rep, std::ratio<1, 1>>(d.count()) * 60);

@@ -72,7 +72,7 @@ namespace {
 // typedef 8 and 32 bit types, resp.
 // adapt these, if necessary, for your operating system and compiler
 typedef unsigned char byte;
-typedef std::uint32_t dword;
+typedef uint32_t dword;
 
 // macro definitions
 
@@ -383,7 +383,7 @@ void MDfinish(dword *MDbuf, const byte *strptr, dword lswlen, dword mswlen) {
 namespace boost {
 namespace actor { namespace detail {
 
-void ripemd_160(std::array<std::uint8_t, 20>& storage, const std::string& data) {
+void ripemd_160(std::array<uint8_t, 20>& storage, const std::string& data) {
     dword MDbuf[5]; // contains (A, B, C, D(, E))
     dword X[16];    // current 16-word chunk
     dword length;   // length in bytes of message

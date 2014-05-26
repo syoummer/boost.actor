@@ -21,11 +21,10 @@
 
 #include "boost/actor/typed_actor.hpp"
 
-#include "boost/actor_io/acceptor.hpp"
-#include "boost/actor_io/tcp_io_stream.hpp"
-
 #include "boost/actor/detail/type_list.hpp"
 #include "boost/actor/detail/raw_access.hpp"
+
+#include "boost/actor_io/detail/remote_actor_impl.hpp"
 
 namespace boost {
 namespace actor_io {
@@ -37,17 +36,14 @@ struct typed_remote_actor_helper;
 template<typename... Ts>
 struct typed_remote_actor_helper<actor::detail::type_list<Ts...>> {
     typedef actor::typed_actor<Ts...> return_type;
-    return_type operator()(stream_ptr_pair conn) {
+    template<typename... Vs>
+    return_type operator()(Vs&&... vs) {
         auto iface = return_type::get_interface();
-        auto tmp = remote_actor_impl(std::move(conn), std::move(iface));
+        auto tmp = remote_actor_impl(std::forward<Vs>(vs)..., std::move(iface));
         return_type res;
         // actually safe, because remote_actor_impl throws on type mismatch
         actor::detail::raw_access::unsafe_assign(res, tmp);
         return res;
-    }
-    return_type operator()(const char* host, std::uint16_t port) {
-        auto ptr = tcp_io_stream::connect_to(host, port);
-        return (*this)(stream_ptr_pair(ptr, ptr));
     }
 };
 

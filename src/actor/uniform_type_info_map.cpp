@@ -314,7 +314,7 @@ void serialize_impl(msg_hdr_cref hdr, serializer* sink) {
 void deserialize_impl(message_header& hdr, deserializer* source) {
     deserialize_impl(hdr.sender, source);
     deserialize_impl(hdr.receiver, source);
-    hdr.id = message_id::from_integer_value(source->read<std::uint64_t>());
+    hdr.id = message_id::from_integer_value(source->read<uint64_t>());
 }
 
 void serialize_impl(const node_id_ptr& ptr, serializer* sink) {
@@ -404,7 +404,7 @@ typename std::enable_if<
 >::type
 deserialize_impl(T& dm, deserializer* source) {
     deserialize_impl(dm.source, source);
-    dm.reason = source->read<std::uint32_t>();
+    dm.reason = source->read<uint32_t>();
 }
 
 inline void serialize_impl(const group_down_msg& dm, serializer* sink) {
@@ -420,7 +420,7 @@ inline void serialize_impl(const timeout_msg& tm, serializer* sink) {
 }
 
 inline void deserialize_impl(timeout_msg& tm, deserializer* source) {
-    tm.timeout_id = source->read<std::uint32_t>();
+    tm.timeout_id = source->read<uint32_t>();
 }
 
 inline void serialize_impl(const sync_timeout_msg&, serializer*) { }
@@ -762,10 +762,10 @@ class utim_impl : public uniform_type_info_map {
                          signed long,           unsigned long,
                          long long,             signed long long,
                          unsigned long long,    wchar_t,
-                         std::int8_t,           std::uint8_t,
-                         std::int16_t,          std::uint16_t,
-                         std::int32_t,          std::uint32_t,
-                         std::int64_t,          std::uint64_t,
+                         int8_t,           uint8_t,
+                         int16_t,          uint16_t,
+                         int32_t,          uint32_t,
+                         int64_t,          uint64_t,
                          char16_t,              char32_t,
                          size_t,                ptrdiff_t,
                          intptr_t                                >(mapping);
@@ -935,16 +935,16 @@ class utim_impl : public uniform_type_info_map {
     uti_impl<float>                         m_type_float;
     uti_impl<double>                        m_type_double;
     uti_impl<long double>                   m_type_long_double;
-    int_tinfo<std::int8_t>                  m_type_i8;
-    int_tinfo<std::uint8_t>                 m_type_u8;
-    int_tinfo<std::int16_t>                 m_type_i16;
-    int_tinfo<std::uint16_t>                m_type_u16;
-    int_tinfo<std::int32_t>                 m_type_i32;
-    int_tinfo<std::uint32_t>                m_type_u32;
+    int_tinfo<int8_t>                  m_type_i8;
+    int_tinfo<uint8_t>                 m_type_u8;
+    int_tinfo<int16_t>                 m_type_i16;
+    int_tinfo<uint16_t>                m_type_u16;
+    int_tinfo<int32_t>                 m_type_i32;
+    int_tinfo<uint32_t>                m_type_u32;
 
     // 30-38
-    int_tinfo<std::int64_t>                 m_type_i64;
-    int_tinfo<std::uint64_t>                m_type_u64;
+    int_tinfo<int64_t>                 m_type_i64;
+    int_tinfo<uint64_t>                m_type_u64;
     default_uniform_type_info<charbuf>      m_type_charbuf;
     uti_impl<accept_handle>                 m_type_accept;
     uti_impl<connection_handle>             m_type_connection;

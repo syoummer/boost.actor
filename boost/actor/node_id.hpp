@@ -53,7 +53,7 @@ class node_id : public ref_counted, detail::comparable<node_id> {
     /**
      * @brief Represents a 160 bit hash.
      */
-    typedef std::array<std::uint8_t, host_id_size> host_id_type;
+    typedef std::array<uint8_t, host_id_size> host_id_type;
 
     /**
      * @brief Copy constructor.
@@ -65,20 +65,20 @@ class node_id : public ref_counted, detail::comparable<node_id> {
      * @param process_id System-wide unique process identifier.
      * @param hash Unique node id as hexadecimal string representation.
      */
-    node_id(std::uint32_t process_id, const std::string& hash);
+    node_id(uint32_t process_id, const std::string& hash);
 
     /**
      * @brief Creates @c this from @p process_id and @p hash.
      * @param process_id System-wide unique process identifier.
      * @param node_id Unique node id.
      */
-    node_id(std::uint32_t process_id, const host_id_type& node_id);
+    node_id(uint32_t process_id, const host_id_type& node_id);
 
     /**
      * @brief Identifies the running process.
      * @returns A system-wide unique process identifier.
      */
-    inline std::uint32_t process_id() const { return m_process_id; }
+    inline uint32_t process_id() const { return m_process_id; }
 
     /**
      * @brief Identifies the host system.
@@ -112,7 +112,7 @@ class node_id : public ref_counted, detail::comparable<node_id> {
 
  private:
 
-    std::uint32_t m_process_id;
+    uint32_t m_process_id;
     host_id_type m_host_id;
 
 };

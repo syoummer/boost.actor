@@ -32,8 +32,6 @@ namespace actor {
 class serializer;
 class deserializer;
 
-namespace io { class middleman; }
-
 /**
  * @brief Groups a (distributed) set of actors and allows actors
  *        in the same namespace to exchange messages.
@@ -42,22 +40,48 @@ class actor_namespace {
 
  public:
 
-    typedef std::function<actor_proxy_ptr(actor_id, node_id_ptr)>
-            factory_fun;
+    /**
+     * @brief Provides facilities to create and maintain actor proxies.
+     */
+    class backend {
 
-    typedef std::function<void(actor_id, const node_id&)>
-            new_element_callback;
+     public:
 
-    inline void set_proxy_factory(factory_fun fun);
+        virtual ~backend();
 
-    inline void set_new_element_callback(new_element_callback fun);
+        /**
+         * @brief Creates a new proxy instance.
+         */
+        virtual actor_proxy_ptr make_proxy(const node_id_ptr&, actor_id) = 0;
 
+        /**
+         * @brief Registers a proxy instance.
+         */
+        virtual void register_proxy(const node_id&, actor_id) = 0;
+
+        /**
+         * @brief Returns the ID of the local node.
+         */
+        virtual const node_id_ptr& node() const = 0;
+
+    };
+
+    actor_namespace(backend& mgm);
+
+    /**
+     * @brief Writes an actor address to @p sink and adds the actor
+     *        to the list of known actors for a later deserialization.
+     */
     void write(serializer* sink, const actor_addr& ptr);
 
+    /**
+     * @brief Reads an actor address from @p source, creating
+     *        addresses for remote actors on the fly if needed.
+     */
     actor_addr read(deserializer* source);
 
     /**
-     * @brief A map that stores weak actor proxy pointers by actor ids.
+     * @brief A map that stores all proxies for known remote actors.
      */
     typedef std::map<actor_id, actor_proxy_ptr> proxy_map;
 
@@ -79,7 +103,7 @@ class actor_namespace {
     actor_proxy_ptr get_or_put(node_id_ptr node, actor_id aid);
 
     /**
-     * @brief Stores @p proxy in the list of known actor proxies.
+     * @brief Adds @p proxy to the list of known actor proxies.
      */
     void put(const node_id& parent,
              actor_id aid,
@@ -98,7 +122,7 @@ class actor_namespace {
     /**
      * @brief Deletes all proxies for @p node.
      */
-    void erase(node_id& node);
+    void erase(const node_id& node);
 
     /**
      * @brief Deletes the proxy with id @p aid for @p node.
@@ -107,23 +131,10 @@ class actor_namespace {
 
  private:
 
-    factory_fun m_factory;
-
-    new_element_callback m_new_element_callback;
-
-    node_id_ptr m_node;
-
+    backend&                     m_backend;
     std::map<node_id, proxy_map> m_proxies;
 
 };
-
-inline void actor_namespace::set_proxy_factory(factory_fun fun) {
-    m_factory = std::move(fun);
-}
-
-inline void actor_namespace::set_new_element_callback(new_element_callback fun) {
-    m_new_element_callback = std::move(fun);
-}
 
 } // namespace actor
 } // namespace boost

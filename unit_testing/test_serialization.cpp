@@ -85,7 +85,7 @@ struct raw_struct_type_info : detail::abstract_uniform_type_info<raw_struct> {
     void deserialize(void* ptr, deserializer* source) const override {
         auto rs = reinterpret_cast<raw_struct*>(ptr);
         rs->str.clear();
-        auto size = source->read<std::uint32_t>();
+        auto size = source->read<uint32_t>();
         rs->str.resize(size);
         source->read_raw(size, &(rs->str[0]));
     }
@@ -129,8 +129,6 @@ int main() {
     BOOST_ACTOR_CHECK_EQUAL(token::value, 2);
 
     announce(typeid(raw_struct), uniform_type_info_ptr{new raw_struct_type_info});
-
-    actor_namespace addressing;
 
   /*
     auto oarr = new detail::object_array;

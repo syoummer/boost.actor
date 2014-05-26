@@ -62,13 +62,13 @@ inline void anon_send(const channel& to, Ts&&... args) {
 /**
  * @brief Anonymously sends @p whom an exit message.
  */
-void anon_send_exit(const actor_addr& whom, std::uint32_t reason);
+void anon_send_exit(const actor_addr& whom, uint32_t reason);
 
 /**
  * @brief Anonymously sends @p whom an exit message.
  */
 template<typename ActorHandle>
-inline void anon_send_exit(const ActorHandle& whom, std::uint32_t reason) {
+inline void anon_send_exit(const ActorHandle& whom, uint32_t reason) {
     anon_send_exit(whom.address(), reason);
 }
 

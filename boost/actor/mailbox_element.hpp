@@ -47,7 +47,7 @@ class mailbox_element : public extend<memory_managed>::
     mailbox_element* next;   // intrusive next pointer
     bool             marked; // denotes if this node is currently processed
     actor_addr       sender;
-    message        msg;    // 'content field'
+    message          msg;    // 'content field'
     message_id       mid;
 
     ~mailbox_element();

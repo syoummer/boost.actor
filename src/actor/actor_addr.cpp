@@ -63,5 +63,10 @@ bool actor_addr::is_remote() const {
     return m_ptr ? m_ptr->is_proxy() : false;
 }
 
+std::set<std::string> actor_addr::interface() const {
+    if (!m_ptr) return std::set<std::string>{};
+    return m_ptr->interface();
+}
+
 } // namespace actor
 } // namespace boost

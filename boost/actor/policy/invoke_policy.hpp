@@ -186,13 +186,15 @@ class invoke_policy {
     // - returns true if fun was successfully invoked
     template<class Actor, class Fun, class MaybeResponseHandle = int>
     optional<message> invoke_fun(Actor* self,
-                                   message& msg,
-                                   message_id& mid,
-                                   Fun& fun,
-                                   MaybeResponseHandle hdl = MaybeResponseHandle{}) {
-#       if BOOST_ACTOR_LOG_LEVEL >= BOOST_ACTOR_DEBUG
+                                 message& msg,
+                                 message_id& mid,
+                                 Fun& fun,
+                                 MaybeResponseHandle hdl = MaybeResponseHandle{}) {
+#       if BOOST_ACTOR_LOG_LEVEL >= BOOST_ACTOR_TRACE
         auto msg_str = to_string(msg);
 #       endif
+        BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_MARG(mid, integer_value)
+                              << ", msg = " << msg_str);
         auto res = fun(msg); // might change mid
         BOOST_ACTOR_LOG_DEBUG_IF(res, "actor did consume message: " << msg_str);
         BOOST_ACTOR_LOG_DEBUG_IF(!res, "actor did ignore message: " << msg_str);
@@ -210,11 +212,12 @@ class invoke_policy {
                     if (fhdl) fhdl.deliver(make_message(unit));
                 }
             } else {
-                if (   res->template has_types<atom_value, std::uint64_t>()
+                BOOST_ACTOR_LOGF_DEBUG("res = " << to_string(*res));
+                if (   res->template has_types<atom_value, uint64_t>()
                     && res->template get_as<atom_value>(0) == atom("MESSAGE_ID")) {
                     BOOST_ACTOR_LOG_DEBUG("message handler returned a "
                                    "message id wrapper");
-                    auto id = res->template get_as<std::uint64_t>(1);
+                    auto id = res->template get_as<uint64_t>(1);
                     auto msg_id = message_id::from_integer_value(id);
                     auto ref_opt = self->sync_handler(msg_id);
                     // calls self->response_promise() if hdl is a dummy

@@ -25,8 +25,7 @@
 
 #include "boost/actor/detail/raw_access.hpp"
 
-#include "boost/actor_io/acceptor.hpp"
-#include "boost/actor_io/tcp_io_stream.hpp"
+#include "boost/actor_io/middleman.hpp"
 
 #include "boost/actor_io/detail/remote_actor_impl.hpp"
 #include "boost/actor_io/detail/typed_remote_actor_helper.hpp"
@@ -42,8 +41,9 @@ namespace actor_io {
  *          representing a remote actor.
  * @throws std::invalid_argument Thrown when connecting to a typed actor.
  */
-inline boost::actor::actor remote_actor(stream_ptr_pair connection) {
-    auto res = detail::remote_actor_impl(connection, std::set<std::string>{});
+template<class Socket>
+inline boost::actor::actor remote_actor(Socket fd) {
+    auto res = detail::remote_actor_impl(std::move(fd), std::set<std::string>{});
     return actor::detail::raw_access::unsafe_cast(res);
 }
 /**
@@ -55,45 +55,46 @@ inline boost::actor::actor remote_actor(stream_ptr_pair connection) {
  * @throws std::invalid_argument Thrown when connecting to a typed actor.
  */
 inline boost::actor::actor remote_actor(const char* host, uint16_t port) {
-    auto ptr = tcp_io_stream::connect_to(host, port);
-    return remote_actor(stream_ptr_pair{ptr, ptr});
+    auto res = detail::remote_actor_impl(host, port, std::set<std::string>{});
+    return actor::detail::raw_access::unsafe_cast(res);
 }
 
 /**
- * @copydoc remote_actor(const char*, std::uint16_t)
+ * @copydoc remote_actor(const char*, uint16_t)
  */
 inline boost::actor::actor remote_actor(const std::string& host, uint16_t port) {
-    return remote_actor(host.c_str(), port);
+    auto res = detail::remote_actor_impl(host, port, std::set<std::string>{});
+    return actor::detail::raw_access::unsafe_cast(res);
 }
 
 /**
  * @copydoc remote_actor(stream_ptr_pair)
  */
-template<class List>
+template<class List, class Socket>
 typename detail::typed_remote_actor_helper<List>::return_type
-typed_remote_actor(stream_ptr_pair connection) {
+typed_remote_actor(Socket fd) {
     detail::typed_remote_actor_helper<List> f;
-    return f(std::move(connection));
+    return f(std::move(fd));
 }
 
 /**
- * @copydoc remote_actor(const char*,std::uint16_t)
+ * @copydoc remote_actor(const char*,uint16_t)
  */
 template<class List>
 typename detail::typed_remote_actor_helper<List>::return_type
-typed_remote_actor(const char* host, std::uint16_t port) {
+typed_remote_actor(const char* host, uint16_t port) {
     detail::typed_remote_actor_helper<List> f;
     return f(host, port);
 }
 
 /**
- * @copydoc remote_actor(const std::string&,std::uint16_t)
+ * @copydoc remote_actor(const std::string&,uint16_t)
  */
 template<class List>
 typename detail::typed_remote_actor_helper<List>::return_type
-typed_remote_actor(const std::string& host, std::uint16_t port) {
+typed_remote_actor(const std::string& host, uint16_t port) {
     detail::typed_remote_actor_helper<List> f;
-    return f(host.c_str(), port);
+    return f(host, port);
 }
 
 } // namespace actor_io

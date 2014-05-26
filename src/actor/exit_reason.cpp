@@ -30,7 +30,7 @@ namespace { constexpr const char* s_names_table[] = {
     "unhandled_sync_timeout"
 }; }
 
-const char* as_string(std::uint32_t value) {
+const char* as_string(uint32_t value) {
     if (value <= unhandled_sync_timeout) return s_names_table[value];
     if (value == remote_link_unreachable) return "remote_link_unreachable";
     if (value >= user_defined) return "user_defined";

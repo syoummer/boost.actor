@@ -25,7 +25,7 @@ namespace { constexpr auto s_foo = atom("FooBar"); }
 
 template<atom_value AtomValue, typename... Types>
 void foo() {
-    BOOST_ACTOR_PRINT("foo(" << static_cast<std::uint64_t>(AtomValue)
+    BOOST_ACTOR_PRINT("foo(" << static_cast<uint64_t>(AtomValue)
                       << " = " << to_string(AtomValue) << ")");
 }
 
@@ -50,7 +50,7 @@ int main() {
     BOOST_ACTOR_CHECK_EQUAL(to_string(s_foo), "FooBar");
     scoped_actor self;
     send_to_self f{self.get()};
-    f(atom("foo"), static_cast<std::uint32_t>(42));
+    f(atom("foo"), static_cast<uint32_t>(42));
     f(atom(":Attach"), atom(":Baz"), "cstring");
     //m(atom("b"), atom("a"), atom("c"), 23.f, 1.f, 1.f);
     f(1.f);
@@ -61,7 +61,7 @@ int main() {
         self->receive(
     //}
     //self->receive_for(i, 3) (
-        on(atom("foo"), arg_match) >> [&](std::uint32_t value) {
+        on(atom("foo"), arg_match) >> [&](uint32_t value) {
             BOOST_ACTOR_CHECKPOINT();
             matched_pattern[0] = true;
             BOOST_ACTOR_CHECK_EQUAL(value, 42);
