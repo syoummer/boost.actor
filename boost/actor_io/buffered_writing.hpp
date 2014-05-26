@@ -19,11 +19,11 @@
 #ifndef BOOST_ACTOR_IO_BUFFERED_WRITING_HPP
 #define BOOST_ACTOR_IO_BUFFERED_WRITING_HPP
 
+#include <vector>
 #include <utility>
 
 #include "boost/actor/detail/logging.hpp"
 
-#include "boost/actor_io/buffer.hpp"
 #include "boost/actor_io/middleman.hpp"
 #include "boost/actor_io/continuable.hpp"
 #include "boost/actor_io/output_stream.hpp"
@@ -37,6 +37,8 @@ class buffered_writing : public Base {
     typedef Base super;
 
  public:
+
+    typedef std::vector<char> buffer_type;
 
     template<typename... Ts>
     buffered_writing(middleman* mm, output_stream_ptr out, Ts&&... args)
@@ -57,7 +59,9 @@ class buffered_writing : public Base {
             if (written != m_buf.size()) {
                 BOOST_ACTOR_LOG_DEBUG("tried to write " << m_buf.size() << "bytes, "
                                << "only " << written << " bytes written");
-                m_buf.erase_leading(written);
+                auto first = m_buf.begin();
+                auto last = first + written;
+                m_buf.erase(first, last);
                 return continue_writing_result::continue_later;
             }
             else {
@@ -74,18 +78,19 @@ class buffered_writing : public Base {
     }
 
     void write(size_t num_bytes, const void* data) {
-        m_buf.write(num_bytes, data);
+        auto first = reinterpret_cast<const char*>(data);
+        m_buf.insert(m_buf.end(), first, first + num_bytes);
         register_for_writing();
     }
 
-    void write(const buffer& buf) {
+    void write(const buffer_type& buf) {
         write(buf.size(), buf.data());
     }
 
-    void write(buffer&& buf) {
+    void write(buffer_type&& buf) {
         if (m_buf.empty()) m_buf = std::move(buf);
         else {
-            m_buf.write(buf.size(), buf.data());
+            write(buf.size(), buf.data());
             buf.clear();
         }
         register_for_writing();
@@ -99,7 +104,7 @@ class buffered_writing : public Base {
         }
     }
 
-    inline buffer& write_buffer() {
+    inline buffer_type& write_buffer() {
         return m_buf;
     }
 
@@ -116,7 +121,7 @@ class buffered_writing : public Base {
     middleman* m_parent;
     output_stream_ptr m_out;
     bool m_has_unwritten_data;
-    buffer m_buf;
+    buffer_type m_buf;
     size_t m_buf_final_size; // 0 means unlimited
 
 };

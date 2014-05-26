@@ -32,8 +32,6 @@ class actor_namespace;
 class uniform_type_info;
 class type_lookup_table;
 
-namespace io { class buffer; }
-
 /**
  * @ingroup TypeSystem
  * @brief Technology-independent deserialization interface.

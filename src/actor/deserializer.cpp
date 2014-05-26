@@ -16,20 +16,13 @@
 \******************************************************************************/
 
 
-#include <string>
-
 #include "boost/actor/deserializer.hpp"
-#include "boost/actor/uniform_type_info.hpp"
-
-#include "boost/actor_io/buffer.hpp"
-
-#include "boost/actor/detail/to_uniform_name.hpp"
 
 namespace boost {
 namespace actor {
 
 deserializer::deserializer(actor_namespace* ns, type_lookup_table* ot)
-: m_namespace{ns}, m_incoming_types{ot} { }
+        : m_namespace{ns}, m_incoming_types{ot} { }
 
 deserializer::~deserializer() { }
 

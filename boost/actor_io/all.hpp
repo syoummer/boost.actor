@@ -22,7 +22,6 @@
 #include "acceptor.hpp"
 #include "all.hpp"
 #include "broker.hpp"
-#include "buffer.hpp"
 #include "buffered_writing.hpp"
 #include "continuable.hpp"
 #include "default_message_queue.hpp"

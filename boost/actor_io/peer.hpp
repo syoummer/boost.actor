@@ -20,6 +20,7 @@
 #define BOOST_ACTOR_peer_IMPL_HPP
 
 #include <map>
+#include <vector>
 #include <cstdint>
 
 #include "boost/actor/extend.hpp"
@@ -28,7 +29,6 @@
 #include "boost/actor/message_handler.hpp"
 #include "boost/actor/type_lookup_table.hpp"
 
-#include "boost/actor_io/buffer.hpp"
 #include "boost/actor_io/input_stream.hpp"
 #include "boost/actor_io/output_stream.hpp"
 #include "boost/actor_io/buffered_writing.hpp"
@@ -46,6 +46,8 @@ class peer : public actor::extend<continuable>::with<buffered_writing> {
     friend class middleman_impl;
 
  public:
+
+    typedef std::vector<char> buffer_type;
 
     peer(middleman* parent,
          const input_stream_ptr& in,
@@ -88,8 +90,9 @@ class peer : public actor::extend<continuable>::with<buffered_writing> {
     const actor::uniform_type_info* m_meta_hdr;
     const actor::uniform_type_info* m_meta_msg;
 
-    buffer m_rd_buf;
-    buffer m_wr_buf;
+    buffer_type m_rd_buf;
+    size_t m_rd_buf_pos;
+    buffer_type m_wr_buf;
 
     default_message_queue_ptr m_queue;
 

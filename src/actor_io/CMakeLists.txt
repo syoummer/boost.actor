@@ -16,7 +16,6 @@ set(LIBBOOST_ACTOR_IO_SRC
     ${LIBBOOST_ACTOR_IO_PLATFORM_SRC}
     acceptor.cpp
     broker.cpp
-    buffer.cpp
     continuable.cpp
     default_message_queue.cpp
     fd_util.cpp

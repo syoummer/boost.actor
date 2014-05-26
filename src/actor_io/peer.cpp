@@ -59,9 +59,10 @@ peer::peer(middleman* parent,
 : super(parent, out, in->read_handle(), out->write_handle())
 , m_in(in), m_state((peer_ptr) ? wait_for_msg_size : wait_for_process_info)
 , m_node(peer_ptr) {
-    m_rd_buf.final_size( m_state == wait_for_process_info
-                       ? sizeof(uint32_t) + node_id::host_id_size
-                       : sizeof(uint32_t));
+    m_rd_buf.resize( m_state == wait_for_process_info
+                    ? sizeof(uint32_t) + node_id::host_id_size
+                    : sizeof(uint32_t));
+    m_rd_buf_pos = 0;
     // state == wait_for_msg_size iff peer was created using remote_peer()
     // in this case, this peer must be erased if no proxy of it remains
     m_stop_on_last_proxy_exited = m_state == wait_for_msg_size;
@@ -88,11 +89,15 @@ void peer::io_failed(event_bitmask mask) {
 continue_reading_result peer::continue_reading() {
     BOOST_ACTOR_LOG_TRACE("");
     for (;;) {
-        try { m_rd_buf.append_from(m_in.get()); }
+        try {
+            auto read = m_in->read_some(m_rd_buf.data() + m_rd_buf_pos,
+                                        m_rd_buf.size() - m_rd_buf_pos);
+            m_rd_buf_pos += read;
+        }
         catch (std::exception&) {
             return continue_reading_result::failure;
         }
-        if (!m_rd_buf.full()) {
+        if (m_rd_buf_pos < m_rd_buf.size()) {
             // try again later
             return continue_reading_result::continue_later;
         }
@@ -103,7 +108,7 @@ continue_reading_result peer::continue_reading() {
                 uint32_t process_id;
                 node_id::host_id_type host_id;
                 memcpy(&process_id, m_rd_buf.data(), sizeof(uint32_t));
-                memcpy(host_id.data(), m_rd_buf.offset_data(sizeof(uint32_t)),
+                memcpy(host_id.data(), m_rd_buf.data() + sizeof(uint32_t),
                        node_id::host_id_size);
                 m_node.reset(new node_id(process_id, host_id));
                 if (*parent()->node() == *m_node) {
@@ -120,16 +125,18 @@ continue_reading_result peer::continue_reading() {
                 }
                 // initialization done
                 m_state = wait_for_msg_size;
-                m_rd_buf.clear();
-                m_rd_buf.final_size(sizeof(uint32_t));
+                // "reset" buffer
+                m_rd_buf_pos = 0;
+                m_rd_buf.resize(sizeof(uint32_t));
                 break;
             }
             case wait_for_msg_size: {
                 //DEBUG("peer_connection::continue_reading: wait_for_msg_size");
                 uint32_t msg_size;
                 memcpy(&msg_size, m_rd_buf.data(), sizeof(uint32_t));
-                m_rd_buf.clear();
-                m_rd_buf.final_size(msg_size);
+                // "reset" buffer
+                m_rd_buf_pos = 0;
+                m_rd_buf.resize(msg_size);
                 m_state = read_message;
                 break;
             }
@@ -176,8 +183,9 @@ continue_reading_result peer::continue_reading() {
                     }
                 };
                 pf(msg);
-                m_rd_buf.clear();
-                m_rd_buf.final_size(sizeof(uint32_t));
+                // "reset" buffer
+                m_rd_buf_pos = 0;
+                m_rd_buf.resize(sizeof(uint32_t));
                 m_state = wait_for_msg_size;
                 break;
             }
@@ -363,8 +371,8 @@ void peer::enqueue_impl(msg_hdr_cref hdr, const message& msg) {
     uint32_t size = 0;
     auto& wbuf = write_buffer();
     auto before = static_cast<uint32_t>(wbuf.size());
-    binary_serializer<buffer> bs(&wbuf, &(parent()->get_namespace()), &m_outgoing_types);
-    wbuf.write(sizeof(uint32_t), &size);
+    binary_serializer<std::vector<char>> bs(&wbuf, &(parent()->get_namespace()), &m_outgoing_types);
+    bs.write_value(size);
     try { bs << hdr << msg; }
     catch (std::exception& e) {
         BOOST_ACTOR_LOG_ERROR(to_verbose_string(e));
@@ -377,7 +385,7 @@ void peer::enqueue_impl(msg_hdr_cref hdr, const message& msg) {
     size =   static_cast<std::uint32_t>((wbuf.size() - before))
            - static_cast<std::uint32_t>(sizeof(std::uint32_t));
     // update size in buffer
-    memcpy(wbuf.offset_data(before), &size, sizeof(std::uint32_t));
+    memcpy(wbuf.data() + before, &size, sizeof(std::uint32_t));
 }
 
 void peer::enqueue(msg_hdr_cref hdr, const message& msg) {

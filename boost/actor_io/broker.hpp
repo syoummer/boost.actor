@@ -28,7 +28,6 @@
 #include "boost/actor/connection_handle.hpp"
 
 #include "boost/actor_io/stream.hpp"
-#include "boost/actor_io/buffer.hpp"
 #include "boost/actor_io/broker.hpp"
 #include "boost/actor_io/acceptor.hpp"
 #include "boost/actor_io/input_stream.hpp"

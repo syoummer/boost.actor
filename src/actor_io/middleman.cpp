@@ -30,9 +30,7 @@
 #include "boost/actor/node_id.hpp"
 #include "boost/actor/to_string.hpp"
 #include "boost/actor/actor_proxy.hpp"
-#include "boost/actor/binary_serializer.hpp"
 #include "boost/actor/uniform_type_info.hpp"
-#include "boost/actor/binary_deserializer.hpp"
 
 #include "boost/actor/detail/logging.hpp"
 #include "boost/actor/detail/ripemd_160.hpp"
@@ -40,7 +38,6 @@
 #include "boost/actor/detail/get_mac_addresses.hpp"
 
 #include "boost/actor_io/peer.hpp"
-#include "boost/actor_io/buffer.hpp"
 #include "boost/actor_io/fd_util.hpp"
 #include "boost/actor_io/acceptor.hpp"
 #include "boost/actor_io/middleman.hpp"
@@ -79,63 +76,6 @@ void shutdown() {
     boost::actor::detail::singletons::destroy(s_instance);
     boost::actor::detail::singletons::stop_singletons();
 }
-
-class buffer_type_info_impl : public uniform_type_info {
-
- public:
-
-    void serialize(const void* instance, serializer* sink) const {
-        auto& val = deref(instance);
-        sink->write_value(static_cast<uint32_t>(val.size()));
-        sink->write_raw(val.size(), val.data());
-    }
-
-    void deserialize(void* instance, deserializer* source) const {
-        auto s = source->read<uint32_t>();
-        source->read_raw(s, deref(instance));
-    }
-
-    const char* name() const {
-        return static_name();
-    }
-
-    message as_message(void* instance) const override {
-        return make_message(deref(instance));
-    }
-
- protected:
-
-    bool equal_to(const std::type_info& ti) const override {
-        return ti == typeid(buffer);
-    }
-
-    bool equals(const void* vlhs, const void* vrhs) const override {
-        auto& lhs = deref(vlhs);
-        auto& rhs = deref(vrhs);
-        return    (lhs.empty() && rhs.empty())
-               || (   lhs.size() == rhs.size()
-                   && memcmp(lhs.data(), rhs.data(), lhs.size()) == 0);
-    }
-
-    uniform_value create(const uniform_value& other) const override {
-        return create_impl<buffer>(other);
-    }
-
- private:
-
-    static inline buffer& deref(void* ptr) {
-        return *reinterpret_cast<buffer*>(ptr);
-    }
-
-    static inline const buffer& deref(const void* ptr) {
-        return *reinterpret_cast<const buffer*>(ptr);
-    }
-
-    static inline const char* static_name() {
-        return "boost::actor_io::buffer";
-    }
-
-};
 
 void notify_queue_event(native_socket_type fd) {
     char dummy = 0;
