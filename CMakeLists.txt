@@ -138,24 +138,9 @@ if (STANDALONE_BUILD)
   add_definitions(-DBOOST_ACTOR_STANDALONE_BUILD)
 endif (STANDALONE_BUILD)
 
-#find_package(Boost 1.54.0 COMPONENTS REQUIRED system context coroutine thread)
-find_package(Boost 1.53.0 COMPONENTS REQUIRED system thread)
-set(LD_FLAGS ${LD_FLAGS} ${Boost_COROUTINE_LIBRARY} ${Boost_CONTEXT_LIBRARY} ${Boost_SYSTEM_LIBRARY})
-# This hack fixes a problem when the linker search path is the same as
-# the one provided by the compiler. In this case, CMake replaces the absolute
-# path (e.g., /path/to/lib.so) with -l<lib>, which may cause it to pick up the wrong
-# library. So when this replacement happens, we ensure that the right
-# library gets picked by adding a -L directive for the affected libraries
-# (which is just Boost Context here).
-set(CMAKE_EXE_LINKER_FLAGS -L${Boost_LIBRARY_DIRS})
+find_package(Boost 1.53.0 REQUIRED) # we only have header-only dependencies
 set(INCLUDE_DIRS ${INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 set(LD_DIRS ${LD_DIRS} ${Boost_LIBRARY_DIRS})
-
-# set compiler flag when compiling w/o context-switching actors
-# DEFAULT for now, because the Context API seems to be broken again
-#if (DISABLE_CONTEXT_SWITCHING)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_ACTOR_DISABLE_CONTEXT_SWITCHING")
-#endif ()
 
 link_directories(${LD_DIRS})
 include_directories(${INCLUDE_DIRS})
@@ -251,13 +236,6 @@ if (NOT "${BOOST_ACTOR_NO_EXAMPLES}" STREQUAL "yes")
   endif ()
 endif ()
 
-# set optional flags
-string(TOUPPER ${CMAKE_BUILD_TYPE} build_type)
-set(CONTEXT_SWITCHING "yes")
-if (DISABLE_CONTEXT_SWITCHING)
-    set(CONTEXT_SWITCHING "no")
-endif ()
-
 # check for doxygen and add custom "doc" target to Makefile
 find_package(Doxygen)
 if (DOXYGEN_FOUND)
@@ -326,7 +304,6 @@ message("\n====================|  Build Summary  |===================="
         "\nBuild type:        ${CMAKE_BUILD_TYPE}"
         "\nDebug mode:        ${DEBUG_MODE_STR}"
         "\nLog level:         ${LOG_LEVEL_STR}"
-        "\nContext switching: ${CONTEXT_SWITCHING}"
         "\nValgrind:          ${VALGRIND}"
         "\nBuild examples:    ${BUILD_EXAMPLES}"
         "\nBuild unit tests:  ${BUILD_UNIT_TESTS}"

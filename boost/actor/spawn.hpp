@@ -29,7 +29,6 @@
 #include "boost/actor/typed_event_based_actor.hpp"
 
 #include "boost/actor/detail/logging.hpp"
-#include "boost/actor/detail/cs_thread.hpp"
 #include "boost/actor/detail/type_traits.hpp"
 #include "boost/actor/detail/make_counted.hpp"
 #include "boost/actor/detail/proper_actor.hpp"
@@ -56,17 +55,8 @@ intrusive_ptr<C> spawn_impl(execution_unit* host,
     static_assert(is_unbound(Os),
                   "top-level spawns cannot have monitor or link flag");
     BOOST_ACTOR_LOGF_TRACE("spawn " << detail::demangle<C>());
-    // runtime check wheter context_switching_resume can be used,
-    // i.e., add the detached flag if build was compiled
-    // without cs_thread support when using the blocking API
-    if (has_blocking_api_flag(Os)
-            && !has_detach_flag(Os)
-            && detail::cs_thread::is_disabled_feature) {
-        return spawn_impl<C, Os + detached>(host, before_launch_fun,
-                                            std::forward<Ts>(args)...);
-    }
     using scheduling_policy = typename std::conditional<
-                                  has_detach_flag(Os),
+                                  has_detach_flag(Os) || has_blocking_api_flag(Os),
                                   policy::no_scheduling,
                                   policy::cooperative_scheduling
                               >::type;
@@ -77,11 +67,7 @@ intrusive_ptr<C> spawn_impl(execution_unit* host,
                             >::type;
     using resume_policy = typename std::conditional<
                               has_blocking_api_flag(Os),
-                              typename std::conditional<
-                                  has_detach_flag(Os),
-                                  policy::no_resume,
-                                  policy::context_switching_resume
-                              >::type,
+                              policy::no_resume,
                               policy::event_based_resume
                           >::type;
     using invoke_policy = typename std::conditional<

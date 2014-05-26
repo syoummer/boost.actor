@@ -20,9 +20,7 @@ set(LIBBOOST_ACTOR_SRC
     blocking_actor.cpp
     binary_deserializer.cpp
     channel.cpp
-    context_switching_resume.cpp
     continue_helper.cpp
-    cs_thread.cpp
     decorated_tuple.cpp
     demangle.cpp
     deserializer.cpp
@@ -62,8 +60,7 @@ set(LIBBOOST_ACTOR_SRC
     to_uniform_name.cpp
     type_lookup_table.cpp
     uniform_type_info.cpp
-    uniform_type_info_map.cpp
-    yield_interface.cpp)
+    uniform_type_info_map.cpp)
 
 # build shared library if not compiling static only
 if (NOT "${BOOST_ACTOR_BUILD_STATIC_ONLY}" STREQUAL "yes")

@@ -24,8 +24,6 @@ namespace actor {
 
 class execution_unit;
 
-namespace detail { struct cs_thread; }
-
 /**
  * @brief A cooperatively executed task managed by one or more instances of
  *        {@link execution_unit}.
@@ -60,7 +58,7 @@ class resumable {
      * @brief Resume any pending computation until it is either finished
      *        or needs to be re-scheduled later.
      */
-    virtual resume_result resume(detail::cs_thread*, execution_unit*) = 0;
+    virtual resume_result resume(execution_unit*) = 0;
 
  protected:
 

@@ -29,6 +29,5 @@
 #include "boost/actor/policy/sequential_invoke.hpp"
 #include "boost/actor/policy/event_based_resume.hpp"
 #include "boost/actor/policy/cooperative_scheduling.hpp"
-#include "boost/actor/policy/context_switching_resume.hpp"
 
 #endif // BOOST_ACTOR_POLICY_HPP

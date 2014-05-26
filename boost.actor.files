@@ -32,7 +32,6 @@ boost/actor/detail/behavior_impl.hpp
 boost/actor/detail/behavior_stack.hpp
 boost/actor/detail/boxed.hpp
 boost/actor/detail/comparable.hpp
-boost/actor/detail/cs_thread.hpp
 boost/actor/detail/decorated_tuple.hpp
 boost/actor/detail/default_uniform_type_info.hpp
 boost/actor/detail/demangle.hpp
@@ -82,7 +81,6 @@ boost/actor/detail/types_array.hpp
 boost/actor/detail/unboxed.hpp
 boost/actor/detail/uniform_type_info_map.hpp
 boost/actor/detail/wrapped.hpp
-boost/actor/detail/yield_interface.hpp
 boost/actor/duration.hpp
 boost/actor/event_based_actor.hpp
 boost/actor/exception.hpp
@@ -112,7 +110,6 @@ boost/actor/mixin/sync_sender.hpp
 boost/actor/node_id.hpp
 boost/actor/on.hpp
 boost/actor/policy.hpp
-boost/actor/policy/context_switching_resume.hpp
 boost/actor/policy/cooperative_scheduling.hpp
 boost/actor/policy/event_based_resume.hpp
 boost/actor/policy/invoke_policy.hpp
@@ -214,9 +211,7 @@ src/actor/behavior_stack.cpp
 src/actor/binary_deserializer.cpp
 src/actor/blocking_actor.cpp
 src/actor/channel.cpp
-src/actor/context_switching_resume.cpp
 src/actor/continue_helper.cpp
-src/actor/cs_thread.cpp
 src/actor/decorated_tuple.cpp
 src/actor/demangle.cpp
 src/actor/deserializer.cpp
@@ -261,7 +256,6 @@ src/actor/to_uniform_name.cpp
 src/actor/type_lookup_table.cpp
 src/actor/uniform_type_info.cpp
 src/actor/uniform_type_info_map.cpp
-src/actor/yield_interface.cpp
 src/actor_io/acceptor.cpp
 src/actor_io/broker.cpp
 src/actor_io/continuable.cpp
@@ -302,4 +296,3 @@ unit_testing/test_tuple.cpp
 unit_testing/test_typed_remote_actor.cpp
 unit_testing/test_typed_spawn.cpp
 unit_testing/test_uniform_type.cpp
-unit_testing/test_yield_interface.cpp

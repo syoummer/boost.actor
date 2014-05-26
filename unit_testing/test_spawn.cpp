@@ -8,9 +8,6 @@
 
 #include "boost/actor/all.hpp"
 
-#include "boost/actor/detail/cs_thread.hpp"
-#include "boost/actor/detail/yield_interface.hpp"
-
 using namespace std;
 using namespace boost::actor;
 
@@ -656,16 +653,6 @@ void test_spawn() {
     BOOST_ACTOR_CHECKPOINT();
 
     auto sync_testee1 = spawn<blocking_api>([](blocking_actor* s) {
-        if (detail::cs_thread::is_disabled_feature) {
-            BOOST_ACTOR_LOGF_WARNING("compiled w/o context switching "
-                              "(skip some tests)");
-        }
-        else {
-            BOOST_ACTOR_CHECKPOINT();
-            // scheduler should switch back immediately
-            detail::yield(detail::yield_state::ready);
-            BOOST_ACTOR_CHECKPOINT();
-        }
         s->receive (
             on(atom("get")) >> [] {
                 return std::make_tuple(42, 2);

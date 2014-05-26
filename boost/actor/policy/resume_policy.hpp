@@ -30,8 +30,6 @@ namespace actor {
 class execution_unit;
 class duration;
 
-namespace detail { struct cs_thread; }
-
 namespace policy {
 
 /**
@@ -50,9 +48,7 @@ class resume_policy {
      *        actor finishes execution.
      */
     template<class Actor>
-    resumable::resume_result resume(Actor* self,
-                                    detail::cs_thread* from,
-                                    execution_unit*);
+    resumable::resume_result resume(Actor* self, execution_unit*);
 
     /**
      * @brief Waits unconditionally until the actor is ready to resume.

@@ -9,14 +9,6 @@
 #include "boost/actor/policy/resume_policy.hpp"
 
 namespace boost {
-namespace actor {
-namespace detail {
-struct cs_thread;
-} // namespace detail
-} // namespace actor
-} // namespace boost
-
-namespace boost {
 namespace actor { namespace policy {
 
 // this policy simply forwards calls to @p await_data to the scheduling
@@ -42,8 +34,7 @@ class no_resume {
             this->deref();
         }
 
-        inline resumable::resume_result resume(detail::cs_thread*,
-                                               execution_unit*) {
+        inline resumable::resume_result resume(execution_unit*) {
             auto done_cb = [=](std::uint32_t reason) {
                 this->planned_exit_reason(reason);
                 this->on_exit();

@@ -30,7 +30,6 @@
 #include "boost/actor/policy/scheduling_policy.hpp"
 
 #include "boost/actor/detail/logging.hpp"
-#include "boost/actor/detail/cs_thread.hpp"
 #include "boost/actor/detail/singletons.hpp"
 #include "boost/actor/detail/scope_guard.hpp"
 #include "boost/actor/detail/actor_registry.hpp"
@@ -71,9 +70,8 @@ class no_scheduling {
         std::thread([=] {
             BOOST_ACTOR_PUSH_AID(mself->id());
             BOOST_ACTOR_LOG_TRACE("");
-            detail::cs_thread fself;
             for (;;) {
-                if (mself->resume(&fself, nullptr) == resumable::done) {
+                if (mself->resume(nullptr) == resumable::done) {
                     return;
                 }
                 // await new data before resuming actor

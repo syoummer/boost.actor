@@ -26,7 +26,6 @@
 #include "boost/actor/message_header.hpp"
 
 #include "boost/actor/detail/singletons.hpp"
-#include "boost/actor/detail/yield_interface.hpp"
 #include "boost/actor/detail/single_reader_queue.hpp"
 
 namespace boost {

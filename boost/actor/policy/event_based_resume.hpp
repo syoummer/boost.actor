@@ -32,7 +32,6 @@
 
 #include "boost/actor/policy/resume_policy.hpp"
 
-#include "boost/actor/detail/cs_thread.hpp"
 #include "boost/actor/detail/logging.hpp"
 #include "boost/actor/detail/functor_based_actor.hpp"
 
@@ -58,8 +57,7 @@ class event_based_resume {
             this->deref();
         }
 
-        resumable::resume_result resume(detail::cs_thread*,
-                                        execution_unit* host) override {
+        resumable::resume_result resume(execution_unit* host) override {
             auto d = static_cast<Derived*>(this);
             d->m_host = host;
             BOOST_ACTOR_LOG_TRACE("id = " << d->id());

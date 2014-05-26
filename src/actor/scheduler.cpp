@@ -224,7 +224,7 @@ class coordinator::shutdown_helper : public resumable {
 
     void detach_from_scheduler() override { }
 
-    resumable::resume_result resume(detail::cs_thread*, execution_unit* ptr) {
+    resumable::resume_result resume(execution_unit* ptr) {
         BOOST_ACTOR_LOG_DEBUG("shutdown_helper::resume => shutdown worker");
         auto wptr = dynamic_cast<worker*>(ptr);
         BOOST_ACTOR_REQUIRE(wptr != nullptr);
@@ -361,7 +361,6 @@ void worker::start(size_t id, coordinator* parent) {
 void worker::run() {
     BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_ARG(m_id));
     // local variables
-    detail::cs_thread fself;
     job_ptr job = nullptr;
     // some utility functions
     auto local_poll = [&]() -> bool {
@@ -431,7 +430,7 @@ void worker::run() {
     for (;;) {
         local_poll() || aggressive_poll() || moderate_poll() || relaxed_poll();
         BOOST_ACTOR_PUSH_AID_FROM_PTR(dynamic_cast<abstract_actor*>(job));
-        switch (job->resume(&fself, this)) {
+        switch (job->resume(this)) {
             case resumable::done: {
                 job->detach_from_scheduler();
                 break;
