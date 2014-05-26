@@ -27,8 +27,9 @@
 #include "boost/actor/config.hpp"
 #include "boost/actor/abstract_actor.hpp"
 
-#include "boost/actor/detail/scope_guard.hpp"
 #include "boost/actor/detail/demangle.hpp"
+#include "boost/actor/detail/singletons.hpp"
+#include "boost/actor/detail/scope_guard.hpp"
 
 /*
  * To enable logging, you have to define BOOST_ACTOR_DEBUG. This enables
@@ -170,20 +171,21 @@ oss_wr operator<<(oss_wr&& lhs, T rhs) {
         if (strcmp(lvlname, "ERROR") == 0) {                                   \
             BOOST_ACTOR_PRINT_ERROR_IMPL(lvlname, classname, funname, message);\
         }                                                                      \
-        boost::actor::detail::get_logger()->log(lvlname, classname, funname,   \
-            __FILE__, __LINE__,                                                \
-            (boost::actor::detail::oss_wr{} << message).str())                 \
+        boost::actor::detail::singletons::get_logger()->log(lvlname, classname,\
+            funname, __FILE__, __LINE__,                                       \
+            (boost::actor::detail::oss_wr{} << message).str())
 #   define BOOST_ACTOR_PUSH_AID(aid_arg)                                       \
-        auto prev_aid_in_scope = boost::actor::detail::get_logger()            \
+        auto prev_aid_in_scope = boost::actor::detail::singletons::get_logger()\
                                  ->set_aid(aid_arg);                           \
-        auto aid_pop_sg = boost::actor::detail::detail::make_scope_guard([=] { \
-            boost::actor::detail::get_logger()->set_aid(prev_aid_in_scope);    \
+        auto aid_pop_sg = boost::actor::detail::make_scope_guard([=] {         \
+            boost::actor::detail::singletons::get_logger()                     \
+            ->set_aid(prev_aid_in_scope);                                      \
         })
 #   define BOOST_ACTOR_PUSH_AID_FROM_PTR(some_ptr)                             \
         auto aid_ptr_argument = some_ptr;                                      \
         BOOST_ACTOR_PUSH_AID(aid_ptr_argument ? aid_ptr_argument->id() : 0)
 #   define BOOST_ACTOR_SET_AID(aid_arg)                                        \
-    boost::actor::detail::get_logger()->set_aid(aid_arg)
+        boost::actor::detail::singletons::get_logger()->set_aid(aid_arg)
 #endif
 
 #define BOOST_ACTOR_CLASS_NAME                                                 \
