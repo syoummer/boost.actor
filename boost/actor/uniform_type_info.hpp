@@ -70,13 +70,13 @@ uniform_value make_uniform_value(const uniform_type_info* ti, Ts&&... args) {
 }
 
 /**
- * @defgroup TypeSystem libcppa's platform-independent type system.
+ * @defgroup TypeSystem Platform-independent type system.
  *
- * @p libcppa provides a fully network transparent communication between
- * actors. Thus, @p libcppa needs to serialize and deserialize message objects.
+ * @p Boost.Actor provides a fully network transparent communication between
+ * actors. Thus, it needs to serialize and deserialize message objects.
  * Unfortunately, this is not possible using the C++ RTTI system.
  *
- * Since it is not possible to extend <tt>std::type_info</tt>, @p libcppa
+ * Since it is not possible to extend <tt>std::type_info</tt>, @p Boost.Actor
  * uses its own type abstraction:
  * {@link cppa::uniform_type_info uniform_type_info}.
  *
@@ -94,7 +94,7 @@ uniform_value make_uniform_value(const uniform_type_info* ti, Ts&&... args) {
  * or {@link cppa::uniform_type_info uniform_type_info}.
  *
  * There is one exception, though, where you need to care about
- * <tt>libcppa</tt>'s type system: using custom data types in messages.
+ * the type system: using custom data types in messages.
  * The source code below compiles fine, but crashes with an exception during
  * runtime.
  *
@@ -119,8 +119,8 @@ uniform_value make_uniform_value(const uniform_type_info* ti, Ts&&... args) {
  * what():  uniform_type_info::by_type_info(): foo is an unknown typeid name
  * </tt>
  *
- * The user-defined struct @p foo is not known by the @p libcppa type system.
- * Thus, @p libcppa is unable to serialize/deserialize @p foo and rejects it.
+ * The user-defined struct @p foo is not known by the type system.
+ * Thus, @p foo cannot be serialized and is rejected.
  *
  * Fortunately, there is an easy way to add @p foo the type system,
  * without needing to implement serialize/deserialize by yourself:
@@ -140,7 +140,7 @@ uniform_value make_uniform_value(const uniform_type_info* ti, Ts&&... args) {
  * Obviously, there are limitations. If your class does implement
  * an unsupported data structure, you have to implement serialize/deserialize
  * by yourself. {@link announce_example_5.cpp Example 5} shows, how to
- * announce a tree data structure to the @p libcppa type system.
+ * announce a tree data structure to the type system.
  */
 
 /**
@@ -179,7 +179,7 @@ class uniform_type_info {
 
     /**
      * @brief Get instance by uniform name.
-     * @param uniform_name The @p libcppa internal name for a type.
+     * @param uniform_name The internal name for a type.
      * @returns The instance associated to @p uniform_name.
      * @throws std::runtime_error if no type named @p uniform_name was found.
      */
@@ -210,8 +210,8 @@ class uniform_type_info {
     uniform_value deserialize(deserializer* source) const;
 
     /**
-     * @brief Get the internal @p libcppa name for this type.
-     * @returns A string describing the @p libcppa internal type name.
+     * @brief Get the internal name for this type.
+     * @returns A string describing the internal type name.
      */
     virtual const char* name() const = 0;
 

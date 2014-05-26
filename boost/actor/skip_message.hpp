@@ -24,7 +24,7 @@ namespace actor {
 
 /**
  * @brief Optional return type for functors used in pattern matching
- *        expressions. This type is evaluated by the runtime system of libcppa
+ *        expressions. This type is evaluated by the runtime system
  *        and can be used to intentionally skip messages.
  */
 struct skip_message_t { constexpr skip_message_t() { } };

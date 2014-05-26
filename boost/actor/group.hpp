@@ -111,7 +111,7 @@ class group : detail::comparable<group>
     static group anonymous();
 
     /**
-     * @brief Add a new group module to the libcppa group management.
+     * @brief Add a new group module to the group management.
      * @threadsafe
      */
     static void add_module(abstract_group::unique_module_ptr);

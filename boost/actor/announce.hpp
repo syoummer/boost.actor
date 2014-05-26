@@ -87,7 +87,7 @@ namespace actor {
  */
 
 /**
- * @brief Adds a new type mapping to the libcppa type system.
+ * @brief Adds a new type mapping to the type system.
  * @param tinfo C++ RTTI for the new type
  * @param utype Corresponding {@link uniform_type_info} instance.
  * @returns @c true if @p uniform_type was added as known
@@ -148,7 +148,7 @@ compound_member(const std::pair<GRes (Parent::*)() const,
 }
 
 /**
- * @brief Adds a new type mapping for @p C to the libcppa type system.
+ * @brief Adds a new type mapping for @p C to the type system.
  * @tparam C A class that is either empty or is default constructible,
  *           copy constructible, and comparable.
  * @param args Members of @p C.

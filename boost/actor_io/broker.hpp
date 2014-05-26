@@ -50,7 +50,7 @@ typedef intrusive_ptr<broker> broker_ptr;
 broker_ptr init_and_launch(broker_ptr);
 
 /**
- * @brief A broker mediates between a libcppa-based actor system
+ * @brief A broker mediates between an actor system
  *        and other components in the network.
  * @extends local_actor
  */

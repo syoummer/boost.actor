@@ -1,6 +1,6 @@
 /******************************************************************************\
  * This example is an implementation of the classical Dining Philosophers     *
- * exercise using only libcppa's event-based actor implementation.            *
+ * exercise using event-based actors.                                         *
 \******************************************************************************/
 
 #include <map>

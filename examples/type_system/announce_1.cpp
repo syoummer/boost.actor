@@ -75,12 +75,12 @@ void testee(event_based_actor* self, size_t remaining) {
 
 int main(int, char**) {
 
-    // announces foo to the libcppa type system;
+    // announces foo to the type system;
     // the function expects member pointers to all elements of foo
     announce<foo>(&foo::a, &foo::b);
 
-    // announce foo2 to the libcppa type system,
-    // note that recursive containers are managed automatically by libcppa
+    // announce foo2 to the type system,
+    // note that recursive containers are managed automatically
     announce<foo2>(&foo2::a, &foo2::b);
 
     foo2 vd;
@@ -109,8 +109,8 @@ int main(int, char**) {
     // std::pair<int, int> is already announced
     assert(announce<foo_pair2>(&foo_pair2::first, &foo_pair2::second) == uti);
 
-    // libcppa returns the same uniform_type_info
-    // instance for foo_pair and foo_pair2
+    // same uniform_type_info is returned
+    // for foo_pair and foo_pair2
     assert(uniform_typeid<foo_pair>() == uniform_typeid<foo_pair2>());
 
     // spawn a testee that receives two messages

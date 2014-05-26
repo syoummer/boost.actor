@@ -1,9 +1,9 @@
 /******************************************************************************
  * This example shows how to implement serialize/deserialize to announce      *
- * non-trivial data structures to the libcppa type system.                    *
+ * non-trivial data structures to the type system.                            *
  *                                                                            *
  * Announce() auto-detects STL compliant containers and provides              *
- * an easy way to tell libcppa how to serialize user defined types.           *
+ * an easy way to to serialize user defined types.                            *
  * See announce_example 1-4 for usage examples.                               *
  *                                                                            *
  * You should use "hand written" serialize/deserialize implementations        *
@@ -169,7 +169,7 @@ void testee(event_based_actor* self, size_t remaining) {
 } // namespace <anonymous>
 
 int main() {
-    // the tree_type_info is owned by libcppa after this function call
+    // announce() takes ownership of the tree_type_info instance
     announce(typeid(tree), uniform_type_info_ptr{new tree_type_info});
 
     tree t0; // create a tree and fill it with some data

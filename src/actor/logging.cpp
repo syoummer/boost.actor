@@ -88,7 +88,7 @@ class logging_impl : public logging {
 
     void operator()() {
         std::ostringstream fname;
-        fname << "libcppa_" << getpid() << "_" << time(0) << ".log";
+        fname << "BoostActor_" << getpid() << "_" << time(0) << ".log";
         std::fstream out(fname.str().c_str(), std::ios::out | std::ios::app);
         std::unique_ptr<log_event> event;
         for (;;) {

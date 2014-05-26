@@ -36,7 +36,7 @@ namespace actor_io {
 
 /**
  * @brief Establish a new connection to a remote actor via @p connection.
- * @param connection A connection to another libcppa process described by a pair
+ * @param connection A connection to another process described by a pair
  *                   of input and output stream.
  * @returns An {@link actor_ptr} to the proxy instance
  *          representing a remote actor.

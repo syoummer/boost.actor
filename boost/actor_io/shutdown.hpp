@@ -27,8 +27,7 @@ namespace actor_io {
 /**
  * @brief Destroys all singletons, disconnects all peers and stops the
  *        scheduler. It is recommended to use this function as very last
- *        function call before leaving main(). Especially in programs
- *        using libcppa's networking infrastructure.
+ *        function call before leaving main().
  */
 void shutdown();
 

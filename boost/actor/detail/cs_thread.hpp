@@ -28,7 +28,7 @@ struct cst_impl;
 // A cooperatively scheduled thread implementation
 struct cs_thread {
 
-    // Queries whether libcppa was compiled without cs threads on this platform.
+    // Queries whether build was compiled without cs threads on this platform.
     static const bool is_disabled_feature;
 
     // Creates a new cs_thread storing the context of the calling thread.

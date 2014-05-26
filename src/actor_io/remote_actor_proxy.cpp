@@ -57,8 +57,8 @@ remote_actor_proxy::~remote_actor_proxy() {
     auto aid = m_id;
     auto node = m_node;
     auto mm = m_parent;
-    BOOST_ACTOR_LOG_INFO(BOOST_ACTOR_ARG(m_id) << ", " << BOOST_ACTOR_TSARG(*m_node)
-                   << ", protocol = " << detail::demangle(typeid(*m_parent)));
+    BOOST_ACTOR_LOG_INFO(BOOST_ACTOR_ARG(m_id)
+                         << ", " << BOOST_ACTOR_TSARG(*m_node));
     mm->run_later([aid, node, mm] {
         BOOST_ACTOR_LOGC_TRACE("cppa::io::remote_actor_proxy",
                         "~remote_actor_proxy$run_later",

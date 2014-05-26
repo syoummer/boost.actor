@@ -57,7 +57,7 @@ intrusive_ptr<C> spawn_impl(execution_unit* host,
                   "top-level spawns cannot have monitor or link flag");
     BOOST_ACTOR_LOGF_TRACE("spawn " << detail::demangle<C>());
     // runtime check wheter context_switching_resume can be used,
-    // i.e., add the detached flag if libcppa was compiled
+    // i.e., add the detached flag if build was compiled
     // without cs_thread support when using the blocking API
     if (has_blocking_api_flag(Os)
             && !has_detach_flag(Os)

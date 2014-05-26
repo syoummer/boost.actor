@@ -29,8 +29,7 @@ typedef void* vptr;
 typedef void (*cst_fun)(vptr);
 
 // Boost's coroutine minimal stack size is pretty small
-// and easily causes stack overflows when using libcppa
-// in debug mode or with logging
+// and easily causes stack overflows in debug mode or with logging
 #if defined(BOOST_ACTOR_DEBUG_MODE) || defined(BOOST_ACTOR_LOG_LEVEL)
 constexpr size_t stack_multiplier = 4;
 #else
@@ -52,7 +51,7 @@ cs_thread::cs_thread(cst_fun, vptr) : m_impl(nullptr) { }
 cs_thread::~cs_thread() { }
 
 void cs_thread::swap(cs_thread&, cs_thread&) {
-    throw std::logic_error("libcppa was compiled using "
+    throw std::logic_error("Boost.Actor was compiled using "
                            "BOOST_ACTOR_DISABLE_CONTEXT_SWITCHING");
 }
 
@@ -169,7 +168,7 @@ namespace {
         alloc.deallocate(sctx);
     }
 #else
-#   error libcppa context switching requires Boost in version >= 1.54
+#   error context switching requires Boost in version >= 1.54
 #endif
 
 } // namespace <anonymous>

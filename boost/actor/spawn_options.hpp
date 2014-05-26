@@ -83,7 +83,7 @@ constexpr spawn_options detached         = spawn_options::detach_flag;
 constexpr spawn_options hidden           = spawn_options::hide_flag;
 
 /**
- * @brief Causes the new actor to opt in to the blocking API of libcppa,
+ * @brief Causes the new actor to opt in to the blocking API,
  *        i.e., the actor uses a context-switching or thread-based backend
  *        instead of the default event-based implementation.
  */

@@ -139,7 +139,7 @@ struct is_one_of<X, T0, Ts...> : is_one_of<X, Ts...> { };
  * @brief Checks wheter @p T is considered a builtin type.
  *
  * Builtin types are: (1) all arithmetic types, (2) string types from the STL,
- * and (3) libcppa types such as @p actor_ptr.
+ * and (3) built-in types such as @p actor_ptr.
  */
 template<typename T>
 struct is_builtin {

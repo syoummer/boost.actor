@@ -52,7 +52,7 @@ namespace boost {
 namespace actor {
 namespace detail {
 
-// maps demangled names to libcppa names
+// maps demangled names to uniform names
 // WARNING: this map is sorted, insert new elements *in sorted order* as well!
 /* extern */ const char* mapped_type_names[][2] = {
     { "bool",                                           "bool"                },

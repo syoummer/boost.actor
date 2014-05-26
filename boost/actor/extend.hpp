@@ -43,7 +43,7 @@ struct extend_helper<D, B, M, Ms...> : extend_helper<D, M<B, D>, Ms...> { };
  *        For example, "extend<ar, T>::with<ob, fo>" is an alias for
  *        "fo<ob<ar, T>, T>".
  *
- * Mixins in libcppa always have two template parameters: base type and
+ * Mixins always have two template parameters: base type and
  * derived type. This allows mixins to make use of the curiously recurring
  * template pattern (CRTP). However, if none of the used mixins use CRTP,
  * the second template argument can be ignored (it is then set to Base).

@@ -46,7 +46,7 @@ class node_id : public ref_counted, detail::comparable<node_id> {
     ~node_id();
 
     /**
-     * @brief @c libcppa uses 160 bit hashes (20 bytes).
+     * @brief A 160 bit hash (20 bytes).
      */
     static constexpr size_t host_id_size = 20;
 

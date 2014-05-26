@@ -28,7 +28,7 @@ namespace boost {
 namespace actor {
 
 /**
- * @brief Base class for libcppa exceptions.
+ * @brief Base class for exceptions.
  */
 class cppa_exception : public std::exception {
 
@@ -95,7 +95,7 @@ class actor_exited : public cppa_exception {
 
 /**
  * @brief Thrown to indicate that either an actor publishing failed or
- *        @p libcppa was unable to connect to a remote host.
+ *        the middleman was unable to connect to a remote host.
  */
 class network_error : public cppa_exception {
 

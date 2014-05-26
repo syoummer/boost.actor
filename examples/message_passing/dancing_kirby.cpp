@@ -1,5 +1,5 @@
 /******************************************************************************\
- * This example illustrates how to do time-triggered loops in libcppa.        *
+ * This example illustrates how to do time-triggered loops.                   *
 \******************************************************************************/
 
 #include <chrono>
