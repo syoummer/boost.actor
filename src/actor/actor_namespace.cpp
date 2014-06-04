@@ -39,7 +39,11 @@ actor_namespace::backend::~backend() {
     // nop
 }
 
-actor_namespace::actor_namespace(backend& be) : m_backend(be) {
+actor_namespace::hook::~hook() {
+    // nop
+}
+
+actor_namespace::actor_namespace(backend& be) : m_backend(be), m_hook(nullptr) {
     // nop
 }
 
@@ -108,6 +112,7 @@ actor_proxy_ptr actor_namespace::get_or_put(node_id_ptr node, actor_id aid) {
     auto result = get(*node, aid);
     if (result == nullptr) {
         auto ptr = m_backend.make_proxy(node, aid);
+        proxy_created(ptr);
         put(*node, aid, ptr);
         result = ptr;
     }
@@ -122,6 +127,7 @@ void actor_namespace::put(const node_id& node,
     if (i == submap.end()) {
         submap.insert(std::make_pair(aid, proxy));
         m_backend.register_proxy(node, aid);
+        proxy_registered(node, aid);
     }
     else {
         BOOST_ACTOR_LOG_ERROR("proxy for " << aid << ":"
@@ -152,6 +158,10 @@ void actor_namespace::erase(node_id& inf, actor_id aid) {
     if (i != m_proxies.end()) {
         i->second.erase(aid);
     }
+}
+
+void actor_namespace::set_hook(hook* ptr) {
+    m_hook = ptr;
 }
 
 } // namespace actor

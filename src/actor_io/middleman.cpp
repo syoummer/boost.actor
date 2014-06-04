@@ -67,21 +67,26 @@ middleman* middleman::instance() {
     }));
 }
 
-const node_id_ptr& middleman::node() const {
+const node_id& middleman::node() const {
+    BOOST_ACTOR_REQUIRE(m_node != nullptr);
+    return *m_node;
+}
+
+const node_id_ptr& middleman::node_ptr() const {
     BOOST_ACTOR_REQUIRE(m_node != nullptr);
     return m_node;
 }
 
-bool middleman::register_peer(const node_id& node, const peer_ptr& ptr) {
-    BOOST_ACTOR_LOG_TRACE("node = " << to_string(node) << ", ptr = " << ptr);
-    auto res = m_peers.emplace(node, ptr);
+bool middleman::register_peer(const node_id& nid, const peer_ptr& ptr) {
+    BOOST_ACTOR_LOG_TRACE("node = " << to_string(nid) << ", ptr = " << ptr);
+    auto res = m_peers.emplace(nid, ptr);
     if (!res.second) {
-        BOOST_ACTOR_LOG_WARNING("peer " << to_string(node)
+        BOOST_ACTOR_LOG_WARNING("peer " << to_string(nid)
                                 << " already defined, "
                                 << "multiple calls to remote_actor()?");
         return false;
     }
-    BOOST_ACTOR_LOG_INFO("peer " << to_string(node) << " added");
+    BOOST_ACTOR_LOG_INFO("peer " << to_string(nid) << " added");
     return true;
 }
 
@@ -99,22 +104,47 @@ peer_ptr middleman::get_peer(const node_id& node) {
     return nullptr;
 }
 
+void middleman::announce_route(const node_id& hop, const node_id& dest) {
+    // do we have a blacklist entry for this route?
+    auto bi = m_blacklist.find(dest);
+    if (bi != m_blacklist.end() && bi->second == hop) return; // ignore route
+    m_routes.emplace(dest, hop);
+}
+
 void middleman::dispatch(const node_id& node, msg_hdr_cref hdr, message msg) {
-    auto i = m_peers.find(node);
-    if (i != m_peers.end()) {
-        auto ptr = i->second;
-        ptr->enqueue(hdr, msg);
-    }
+    auto p = select_peer(node);
+    if (p) p->enqueue(hdr, msg);
     else {
         BOOST_ACTOR_LOG_WARNING("message dropped: no route to node: "
                                 << to_string(node));
     }
 }
 
+void middleman::dispatch(const node_id& node, const void* buf, size_t buf_len) {
+    auto p = select_peer(node);
+    if (p) p->send(buf, buf_len);
+    else {
+        BOOST_ACTOR_LOG_WARNING("message dropped: no route to node: "
+                                << to_string(node));
+    }
+}
+
+peer* middleman::select_peer(const node_id& nid) {
+    auto i = m_peers.find(nid);
+    if (i != m_peers.end()) {
+        return i->second.get();
+    }
+    auto j = m_routes.find(nid);
+    if (j != m_routes.end()) {
+        return select_peer(j->second);
+    }
+    return nullptr;
+}
+
 void middleman::last_proxy_exited(const peer_ptr& pptr) {
     BOOST_ACTOR_REQUIRE(pptr != nullptr);
     BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_ARG(pptr)
-                   << ", pptr->node() = " << to_string(pptr->node()));
+                          << ", " << to_string(pptr->node()));
     if (pptr->stop_on_last_proxy_exited()) {
         pptr->stop();
     }
@@ -125,8 +155,8 @@ void middleman::del_peer(const peer_ptr& pptr) {
     auto i = m_peers.find(pptr->node());
     if (i != m_peers.end()) {
         BOOST_ACTOR_LOG_DEBUG_IF(i->second != pptr,
-                          "node " << to_string(pptr->node())
-                          << " does not exist in m_peers");
+                                 "node " << to_string(pptr->node())
+                                 << " does not exist in m_peers");
         if (i->second == pptr) {
             m_peers.erase(i);
         }

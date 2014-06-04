@@ -35,6 +35,7 @@
 #include "boost/actor/node_id.hpp"
 #include "boost/actor/actor_proxy.hpp"
 #include "boost/actor/ref_counted.hpp"
+#include "boost/actor/actor_namespace.hpp"
 #include "boost/actor/mailbox_element.hpp"
 #include "boost/actor/message_handler.hpp"
 #include "boost/actor/type_lookup_table.hpp"
@@ -50,7 +51,8 @@ namespace actor_io {
 class middleman;
 class peer_acceptor;
 
-class peer : public network::stream_manager {
+class peer : public network::stream_manager
+           , public actor::actor_namespace::hook {
 
     friend class middleman;
     friend class peer_acceptor;
@@ -59,14 +61,19 @@ class peer : public network::stream_manager {
 
     typedef std::vector<char> buffer_type;
 
-    typedef boost::actor::detail::single_reader_queue<
-                boost::actor::mailbox_element,
-                boost::actor::detail::disposer
+    typedef actor::detail::single_reader_queue<
+                actor::mailbox_element,
+                actor::detail::disposer
             >
             mailbox_type;
 
-    virtual void enqueue(boost::actor::msg_hdr_cref hdr,
-                         boost::actor::message msg) = 0;
+    virtual void enqueue(actor::msg_hdr_cref hdr, actor::message msg) = 0;
+
+    /**
+     * @brief Sends @p data to the remote node.
+     * @warning Must not be called outside of the event loop of the middleman.
+     */
+    virtual void send(const void* data, size_t data_len) = 0;
 
     inline bool stop_on_last_proxy_exited() const {
         return m_stop_on_last_proxy_exited;
@@ -95,6 +102,11 @@ class peer : public network::stream_manager {
         std::string* error_msg;
         const std::set<std::string>* expected_ifs;
     };
+
+    void proxy_created(const actor::actor_proxy_ptr& ptr) override;
+
+    void proxy_registered(const actor::node_id&, actor::actor_id) override;
+
 
  protected:
 
@@ -138,8 +150,8 @@ class peer : public network::stream_manager {
 
     void deliver(actor::msg_hdr_cref hdr, actor::message msg);
 
-    void serialize_msg(boost::actor::msg_hdr_cref hdr,
-                       const boost::actor::message& msg,
+    void serialize_msg(actor::msg_hdr_cref hdr,
+                       const actor::message& msg,
                        std::vector<char>& wr_buf);
 
     void add_type_if_needed(const std::string& tname);
@@ -165,16 +177,16 @@ class peer : public network::stream_manager {
         await_msg
     };
 
-    middleman*                              m_parent;
-    actor::node_id_ptr                      m_node;
-    state                                   m_state;
-    bool                                    m_stop_on_last_proxy_exited;
-    const boost::actor::uniform_type_info*  m_meta_hdr;
-    const boost::actor::uniform_type_info*  m_meta_msg;
-    boost::actor::type_lookup_table         m_incoming_types;
-    boost::actor::type_lookup_table         m_outgoing_types;
-    boost::actor::message_handler           m_handle_control_messages;
-    client_handshake_data*                  m_handshake_data;
+    middleman*                       m_parent;
+    actor::node_id_ptr               m_node;
+    state                            m_state;
+    bool                             m_stop_on_last_proxy_exited;
+    const actor::uniform_type_info*  m_meta_hdr;
+    const actor::uniform_type_info*  m_meta_msg;
+    actor::type_lookup_table         m_incoming_types;
+    actor::type_lookup_table         m_outgoing_types;
+    actor::message_handler           m_handle_control_messages;
+    client_handshake_data*           m_handshake_data;
 
 };
 
@@ -218,6 +230,22 @@ class peer::impl : public peer {
         m_stream.start(this);
     }
 
+    void send(const void* data, size_t data_len) {
+        auto first = reinterpret_cast<const char*>(data);
+        auto last = first + data_len;
+        auto& buf = m_stream.wr_buf();
+        buf.insert(buf.end(), first, last);
+        m_stream.flush(this);
+    }
+
+    void enqueue(actor::msg_hdr_cref hdr, actor::message msg) override {
+        m_stream.backend().dispatch([=] {
+            BOOST_ACTOR_LOGM_TRACE("boost.actor_io.peer$enqueue_lambda", "");
+            serialize_msg(hdr, msg, m_stream.wr_buf());
+            m_stream.flush(this);
+        });
+    }
+
  protected:
 
     void stop() override {
@@ -235,14 +263,6 @@ class peer::impl : public peer {
 
     void configure_read(receive_policy::config config) override {
         m_stream.configure_read(config);
-    }
-
-    void enqueue(actor::msg_hdr_cref hdr, actor::message msg) override {
-        m_stream.backend().dispatch([=] {
-            BOOST_ACTOR_LOGM_TRACE("boost.actor_io.peer$enqueue_lambda", "");
-            serialize_msg(hdr, msg, m_stream.wr_buf());
-            m_stream.flush(this);
-        });
     }
 
     void io_failure(network::operation op, const std::string& err) override {

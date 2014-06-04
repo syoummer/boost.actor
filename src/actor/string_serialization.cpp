@@ -66,7 +66,7 @@ class dummy_backend : public actor_namespace::backend {
         // ignore proxy
     }
 
-    const node_id_ptr& node() const override {
+    const node_id_ptr& node_ptr() const override {
         return m_ptr;
     }
 

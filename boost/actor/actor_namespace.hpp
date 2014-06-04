@@ -62,7 +62,22 @@ class actor_namespace {
         /**
          * @brief Returns the ID of the local node.
          */
-        virtual const node_id_ptr& node() const = 0;
+        virtual const node_id_ptr& node_ptr() const = 0;
+
+    };
+
+    /**
+     * @brief A set of callback functions to react to proxy-related events.
+     */
+    class hook {
+
+     public:
+
+        virtual ~hook();
+
+        virtual void proxy_created(const actor_proxy_ptr& ptr) = 0;
+
+        virtual void proxy_registered(const node_id&, actor_id) = 0;
 
     };
 
@@ -129,9 +144,23 @@ class actor_namespace {
      */
     void erase(node_id& node, actor_id aid);
 
+    /**
+     * @brief Sets the hook for proxy-related events.
+     */
+    void set_hook(hook*);
+
  private:
 
+    inline void proxy_created(const actor_proxy_ptr& ptr) {
+        if (m_hook) m_hook->proxy_created(ptr);
+    }
+
+    inline void proxy_registered(const node_id& nid, actor_id aid) {
+        if (m_hook) m_hook->proxy_registered(nid, aid);
+    }
+
     backend&                     m_backend;
+    hook*                        m_hook;
     std::map<node_id, proxy_map> m_proxies;
 
 };

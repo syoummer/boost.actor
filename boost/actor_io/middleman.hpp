@@ -47,12 +47,12 @@ class middleman : public actor::actor_namespace::backend
 
  public:
 
+    using node_id = actor::node_id;
+
     /**
      * @brief Get middleman instance.
      */
     static middleman* instance();
-
-    middleman();
 
     ~middleman();
 
@@ -81,12 +81,12 @@ class middleman : public actor::actor_namespace::backend
      *        Returns false if there is already a connection to @p node,
      *        otherwise true.
      */
-    bool register_peer(const actor::node_id& node, const peer_ptr& ptr);
+    bool register_peer(const node_id& node, const peer_ptr& ptr);
 
     /**
      * @brief Returns the peer associated with given node id.
      */
-    peer_ptr get_peer(const actor::node_id& node);
+    peer_ptr get_peer(const node_id& node);
 
     /**
      * @brief This callback is used by peer implementations to
@@ -95,11 +95,20 @@ class middleman : public actor::actor_namespace::backend
     void del_peer(const peer_ptr& pptr);
 
     /**
+     * @brief Announces a new routing path to @p destination via @p hop.
+     */
+    void announce_route(const node_id& hop, const node_id& destination);
+
+    /**
      * @brief Delivers a message to given node.
      */
-    void dispatch(const actor::node_id& node,
-                  actor::msg_hdr_cref hdr,
-                  actor::message msg);
+    void dispatch(const node_id& node, actor::msg_hdr_cref hdr, actor::message msg);
+
+    /**
+     * @brief Delivers a message to given node.
+     * @warning Must not be called from outside the middleman's event loop.
+     */
+    void dispatch(const node_id& node, const void* buf, size_t buf_len);
 
     /**
      * @brief This callback is invoked by {@link peer} implementations
@@ -122,12 +131,17 @@ class middleman : public actor::actor_namespace::backend
     /**
      * @brief Registers a proxy instance.
      */
-    void register_proxy(const actor::node_id&, actor::actor_id) override;
+    void register_proxy(const node_id&, actor::actor_id) override;
 
     /**
-     * @brief Returns the node of this middleman.
+     * @brief Returns the node ID of this middleman.
      */
-    const actor::node_id_ptr& node() const override;
+    const actor::node_id& node() const;
+
+    /**
+     * @brief Returns a pointer to the node ID of this middleman.
+     */
+    const actor::node_id_ptr& node_ptr() const override;
 
     /**
      * @brief Returns the IO backend used by this middleman.
@@ -136,28 +150,7 @@ class middleman : public actor::actor_namespace::backend
         return m_backend;
     }
 
-    /**
-     * @brief Buffer type used for asynchronous IO.
-     */
-    typedef std::vector<char> buffer_type;
-
-    /**
-     * @brief Returns a buffer for asynchronous IO. This buffer is owned by
-     *        the middleman and must not be deleted.
-     * @warning Call *only* from completion handlers invoked from the backend.
-     */
-    buffer_type* acquire_buffer();
-
-    /**
-     * @brief Allows the middleman to re-use @p buf in a subsequent
-     *        in a subsequent call to @p acquire_buffer.
-     * @warning Call *only* from completion handlers invoked from the backend.
-     */
-    void release_buffer(buffer_type* buf);
-
-    inline std::thread::id thread_id() {
-        return m_thread.get_id();
-    }
+    /** @cond PRIVATE */
 
     // destroys uninitialized instances
     void dispose() override;
@@ -168,27 +161,25 @@ class middleman : public actor::actor_namespace::backend
     // initializes a singleton
     void initialize() override;
 
+    /** @endcond */
+
  private:
 
-    network::multiplexer m_backend;
-    network::supervisor* m_supervisor;
+    middleman();
 
-    // creates a middleman instance
-    static inline middleman* create_singleton() {
-        return new middleman;
-    }
+    peer* select_peer(const node_id& nid);
 
-    // each middleman defines its own namespace
-    actor::actor_namespace m_namespace;
+    using routing_table = std::multimap<node_id /* dest */, node_id /* hop */>;
 
-    // the node id of this middleman
-    actor::node_id_ptr m_node;
-
-    std::set<network::manager_ptr> m_managers;
-
-    std::map<boost::actor::node_id, peer_ptr> m_peers;
-
-    std::thread m_thread;
+    network::multiplexer           m_backend;    // networking backend
+    network::supervisor*           m_supervisor; // keeps backend busy
+    actor::actor_namespace         m_namespace;  // manages proxies
+    actor::node_id_ptr             m_node;       // identifies this node
+    std::set<network::manager_ptr> m_managers;   // keeps managers alive
+    std::map<node_id, peer_ptr>    m_peers;      // known peers
+    routing_table                  m_routes;     // stores non-direct routes
+    routing_table                  m_blacklist;  // stores invalidated routes
+    std::thread                    m_thread;     // runs the backend
 
 };
 

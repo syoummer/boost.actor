@@ -104,15 +104,16 @@ void peer::handle_read_failure(const std::string& err) {
     cleanup();
 }
 
-void peer::monitor(const node_id_ptr& node, actor_id aid) {
-    BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_MARG(node, get) << ", " << BOOST_ACTOR_ARG(aid));
-    if (!node) {
+void peer::monitor(const node_id_ptr& nptr, actor_id aid) {
+    BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_MARG(nptr, get)
+                          << ", " << BOOST_ACTOR_ARG(aid));
+    if (!nptr) {
         BOOST_ACTOR_LOG_ERROR("received MONITOR from invalid peer");
         return;
     }
     auto entry = singletons::get_actor_registry()->get_entry(aid);
-    auto pself = parent()->node();
-    if (*node == *pself) {
+    auto& pself = parent()->node_ptr();
+    if (*nptr == *pself) {
         BOOST_ACTOR_LOG_ERROR("received 'MONITOR' from pself");
     }
     else if (entry.first == nullptr) {
@@ -138,7 +139,7 @@ void peer::monitor(const node_id_ptr& node, actor_id aid) {
                 BOOST_ACTOR_LOGC_TRACE("boost::actor_io::peer",
                                        "monitor$kill_proxy_helper",
                                        "reason = " << reason);
-                m_parent->dispatch(*node,
+                m_parent->dispatch(*nptr,
                                   {},
                                   make_message(atom("KILL_PROXY"),
                                                pself,
@@ -149,12 +150,24 @@ void peer::monitor(const node_id_ptr& node, actor_id aid) {
     }
 }
 
+void peer::proxy_created(const actor_proxy_ptr&) {
+    // nop
+}
+
+void peer::proxy_registered(const node_id& nid, actor_id) {
+    // intercept any proxy to third nodes
+    if (nid != node() && nid != m_parent->node()) {
+        // assume remote node to have a path to the third node
+        m_parent->announce_route(nid, node());
+    }
+}
+
 void peer::consume(const void* buf, size_t buf_len) {
     BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_ARG(buf_len) << ", "
                           << BOOST_ACTOR_TARG(m_state, static_cast<int>));
-    boost::actor::binary_deserializer bd{buf, buf_len,
-                                         &(parent()->get_namespace()),
-                                         &m_incoming_types};
+    auto& ns = parent()->get_namespace();
+    ns.set_hook(this);
+    boost::actor::binary_deserializer bd{buf, buf_len, &ns, &m_incoming_types};
     switch (m_state) {
         case state::await_server_response_size: {
             auto rsize = bd.read<std::uint32_t>();
@@ -237,8 +250,8 @@ void peer::consume(const void* buf, size_t buf_len) {
                     // complete handshake to server
                     binary_serializer<buffer_type> bs(&wr_buf());
                     auto& pinf = m_parent->node();
-                    bs.write_value(pinf->process_id());
-                    bs.write_raw(pinf->host_id().size(), pinf->host_id().data());
+                    bs.write_value(pinf.process_id());
+                    bs.write_raw(pinf.host_id().size(), pinf.host_id().data());
                     flush();
                     // prepare to receive messages
                     configure_read(receive_policy::exactly(sizeof(uint32_t)));
@@ -257,7 +270,7 @@ void peer::consume(const void* buf, size_t buf_len) {
             bd.read_raw(node_id::host_id_size, host_id.data());
             m_node.reset(new node_id(process_id, host_id));
             BOOST_ACTOR_LOG_DEBUG("read process info: " << to_string(*m_node));
-            if (*parent()->node() == *m_node) {
+            if (parent()->node() == *m_node) {
                 BOOST_ACTOR_LOG_WARNING("*** middleman warning: "
                                         "incoming connection from self");
                 stop();
@@ -282,17 +295,36 @@ void peer::consume(const void* buf, size_t buf_len) {
         }
         case state::await_msg: {
             message_header hdr;
-            message msg;
             m_meta_hdr->deserialize(&hdr, &bd);
+            // forward message without deserializing it if we deal with
+            // a remote actor as receiver (i.e. operating as hop)
+            if (hdr.receiver) {
+                auto ptr = dynamic_cast<abstract_actor*>(&(*hdr.receiver));
+                if (ptr && ptr->is_proxy()) {
+                    m_parent->dispatch(ptr->node(), buf, buf_len);
+                    break; // done
+                }
+            }
+            message msg;
             m_meta_msg->deserialize(&msg, &bd);
             BOOST_ACTOR_LOG_DEBUG("deserialized: " << to_string(hdr)
                                   << " " << to_string(msg));
-            if (!m_handle_control_messages(msg)) deliver(hdr, std::move(msg));
+            if (!hdr.receiver) {
+                // only system messages are allowed to
+                // have an invalid receiver
+                if (!m_handle_control_messages(msg)) {
+                    BOOST_ACTOR_LOG_WARNING("received message with invalid "
+                                            "receiver that isn't a "
+                                            "control message");
+                }
+            }
+            else deliver(hdr, std::move(msg));
             configure_read(receive_policy::exactly(sizeof(uint32_t)));
             m_state = state::await_msg_size;
             break;
         }
     }
+    ns.set_hook(nullptr);
 }
 
 void peer::kill_proxy(const node_id_ptr& node,
@@ -423,7 +455,7 @@ void peer::serialize_msg(msg_hdr_cref hdr,
     BOOST_ACTOR_LOG_DEBUG("serialized: " << to_string(hdr)
                           << " " << to_string(msg));
     data_size =   static_cast<uint32_t>((wr_buf.size() - before))
-           - static_cast<uint32_t>(sizeof(uint32_t));
+                - static_cast<uint32_t>(sizeof(uint32_t));
     // update size in buffer
     memcpy(wr_buf.data() + before, &data_size, sizeof(uint32_t));
 }
@@ -449,8 +481,8 @@ void peer::init_handshake_as_sever(const actor_addr& addr) {
     auto& buf = wr_buf();
     binary_serializer<std::vector<char>> bs(&buf);
     bs << uint32_t{0}; // size of the message (updated later on)
-    bs << addr.id() << pself->process_id();
-    bs.write_raw(pself->host_id().size(), pself->host_id().data());
+    bs << addr.id() << pself.process_id();
+    bs.write_raw(pself.host_id().size(), pself.host_id().data());
     auto sigs = addr.interface();
     bs << static_cast<uint32_t>(sigs.size());
     for (auto& sig : sigs) bs << sig;
@@ -465,3 +497,4 @@ void peer::init_handshake_as_sever(const actor_addr& addr) {
 
 } // namespace actor_io
 } // namespace boost
+
