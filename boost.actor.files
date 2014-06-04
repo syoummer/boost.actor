@@ -166,7 +166,7 @@ boost/actor_io/platform.hpp
 boost/actor_io/publish_local_groups.hpp
 boost/actor_io/remote_actor.hpp
 boost/actor_io/remote_actor_proxy.hpp
-boost/actor_io/shutdown.hpp
+boost/actor/shutdown.hpp
 boost/actor_io/spawn_io.hpp
 examples/aout.cpp
 examples/hello_world.cpp
@@ -279,3 +279,4 @@ unit_testing/test_uniform_type.cpp
 boost/actor_io/network.hpp
 boost/actor_io/receive_policy.hpp
 src/actor_io/network.cpp
+src/actor/shutdown.cpp

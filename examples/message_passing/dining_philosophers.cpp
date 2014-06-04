@@ -194,4 +194,5 @@ int main(int, char**) {
     dining_philosophers();
     // real philosophers are never done
     await_all_actors_done();
+    shutdown();
 }

@@ -171,15 +171,12 @@ void testee(event_based_actor* self, size_t remaining) {
 int main() {
     // announce() takes ownership of the tree_type_info instance
     announce(typeid(tree), uniform_type_info_ptr{new tree_type_info});
-
-    tree t0; // create a tree and fill it with some data
-
+    // create a tree and fill it with some data
+    tree t0;
     t0.root.add_child(10);
     t0.root.children.back().add_child(11).add_child(12).add_child(13);
-
     t0.root.add_child(20);
     t0.root.children.back().add_child(21).add_child(22);
-
     /*
         tree t is now:
                0
@@ -208,6 +205,6 @@ int main() {
         tvec.push_back(t0);
         self->send(t, tvec);
     }
-
     await_all_actors_done();
+    shutdown();
 }

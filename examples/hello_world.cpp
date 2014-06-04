@@ -40,5 +40,5 @@ int main() {
     // wait until all other actors we have spawned are done
     await_all_actors_done();
     // run cleanup code before exiting main
-    //shutdown();
+    shutdown();
 }

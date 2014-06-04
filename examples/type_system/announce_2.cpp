@@ -62,4 +62,5 @@ int main(int, char**) {
         self->send(t, foo{1, 2});
     }
     await_all_actors_done();
+    shutdown();
 }

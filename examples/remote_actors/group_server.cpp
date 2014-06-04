@@ -62,6 +62,5 @@ int main(int argc, char** argv) {
         if (line == "quit") return 0;
         else cout << "illegal command" << endl;
     }
-    //shutdown();
-    return 0;
+    shutdown();
 }

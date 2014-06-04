@@ -36,4 +36,5 @@ int main() {
     }
     // wait until all other actors we've spawned are done
     await_all_actors_done();
+    shutdown();
 }

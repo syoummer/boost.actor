@@ -12,9 +12,8 @@
 #include "boost/actor/all.hpp"
 #include "boost/actor/actor.hpp"
 #include "boost/actor/config.hpp"
+#include "boost/actor/shutdown.hpp"
 #include "boost/actor/to_string.hpp"
-
-#include "boost/actor_io/shutdown.hpp"
 
 #include "boost/actor/detail/logging.hpp"
 #include "boost/actor/detail/scope_guard.hpp"
@@ -200,7 +199,7 @@ void run_client_part(const std::map<std::string, std::string>& args, F fun) {
     auto port = static_cast<uint16_t>(stoi(i->second));
     fun(port);
     boost::actor::await_all_actors_done();
-    boost::actor_io::shutdown();
+    boost::actor::shutdown();
 }
 
 #endif // TEST_HPP

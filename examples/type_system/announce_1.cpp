@@ -123,5 +123,6 @@ int main(int, char**) {
         self->send(t, foo_pair2{3, 4});
     }
     await_all_actors_done();
+    shutdown();
 }
 

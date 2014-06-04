@@ -54,6 +54,7 @@ set(LIBBOOST_ACTOR_SRC
     scoped_actor.cpp
     serializer.cpp
     shared_spinlock.cpp
+    shutdown.cpp
     singletons.cpp
     string_serialization.cpp
     sync_request_bouncer.cpp

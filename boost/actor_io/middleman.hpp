@@ -40,7 +40,8 @@ namespace actor_io {
 /**
  * @brief Multiplexes asynchronous IO.
  */
-class middleman : public actor::actor_namespace::backend {
+class middleman : public actor::actor_namespace::backend
+                , public actor::detail::abstract_singleton {
 
     friend class boost::actor::detail::singletons;
 
@@ -158,6 +159,15 @@ class middleman : public actor::actor_namespace::backend {
         return m_thread.get_id();
     }
 
+    // destroys uninitialized instances
+    void dispose() override;
+
+    // destroys an initialized singleton
+    void destroy() override;
+
+    // initializes a singleton
+    void initialize() override;
+
  private:
 
     network::multiplexer m_backend;
@@ -167,15 +177,6 @@ class middleman : public actor::actor_namespace::backend {
     static inline middleman* create_singleton() {
         return new middleman;
     }
-
-    // destroys uninitialized instances
-    inline void dispose() { delete this; }
-
-    // destroys an initialized singleton
-    void destroy();
-
-    // initializes a singleton
-    void initialize();
 
     // each middleman defines its own namespace
     actor::actor_namespace m_namespace;

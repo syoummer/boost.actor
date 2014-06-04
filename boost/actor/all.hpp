@@ -38,6 +38,7 @@
 #include "boost/actor/behavior.hpp"
 #include "boost/actor/duration.hpp"
 #include "boost/actor/sb_actor.hpp"
+#include "boost/actor/shutdown.hpp"
 #include "boost/actor/exception.hpp"
 #include "boost/actor/resumable.hpp"
 #include "boost/actor/scheduler.hpp"

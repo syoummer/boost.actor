@@ -59,15 +59,12 @@ using namespace actor;
 
 using boost::actor::detail::make_counted;
 
-namespace { std::atomic<middleman*> s_instance; }
-
 middleman* middleman::instance() {
-    return boost::actor::detail::singletons::lazy_get(s_instance);
-}
-
-void shutdown() {
-    boost::actor::detail::singletons::destroy(s_instance);
-    boost::actor::detail::singletons::stop_singletons();
+    using namespace boost::actor::detail;
+    auto mpi = singletons::middleman_plugin_id;
+    return static_cast<middleman*>(singletons::get_plugin_singleton(mpi, [] {
+        return new middleman;
+    }));
 }
 
 const node_id_ptr& middleman::node() const {
@@ -174,6 +171,10 @@ void middleman::destroy() {
     m_thread.join();
     m_managers.clear();
     m_peers.clear();
+}
+
+void middleman::dispose() {
+    delete this;
 }
 
 void middleman::add(const network::manager_ptr& mgr) {

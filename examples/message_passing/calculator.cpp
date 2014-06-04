@@ -75,4 +75,5 @@ void tester(event_based_actor* self, const actor& testee) {
 int main() {
     spawn(tester, spawn(calculator));
     await_all_actors_done();
+    shutdown();
 }

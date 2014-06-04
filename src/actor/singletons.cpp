@@ -19,9 +19,9 @@
 #include <atomic>
 #include <iostream>
 
+#include "boost/actor/message.hpp"
 #include "boost/actor/scheduler.hpp"
 #include "boost/actor/exception.hpp"
-#include "boost/actor/message.hpp"
 #include "boost/actor/local_actor.hpp"
 
 #include "boost/actor/detail/logging.hpp"
@@ -36,6 +36,7 @@ namespace detail {
 
 namespace {
 
+std::atomic<abstract_singleton*> s_plugins[singletons::max_plugin_singletons];
 std::atomic<scheduler::coordinator*> s_scheduling_coordinator;
 std::atomic<uniform_type_info_map*> s_uniform_type_info_map;
 std::atomic<actor_registry*> s_actor_registry;
@@ -45,14 +46,20 @@ std::atomic<logging*> s_logger;
 
 } // namespace <anonymous>
 
+abstract_singleton::~abstract_singleton() {
+    // nop
+}
+
 void singletons::stop_singletons() {
-    BOOST_ACTOR_LOGF_DEBUG("shutdown scheduler");
+    BOOST_ACTOR_LOGF_DEBUG("destroy scheduler");
     destroy(s_scheduling_coordinator);
-    BOOST_ACTOR_LOGF_DEBUG("close actor registry");
+    BOOST_ACTOR_LOGF_DEBUG("destroy plugins");
+    for (auto& plugin : s_plugins) destroy(plugin);
+    BOOST_ACTOR_LOGF_DEBUG("destroy actor registry");
     destroy(s_actor_registry);
-    BOOST_ACTOR_LOGF_DEBUG("shutdown group manager");
+    BOOST_ACTOR_LOGF_DEBUG("destroy group manager");
     destroy(s_group_manager);
-    BOOST_ACTOR_LOGF_DEBUG("clear type info map");
+    BOOST_ACTOR_LOGF_DEBUG("destroy type info map");
     destroy(s_uniform_type_info_map);
     destroy(s_logger);
     destroy(s_node_id);
@@ -80,6 +87,11 @@ node_id* singletons::get_node_id() {
 
 logging* singletons::get_logger() {
     return lazy_get(s_logger);
+}
+
+std::atomic<abstract_singleton*>& singletons::get_plugin_singleton(size_t id) {
+    BOOST_ACTOR_REQUIRE(id < max_plugin_singletons);
+    return s_plugins[id];
 }
 
 } // namespace detail

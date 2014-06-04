@@ -40,13 +40,34 @@ class group_manager;
 class actor_registry;
 class uniform_type_info_map;
 
+
+class abstract_singleton {
+
+ public:
+
+    virtual ~abstract_singleton();
+
+    virtual void dispose() = 0;
+
+    virtual void destroy() = 0;
+
+    virtual void initialize() = 0;
+
+};
+
 class singletons {
 
     singletons() = delete;
 
  public:
 
-    static void stop_singletons();
+    static constexpr size_t max_plugin_singletons = 3;
+
+    static constexpr size_t middleman_plugin_id   = 0; // boost::actor_io
+
+    static constexpr size_t opencl_plugin_id      = 1; // for future use
+
+    static constexpr size_t actorshell_plugin_id  = 2; // for future use
 
     static logging* get_logger();
 
@@ -62,6 +83,18 @@ class singletons {
 
     static message_data* get_tuple_dummy();
 
+    // usually guarded by implementation-specific singleton getter
+    template<typename Factory>
+    static abstract_singleton* get_plugin_singleton(size_t id, Factory f) {
+        return lazy_get(get_plugin_singleton(id), f);
+    }
+
+    static void stop_singletons();
+
+ private:
+
+    static std::atomic<abstract_singleton*>& get_plugin_singleton(size_t id);
+
     /*
      * @brief Type @p T has to provide: <tt>static T* create_singleton()</tt>,
      *        <tt>void initialize()</tt>, <tt>void destroy()</tt>,
@@ -75,11 +108,11 @@ class singletons {
      * Both <tt>dispose</tt> and <tt>destroy</tt> must delete the object
      * eventually.
      */
-    template<typename T>
-    static T* lazy_get(std::atomic<T*>& ptr) {
+    template<typename T, typename Factory>
+    static T* lazy_get(std::atomic<T*>& ptr, Factory f) {
         T* result = ptr.load();
         while (result == nullptr) {
-            auto tmp = T::create_singleton();
+            auto tmp = f();
             // double check if singleton is still undefined
             if (ptr.load() == nullptr) {
                 tmp->initialize();
@@ -91,6 +124,11 @@ class singletons {
             else tmp->dispose();
         }
         return result;
+    }
+
+    template<typename T>
+    static T* lazy_get(std::atomic<T*>& ptr) {
+        return lazy_get(ptr, [] { return T::create_singleton(); });
     }
 
     template<typename T>
