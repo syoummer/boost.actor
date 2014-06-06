@@ -265,8 +265,7 @@ class stream {
         m_wr_buf.clear();
         m_wr_buf.swap(m_wr_offline_buf);
         asio::async_write(m_fd, asio::buffer(m_wr_buf),
-                          [=](const system::error_code& ec, size_t nb) {
-            BOOST_ACTOR_LOG_TRACE(nb << " bytes written");
+                          [=](const system::error_code& ec, size_t) {
             if (!ec) write_loop(mgr);
             else {
                 mgr->io_failure(operation::read, ec.message());

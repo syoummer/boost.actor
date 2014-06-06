@@ -22,7 +22,6 @@
 #include "boost/actor_io/peer.hpp"
 #include "boost/actor_io/event.hpp"
 #include "boost/actor_io/broker.hpp"
-#include "boost/actor_io/platform.hpp"
 #include "boost/actor_io/spawn_io.hpp"
 #include "boost/actor_io/middleman.hpp"
 #include "boost/actor_io/max_msg_size.hpp"
