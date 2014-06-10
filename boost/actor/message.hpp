@@ -35,6 +35,8 @@
 namespace boost {
 namespace actor {
 
+class message_handler;
+
 /**
  * @brief Describes a fixed-length copy-on-write tuple
  *        with elements of any type.
@@ -206,6 +208,12 @@ class message {
 
     template<typename... Ts>
     static inline message move_from_tuple(std::tuple<Ts...>&&);
+
+    /**
+     * @brief Applies @p handler to this message and returns the result
+     *        of <tt>handler(*this)</tt>.
+     */
+    optional<message> apply(message_handler handler);
 
     /** @endcond */
 

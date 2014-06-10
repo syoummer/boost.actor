@@ -17,6 +17,7 @@
 
 
 #include "boost/actor/message.hpp"
+#include "boost/actor/message_handler.hpp"
 
 #include "boost/actor/detail/singletons.hpp"
 #include "boost/actor/detail/decorated_tuple.hpp"
@@ -68,13 +69,16 @@ message message::drop(size_t n) const {
 
 message message::drop_right(size_t n) const {
     BOOST_ACTOR_REQUIRE(m_vals);
-    using namespace std;
     if (n == 0) return *this;
     if (n >= size()) return message{};
-    vector<size_t> mapping(size() - n);
+    std::vector<size_t> mapping(size() - n);
     size_t i = 0;
-    generate(mapping.begin(), mapping.end(), [&] { return i++; });
-    return message{detail::decorated_tuple::create(m_vals, move(mapping))};
+    std::generate(mapping.begin(), mapping.end(), [&] { return i++; });
+    return message{detail::decorated_tuple::create(m_vals, std::move(mapping))};
+}
+
+optional<message> message::apply(message_handler handler) {
+    return handler(*this);
 }
 
 } // namespace actor
