@@ -1,40 +1,27 @@
 cmake_minimum_required(VERSION 2.8)
 project(boost_actor_io_lib C CXX)
 
-# list cpp files including platform-dependent files
-set(LIBBOOST_ACTOR_IO_SRC
-    broker.cpp
-    middleman.cpp
-    network.cpp
-    peer.cpp
-    peer_acceptor.cpp
-    publish_local_groups.cpp
-    remote_actor_proxy.cpp)
+# list hpp files (for convenience when using an IDE)
+file(GLOB_RECURSE LIBBOOST_ACTOR_IO_HDRS "${CMAKE_SOURCE_DIR}/boost/actor_io/" *.hpp)
+
+# list cpp files
+file(GLOB_RECURSE LIBBOOST_ACTOR_IO_SRCS ${CMAKE_CURRENT_SOURCE_DIR} *.cpp)
 
 message(STATUS "boost actor library: ${BOOST_ACTOR_LIBRARY}")
 
 # build shared library if not compiling static only
-if (NOT "${BOOST_ACTOR_BUILD_STATIC_ONLY}" STREQUAL "yes")
-  add_library(libboost_actor_io SHARED ${LIBBOOST_ACTOR_IO_SRC} ${LIBBOOST_ACTOR_IO_HDRS})
-  target_link_libraries(libboost_actor_io ${LD_FLAGS} ${BOOST_ACTOR_LIBRARY})
-  set(LIBRARY_VERSION ${LIBBOOST_ACTOR_IO_VERSION_MAJOR}.${LIBBOOST_ACTOR_IO_VERSION_MINOR}.${LIBBOOST_ACTOR_IO_VERSION_PATCH})
-  set(LIBRARY_SOVERSION ${LIBBOOST_ACTOR_IO_VERSION_MAJOR})
-  set_target_properties(libboost_actor_io
-                        PROPERTIES
-                        SOVERSION 0
-                        VERSION 0
-                        OUTPUT_NAME boost_actor_io)
-  if(NOT MINGW)
-    install(TARGETS libboost_actor_io LIBRARY DESTINATION lib)
-  endif()
-endif ()
-
-# build static library only if --build-static or --build-static-only was set
-if ("${BOOST_ACTOR_BUILD_STATIC_ONLY}" STREQUAL "yes" OR "${BOOST_ACTOR_BUILD_STATIC}" STREQUAL "yes")
-  add_library(libboost_actor_ioStatic STATIC ${LIBBOOST_ACTOR_IO_HDRS} ${LIBBOOST_ACTOR_IO_SRC})
-  set_target_properties(libboost_actor_ioStatic PROPERTIES OUTPUT_NAME boost_actor_static)
-  install(TARGETS libboost_actor_ioStatic ARCHIVE DESTINATION lib)
-endif ()
+add_library(libboost_actor_io SHARED ${LIBBOOST_ACTOR_IO_HDRS} ${LIBBOOST_ACTOR_IO_SRCS})
+target_link_libraries(libboost_actor_io ${LD_FLAGS} ${BOOST_ACTOR_LIBRARY})
+set(LIBRARY_VERSION ${LIBBOOST_ACTOR_IO_VERSION_MAJOR}.${LIBBOOST_ACTOR_IO_VERSION_MINOR}.${LIBBOOST_ACTOR_IO_VERSION_PATCH})
+set(LIBRARY_SOVERSION ${LIBBOOST_ACTOR_IO_VERSION_MAJOR})
+set_target_properties(libboost_actor_io
+                PROPERTIES
+                SOVERSION 0
+                VERSION 0
+                OUTPUT_NAME boost_actor_io)
+if(NOT MINGW)
+  install(TARGETS libboost_actor_io LIBRARY DESTINATION lib)
+endif()
 
 link_directories(${LD_DIRS})
 include_directories(${INCLUDE_DIRS})

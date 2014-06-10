@@ -80,15 +80,6 @@ else (CMAKE_CXX_FLAGS)
   set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g")
 endif (CMAKE_CXX_FLAGS)
 
-include(CheckIncludeFileCXX)
-check_include_file_cxx("valgrind/valgrind.h" HAVE_VALGRIND_H)
-if (HAVE_VALGRIND_H)
-  set(VALGRIND "yes")
-  add_definitions(-DBOOST_ACTOR_ANNOTATE_VALGRIND)
-else (HAVE_VALGRIND_H)
-  set(VALGRIND "no")
-endif (HAVE_VALGRIND_H)
-
 # set build type (evaluate ENABLE_DEBUG flag)
 if (ENABLE_DEBUG)
   set(CMAKE_BUILD_TYPE Debug)
@@ -105,12 +96,11 @@ if (BOOST_ACTOR_LOG_LEVEL)
   add_definitions(-DBOOST_ACTOR_LOG_LEVEL=${BOOST_ACTOR_LOG_LEVEL})
 endif(BOOST_ACTOR_LOG_LEVEL)
 
-message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
-
 # set build default build type if not set
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
   set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif ("${CMAKE_BUILD_TYPE}" STREQUAL "")
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
 if (BOOST_ROOT)
   # Prevent falling back to system paths when using a custom Boost prefix.
@@ -134,10 +124,6 @@ if (DISABLE_MEM_MANAGEMENT)
   add_definitions(-DBOOST_ACTOR_DISABLE_MEM_MANAGEMENT)
 endif (DISABLE_MEM_MANAGEMENT)
 
-if (STANDALONE_BUILD)
-  add_definitions(-DBOOST_ACTOR_STANDALONE_BUILD)
-endif (STANDALONE_BUILD)
-
 find_package(Boost 1.53.0 REQUIRED system) # system is required for ASIO
 set(LD_FLAGS ${LD_FLAGS} ${Boost_SYSTEM_LIBRARY})
 # This hack fixes a problem when the linker search path is the same as
@@ -153,8 +139,11 @@ set(LD_DIRS ${LD_DIRS} ${Boost_LIBRARY_DIRS})
 link_directories(${LD_DIRS})
 include_directories(${INCLUDE_DIRS})
 
-# install includes
-install(DIRECTORY boost/actor/ DESTINATION include/boost/actor FILES_MATCHING PATTERN "*.hpp")
+# install includes for boost.actor
+install(DIRECTORY boost/actor DESTINATION include/boost/actor FILES_MATCHING PATTERN "*.hpp")
+
+# install includes for boost.actor_io
+install(DIRECTORY boost/actor_io DESTINATION include/boost/actor_io FILES_MATCHING PATTERN "*.hpp")
 
 # process cmake_uninstall.cmake.in
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake_uninstall.cmake.in"
@@ -166,82 +155,59 @@ add_custom_target(uninstall
                   COMMAND ${CMAKE_COMMAND} -P
                   ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 
-# setting path to boost_actor headers and libboost_actor
-set (BOOST_ACTOR_INCLUDE_PATH ${CMAKE_SOURCE_DIR}/boost.actor)
-set (BOOST_ACTOR_INCLUDE ${BOOST_ACTOR_INCLUDE_PATH})
 
-# set for Boost.Actor
+# make header files appear in IDEs
+file(GLOB_RECURSE BOOST_ACTOR_HDR_FILES boost *.hpp)
+add_custom_target(boost_actor_lib_hdr_files SOURCES ${BOOST_ACTOR_HDR_FILES})
+
+# build boost.actor
 add_subdirectory(src/actor)
-link_directories(${LD_DIRS})
-include_directories(${INCLUDE_DIRS})
 
-# setting path to boost_actor headers and libboost_actor
-set (BOOST_ACTOR_INCLUDE_PATH ${CMAKE_SOURCE_DIR}/boost.actor)
-set (BOOST_ACTOR_INCLUDE ${BOOST_ACTOR_INCLUDE_PATH})
-
-if ("${BOOST_ACTOR_BUILD_STATIC_ONLY}" STREQUAL "yes")
-  set (BOOST_ACTOR_LIBRARY ${LIBRARY_OUTPUT_PATH}/libboost_actor_static.a ${LD_FLAGS})
-else ()
-  if (APPLE)
-    if ("${CMAKE_GENERATOR}" STREQUAL "Xcode")
-      set (BOOST_ACTOR_LIBRARY "-lboost_actor")
-    else ()
-      set (BOOST_ACTOR_LIBRARY ${LIBRARY_OUTPUT_PATH}/libboost_actor.dylib)
-    endif ()
-  elseif (UNIX)
-    set (BOOST_ACTOR_LIBRARY ${LIBRARY_OUTPUT_PATH}/libboost_actor.so)
-  elseif (MINGW)
-    set (BOOST_ACTOR_LIBRARY ${LIBRARY_OUTPUT_PATH}/libboost_actor.dll)
+# set path to boost.actor library
+if (APPLE)
+  if ("${CMAKE_GENERATOR}" STREQUAL "Xcode")
+    set (BOOST_ACTOR_LIBRARY "-lboost_actor")
   else ()
-    message (SEND_FATAL "Host platform not supported ...")
+    set (BOOST_ACTOR_LIBRARY ${LIBRARY_OUTPUT_PATH}/libboost_actor.dylib)
   endif ()
-endif ()
+elseif (UNIX)
+  set (BOOST_ACTOR_LIBRARY ${LIBRARY_OUTPUT_PATH}/libboost_actor.so)
+elseif (MINGW)
+  set (BOOST_ACTOR_LIBRARY ${LIBRARY_OUTPUT_PATH}/libboost_actor.dll)
+else (APPLE)
+  message (SEND_FATAL "Host platform not supported ...")
+endif (APPLE)
 
-# setup for Boost.ActorIO
+# build boost.actor_io
 add_subdirectory(src/actor_io)
-
-# setting path to boost_actor headers and libboost_actor_io
-set (BOOST_ACTOR_IO_INCLUDE_PATH ${CMAKE_SOURCE_DIR}/boost.actor)
-set (BOOST_ACTOR_IO_INCLUDE ${BOOST_ACTOR_INCLUDE_PATH})
-
-if ("${BOOST_ACTOR_BUILD_STATIC_ONLY}" STREQUAL "yes")
-  set (BOOST_ACTOR_IO_LIBRARY ${LIBRARY_OUTPUT_PATH}/libboost_actor_io_static.a ${LD_FLAGS})
-else ()
-  if (APPLE)
-    if ("${CMAKE_GENERATOR}" STREQUAL "Xcode")
-      set (BOOST_ACTOR_IO_LIBRARY "-lboost_actor")
-    else ()
-      set (BOOST_ACTOR_IO_LIBRARY ${LIBRARY_OUTPUT_PATH}/libboost_actor_io.dylib) 
-    endif ()
-    #set (BOOST_ACTOR_IO_LIBRARY -L${LIBRARY_OUTPUT_PATH} -lboost_actor)
-  elseif (UNIX)
-    set (BOOST_ACTOR_IO_LIBRARY ${LIBRARY_OUTPUT_PATH}/libboost_actor_io.so)
-  elseif (MINGW)
-    set (BOOST_ACTOR_IO_LIBRARY ${LIBRARY_OUTPUT_PATH}/libboost_actor_io.dll)
-  else ()
-    message (SEND_FATAL "Host platform not supported ...")
-  endif ()
-endif ()
-
 add_dependencies(libboost_actor_io libboost_actor)
 
-# set up subdirectories
+# set path to boost.actor_io library
+if (APPLE)
+  if ("${CMAKE_GENERATOR}" STREQUAL "Xcode")
+    set (BOOST_ACTOR_IO_LIBRARY "-lboost_actor_io")
+  else ()
+    set (BOOST_ACTOR_IO_LIBRARY ${LIBRARY_OUTPUT_PATH}/libboost_actor_io.dylib)
+  endif ()
+elseif (UNIX)
+  set (BOOST_ACTOR_IO_LIBRARY ${LIBRARY_OUTPUT_PATH}/libboost_actor_io.so)
+elseif (MINGW)
+  set (BOOST_ACTOR_IO_LIBRARY ${LIBRARY_OUTPUT_PATH}/libboost_actor_io.dll)
+else (APPLE)
+  message (SEND_FATAL "Host platform not supported ...")
+endif (APPLE)
+
+# build unit tests if not explicitly disabled
 if (NOT "${BOOST_ACTOR_NO_UNIT_TESTS}" STREQUAL "yes")
   enable_testing()
   add_subdirectory(unit_testing)
-  if ("${BOOST_ACTOR_BUILD_STATIC_ONLY}" STREQUAL "yes")
-    add_dependencies(all_unit_tests libboost_actorStatic libboost_actor_ioStatic)
-  else ()
-    add_dependencies(all_unit_tests libboost_actor libboost_actor_io)
-  endif ()
+  add_dependencies(all_unit_tests libboost_actor_io libboost_actor)
 endif ()
+
+# build examples if not explicitly disabled
 if (NOT "${BOOST_ACTOR_NO_EXAMPLES}" STREQUAL "yes")
   add_subdirectory(examples)
-  if ("${BOOST_ACTOR_BUILD_STATIC_ONLY}" STREQUAL "yes")
-    add_dependencies(all_examples libboost_actorStatic libboost_actor_ioStatic)
-  else ()
-    add_dependencies(all_examples libboost_actor libboost_actor_io)
-  endif ()
+  add_dependencies(all_examples libboost_actor_io libboost_actor)
 endif ()
 
 # check for doxygen and add custom "doc" target to Makefile
@@ -307,17 +273,14 @@ else ()
 endif ()
 
 # done (print summary)
-message("\n====================|  Build Summary  |===================="
+message(STATUS
+        "\n====================|  Build Summary  |===================="
         "\n"
         "\nBuild type:        ${CMAKE_BUILD_TYPE}"
         "\nDebug mode:        ${DEBUG_MODE_STR}"
         "\nLog level:         ${LOG_LEVEL_STR}"
-        "\nValgrind:          ${VALGRIND}"
         "\nBuild examples:    ${BUILD_EXAMPLES}"
         "\nBuild unit tests:  ${BUILD_UNIT_TESTS}"
-        "\nBuild static:      ${BOOST_ACTOR_BUILD_STATIC}"
-        "\nBulid static only: ${BOOST_ACTOR_BUILD_STATIC_ONLY}"
-        "\nBuild OpenCL:      ${BUILD_OPENCL_STR}"
         "\nWith mem. mgmt.:   ${WITH_MEM_MANAGEMENT}"
         "\n"
         "\nCXX:               ${CMAKE_CXX_COMPILER}"
