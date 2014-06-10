@@ -82,6 +82,7 @@ void broker::scribe::consume(const void*, size_t num_bytes) {
     read_msg().buf.swap(buf);                 // swap into message to client
     m_broker->invoke_message({}, m_read_msg); // call client
     read_msg().buf.swap(buf);                 // swap buffer back to stream
+    flush();                                  // implicit flush of wr_buf()
 }
 
 void broker::scribe::io_failure(network::operation, const std::string&) {
@@ -232,6 +233,14 @@ bool broker::invoke_message_from_cache() {
     }
     return false;
 }
+
+void broker::write(const connection_handle& hdl, size_t bs, const void* buf) {
+    auto& out = wr_buf(hdl);
+    auto first = reinterpret_cast<const char*>(buf);
+    auto last = first + bs;
+    out.insert(out.end(), first, last);
+}
+
 
 void broker::enqueue(msg_hdr_cref hdr,
                      message msg,

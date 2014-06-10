@@ -184,6 +184,10 @@ class broker : public actor::extend<actor::local_actor>::
      */
     buffer_type& wr_buf(const actor::connection_handle& hdl);
 
+    void write(const actor::connection_handle& hdl,
+               size_t buf_size,
+               const void* buf);
+
     /**
      * @brief Sends the content of the buffer for given connection.
      */
