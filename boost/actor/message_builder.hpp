@@ -43,6 +43,20 @@ class message_builder {
         return append_impl<T>(std::move(what));
     }
 
+    template<typename Iter>
+    message_builder& append(Iter first, Iter last) {
+        using vtype = typename detail::rm_const_and_ref<decltype(*first)>::type;
+        using converted = typename detail::implicit_conversions<vtype>::type;
+        auto uti = uniform_typeid<converted>();
+        for (; first != last ; ++first) {
+            auto uval = uti->create();
+            *reinterpret_cast<converted*>(uval->val) = *first;
+            append(std::move(uval));
+        }
+        return *this;
+
+    }
+
     message_builder& append(uniform_value what);
 
     message to_message();
@@ -57,7 +71,6 @@ class message_builder {
         auto uval = uti->create();
         *reinterpret_cast<type*>(uval->val) = std::move(what);
         return append(std::move(uval));
-        return *this;
     }
 
     std::vector<uniform_value> m_elements;
