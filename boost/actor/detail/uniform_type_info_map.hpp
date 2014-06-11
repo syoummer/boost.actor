@@ -62,7 +62,7 @@ using mapped_type_list = detail::type_list<
     group,
     group_down_msg,
     message,
-    message_header,
+    message_id,
     new_connection_msg,
     new_data_msg,
     sync_exited_msg,

@@ -31,7 +31,6 @@
 #include "boost/actor/message.hpp"
 #include "boost/actor/message.hpp"
 #include "boost/actor/abstract_group.hpp"
-#include "boost/actor/message_header.hpp"
 
 #include "boost/actor/detail/demangle.hpp"
 #include "boost/actor/detail/safe_equal.hpp"

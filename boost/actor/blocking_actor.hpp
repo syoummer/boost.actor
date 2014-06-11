@@ -47,10 +47,12 @@ class blocking_actor
 
  public:
 
+    class functor_based;
+
     /**************************************************************************
      *           utility stuff and receive() member function family           *
      **************************************************************************/
- typedef std::chrono::high_resolution_clock::time_point timeout_type;
+    typedef std::chrono::high_resolution_clock::time_point timeout_type;
 
     struct receive_while_helper {
 
@@ -237,6 +239,55 @@ class blocking_actor
     }
 
     std::map<message_id, behavior> m_sync_handler;
+
+};
+
+class blocking_actor::functor_based : public blocking_actor {
+
+ public:
+
+    typedef std::function<void (blocking_actor*)> act_fun;
+
+    template<typename F, typename... Ts>
+    functor_based(F f, Ts&&... vs) {
+        blocking_actor* dummy = nullptr;
+        create(dummy, f, std::forward<Ts>(vs)...);
+    }
+
+ protected:
+
+    void act() override;
+
+ private:
+
+    void create(blocking_actor*, act_fun);
+
+    template<class Actor, typename F, typename T0, typename... Ts>
+    auto create(Actor* dummy, F f, T0&& v0, Ts&&... vs) ->
+    typename std::enable_if<
+        std::is_same<
+            decltype(f(dummy, std::forward<T0>(v0), std::forward<Ts>(vs)...)),
+            void
+        >::value
+    >::type {
+        create(dummy, std::bind(f, std::placeholders::_1,
+                                std::forward<T0>(v0), std::forward<Ts>(vs)...));
+    }
+
+    template<class Actor, typename F, typename T0, typename... Ts>
+    auto create(Actor* dummy, F f, T0&& v0, Ts&&... vs) ->
+    typename std::enable_if<
+        std::is_same<
+            decltype(f(std::forward<T0>(v0), std::forward<Ts>(vs)...)),
+            void
+        >::value
+    >::type {
+        std::function<void()> fun = std::bind(f, std::forward<T0>(v0),
+                                              std::forward<Ts>(vs)...);
+        create(dummy, [fun](Actor*) { fun(); });
+    }
+
+    act_fun m_act;
 
 };
 

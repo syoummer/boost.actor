@@ -22,6 +22,7 @@
 #include "boost/intrusive_ptr.hpp"
 
 #include "boost/actor/actor_addr.hpp"
+#include "boost/actor/actor_cast.hpp"
 #include "boost/actor/replies_to.hpp"
 #include "boost/actor/abstract_actor.hpp"
 #include "boost/actor/typed_behavior.hpp"
@@ -37,12 +38,6 @@ struct invalid_actor_addr_t;
 template<typename... Rs>
 class typed_event_based_actor;
 
-namespace detail {
-
-class raw_access;
-
-} // namespace detail
-
 /**
  * @brief Identifies a strongly typed actor.
  * @tparam Rs Interface as @p replies_to<...>::with<...> parameter pack.
@@ -54,11 +49,13 @@ class typed_actor : detail::comparable<typed_actor<Rs...>>
 
     friend class local_actor;
 
-    friend class detail::raw_access;
-
     // friend with all possible instantiations
     template<typename...>
     friend class typed_actor;
+
+    // allow conversion via actor_cast
+    template<typename T, typename U>
+    friend T actor_cast(const U&);
 
  public:
 
@@ -145,6 +142,10 @@ class typed_actor : detail::comparable<typed_actor<Rs...>>
     }
 
  private:
+
+    inline abstract_actor* get() const {
+        return m_ptr.get();
+    }
 
     typed_actor(abstract_actor* ptr) : m_ptr(ptr) { }
 

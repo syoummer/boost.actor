@@ -53,114 +53,145 @@ void broker::servant::set_broker(broker* new_broker) {
 }
 
 void broker::servant::disconnect() {
+    BOOST_ACTOR_LOG_TRACE("");
     if (!m_disconnected) {
+        BOOST_ACTOR_LOG_DEBUG("disconnect servant from broker");
         m_disconnected = true;
+        remove_from_broker();
         if (m_broker->exit_reason() == exit_reason::not_exited) {
-            auto msg = disconnect_message();
-            m_broker->invoke_message({}, msg);
+            if (m_broker->m_running) {
+                // push this message to the cache to make sure we
+                // don't have interleaved message handlers
+                auto e = mailbox_element::create(m_broker->address(),
+                                                 message_id::invalid,
+                                                 disconnect_message());
+                m_broker->m_priority_policy
+                .push_to_cache(unique_mailbox_element_pointer{e});
+            }
+            else {
+                m_broker->enqueue(m_broker->address(),
+                                  message_id::invalid,
+                                  disconnect_message(),
+                                  nullptr);
+            }
         }
     }
 }
 
-broker::scribe::scribe(broker* parent, connection_handle hdl) : super(parent) {
+broker::scribe::scribe(broker* parent) : super(parent) {
     std::vector<char> tmp;
-    m_read_msg = make_message(new_data_msg{hdl, std::move(tmp)});
+    m_hdl = connection_handle::from_int(parent->m_next_handle_id++);
+    m_read_msg = make_message(new_data_msg{m_hdl, std::move(tmp)});
 }
 
+void broker::scribe::remove_from_broker() {
+    BOOST_ACTOR_LOG_TRACE("hdl = " << hdl().id());
+    m_broker->m_scribes.erase(hdl());
+}
 
 broker::scribe::~scribe() {
-    // nop
+    BOOST_ACTOR_LOG_TRACE("");
 }
 
 message broker::scribe::disconnect_message() {
-    return make_message(connection_closed_msg{id()});
+    return make_message(connection_closed_msg{hdl()});
 }
 
 void broker::scribe::consume(const void*, size_t num_bytes) {
+    BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_ARG(num_bytes));
     auto& buf = rd_buf();
-    buf.resize(num_bytes);                    // make sure size is correct
-    read_msg().buf.swap(buf);                 // swap into message to client
-    m_broker->invoke_message({}, m_read_msg); // call client
-    read_msg().buf.swap(buf);                 // swap buffer back to stream
-    flush();                                  // implicit flush of wr_buf()
+    buf.resize(num_bytes);                       // make sure size is correct
+    read_msg().buf.swap(buf);                    // swap into message to client
+    m_broker->invoke_message(invalid_actor_addr, // call client
+                             message_id::invalid,
+                             m_read_msg);
+    read_msg().buf.swap(buf);                    // swap buffer back to stream
+    flush();                                     // implicit flush of wr_buf()
 }
 
-void broker::scribe::io_failure(network::operation, const std::string&) {
+void broker::scribe::io_failure(network::operation op, const std::string& str) {
+    BOOST_ACTOR_LOG_TRACE("id = " << hdl().id() << ", "
+                          << BOOST_ACTOR_TARG(op, static_cast<int>) << ", "
+                          << BOOST_ACTOR_ARG(str));
+    // keep compiler happy when compiling w/o logging
+    static_cast<void>(op);
+    static_cast<void>(str);
     disconnect();
 }
 
-broker::doorman::doorman(broker* parent, accept_handle hdl) : super{parent} {
-    m_accept_msg = make_message(new_connection_msg{});
-    accept_msg().source = hdl;
+broker::doorman::doorman(broker* parent) : super{parent} {
+    m_hdl = accept_handle::from_int(parent->m_next_handle_id++);
+    auto hdl2 = connection_handle::from_int(-1);
+    m_accept_msg = make_message(new_connection_msg{m_hdl, hdl2});
 }
 
 broker::doorman::~doorman() {
-    // nop
+    BOOST_ACTOR_LOG_TRACE("");
+}
+
+void broker::doorman::remove_from_broker() {
+    BOOST_ACTOR_LOG_TRACE("hdl = " << hdl().id());
+    m_broker->m_doormen.erase(hdl());
 }
 
 message broker::doorman::disconnect_message() {
-    return make_message(acceptor_closed_msg{id()});
+    return make_message(acceptor_closed_msg{hdl()});
 }
 
-void broker::doorman::io_failure(network::operation, const std::string&) {
+void broker::doorman::io_failure(network::operation op, const std::string& str) {
+    BOOST_ACTOR_LOG_TRACE("id = " << hdl().id() << ", "
+                          << BOOST_ACTOR_TARG(op, static_cast<int>) << ", "
+                          << BOOST_ACTOR_ARG(str));
+    // keep compiler happy when compiling w/o logging
+    static_cast<void>(op);
+    static_cast<void>(str);
     disconnect();
 }
-
-class default_broker : public broker {
-
- public:
-
-    typedef std::function<behavior (broker*)> function_type;
-
-    default_broker(function_type f) : m_fun(std::move(f)) { }
-
-    behavior make_behavior() override {
-        return m_fun(this);
-    }
-
- private:
-
-    function_type m_fun;
-
-};
 
 class broker::continuation {
 
  public:
 
-    continuation(broker_ptr ptr, msg_hdr_cref hdr, message&& msg)
-    : m_self(std::move(ptr)), m_hdr(hdr), m_data(move(msg)) { }
+    continuation(broker_ptr ptr, actor_addr from, message_id mid, message&& msg)
+    : m_self(std::move(ptr)), m_from(from), m_mid(mid), m_data(move(msg)) { }
 
     inline void operator()() {
         BOOST_ACTOR_PUSH_AID(m_self->id());
         BOOST_ACTOR_LOG_TRACE("");
-        m_self->invoke_message(m_hdr, m_data);
+        m_self->invoke_message(m_from, m_mid, m_data);
     }
 
  private:
 
-    broker_ptr     m_self;
-    message_header m_hdr;
-    message        m_data;
+    broker_ptr m_self;
+    actor_addr m_from;
+    message_id m_mid;
+    message    m_data;
 
 };
 
-void broker::invoke_message(msg_hdr_cref hdr, message& msg) {
+void broker::invoke_message(const actor_addr& sender,
+                            message_id mid,
+                            message& msg) {
     BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_TARG(msg, to_string));
+    m_running = true;
+    auto sg = make_scope_guard([=] {
+        m_running = false;
+    });
     if (   planned_exit_reason() != exit_reason::not_exited
         || bhvr_stack().empty()) {
         BOOST_ACTOR_LOG_DEBUG("actor already finished execution"
                        << ", planned_exit_reason = " << planned_exit_reason()
                        << ", bhvr_stack().empty() = " << bhvr_stack().empty());
-        if (hdr.id.valid()) {
+        if (mid.valid()) {
             sync_request_bouncer srb{exit_reason()};
-            srb(hdr.sender, hdr.id);
+            srb(sender, mid);
         }
         return;
     }
     // prepare actor for invocation of message handler
-    m_dummy_node.sender = hdr.sender;
-    m_dummy_node.mid = hdr.id;
+    m_dummy_node.sender = sender;
+    m_dummy_node.mid = mid;
     std::swap(msg, m_dummy_node.msg);
     try {
         auto bhvr = bhvr_stack().back();
@@ -181,7 +212,8 @@ void broker::invoke_message(msg_hdr_cref hdr, message& msg) {
             case policy::hm_skip_msg:
             case policy::hm_cache_msg: {
                 BOOST_ACTOR_LOG_DEBUG("handle_message returned hm_skip_msg or hm_cache_msg");
-                auto e = mailbox_element::create(hdr, std::move(m_dummy_node.msg));
+                auto e = mailbox_element::create(sender, mid,
+                                                 std::move(m_dummy_node.msg));
                 m_priority_policy.push_to_cache(unique_mailbox_element_pointer{e});
                 break;
             }
@@ -195,7 +227,7 @@ void broker::invoke_message(msg_hdr_cref hdr, message& msg) {
         quit(exit_reason::unhandled_exception);
     }
     catch (...) {
-        BOOST_ACTOR_LOG_ERROR("broker killed due to an unhandled exception");
+        BOOST_ACTOR_LOG_ERROR("broker killed due to an unknown exception");
         quit(exit_reason::unhandled_exception);
     }
     // restore dummy node
@@ -205,14 +237,14 @@ void broker::invoke_message(msg_hdr_cref hdr, message& msg) {
     if (planned_exit_reason() != exit_reason::not_exited) {
         cleanup(planned_exit_reason());
         // release implicit reference count held by MM
-        deref();
+        //deref();
     }
     else if (bhvr_stack().empty()) {
         BOOST_ACTOR_LOG_DEBUG("bhvr_stack().empty(), quit for normal exit reason");
         quit(exit_reason::normal);
         cleanup(planned_exit_reason());
         // release implicit reference count held by MM
-        deref();
+        //deref();
     }
 }
 
@@ -234,7 +266,7 @@ bool broker::invoke_message_from_cache() {
     return false;
 }
 
-void broker::write(const connection_handle& hdl, size_t bs, const void* buf) {
+void broker::write(connection_handle hdl, size_t bs, const void* buf) {
     auto& out = wr_buf(hdl);
     auto first = reinterpret_cast<const char*>(buf);
     auto last = first + bs;
@@ -242,40 +274,39 @@ void broker::write(const connection_handle& hdl, size_t bs, const void* buf) {
 }
 
 
-void broker::enqueue(msg_hdr_cref hdr,
+void broker::enqueue(const actor_addr& sender,
+                     message_id mid,
                      message msg,
                      execution_unit*) {
-    middleman::instance()->run_later(continuation{this, hdr, std::move(msg)});
+    middleman::instance()->run_later(continuation{this, sender, mid,
+                                                  std::move(msg)});
 }
 
 bool broker::initialized() const {
     return m_initialized;
 }
 
-broker::broker() : m_initialized(false) {
-    // acquire implicit reference count held by the middleman
-    ref();
-    // actor is running now
-    singletons::get_actor_registry()->inc_running();
-}
+broker::broker()
+        : m_initialized(false), m_hidden(true)
+        , m_next_handle_id(1), m_running(false) { }
 
 void broker::cleanup(uint32_t reason) {
+    BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_ARG(reason));
+    stop_reading();
     super::cleanup(reason);
-    singletons::get_actor_registry()->dec_running();
-    for (auto& kvp : m_doormen) {
-        kvp.second->stop_reading();
-    }
-    for (auto& kvp : m_scribes) {
-        kvp.second->stop_reading();
-    }
+    if (!m_hidden) singletons::get_actor_registry()->dec_running();
 }
 
-broker_ptr init_and_launch(broker_ptr ptr) {
-    BOOST_ACTOR_PUSH_AID(ptr->id());
-    BOOST_ACTOR_LOGF_TRACE("init and launch broker with id " << ptr->id());
+void broker::launch(bool is_hidden, execution_unit*) {
+    if (!is_hidden) {
+        m_hidden = false;
+        singletons::get_actor_registry()->inc_running();
+    }
+    BOOST_ACTOR_PUSH_AID(id());
+    BOOST_ACTOR_LOGF_TRACE("init and launch broker with id " << id());
     // we want to make sure initialization is executed in MM context
-    auto self = ptr.get();
-    ptr->become(
+    broker_ptr self = this;
+    self->become(
         on(atom("INITMSG")) >> [self] {
             BOOST_ACTOR_LOGF_TRACE(BOOST_ACTOR_ARG(self));
             self->unbecome();
@@ -284,82 +315,73 @@ broker_ptr init_and_launch(broker_ptr ptr) {
             for (auto& kvp : self->m_doormen) {
                 kvp.second->launch();
             }
-            for (auto& kvp : self->m_scribes) {
-                kvp.second->launch();
-            }
             self->m_initialized = true;
             // run user-defined initialization code
             auto bhvr = self->make_behavior();
             if (bhvr) self->become(std::move(bhvr));
         }
     );
-    ptr->enqueue({invalid_actor_addr, ptr},
-                  make_message(atom("INITMSG")),
-                  nullptr);
-    return ptr;
+    self->enqueue(invalid_actor_addr, message_id::invalid,
+                  make_message(atom("INITMSG")), nullptr);
 }
 
-broker_ptr broker::from_impl(std::function<behavior (broker*)> fun) {
-    return make_counted<default_broker>(fun);
+void broker::configure_read(connection_handle hdl, receive_policy::config cfg) {
+    BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_MARG(hdl, id) << ", cfg = {"
+                          << static_cast<int>(cfg.first)
+                          << ", " << cfg.second << "}");
+    by_id(hdl).configure_read(cfg);
 }
 
-broker_ptr broker::from_impl(std::function<void (broker*)> fun) {
-    return from([=](broker* self) -> behavior {
-        fun(self);
-        return {};
-    });
-}
-
-boost::actor::actor
-broker::fork_impl(std::function<behavior (broker*)> f, connection_handle hdl) {
-    BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_MARG(hdl, id));
-    auto i = m_scribes.find(hdl);
-    if (i == m_scribes.end()) {
-        BOOST_ACTOR_LOG_ERROR("invalid handle");
-        throw std::invalid_argument("invalid handle");
-    }
-    auto sptr = i->second;
-    auto result = make_counted<default_broker>(f);
-    result->m_scribes.emplace(sptr->id(), i->second);
-    init_and_launch(result);
-    sptr->set_broker(result.get()); // set new broker
-    m_scribes.erase(i);
-    return {result};
-}
-
-boost::actor::actor
-broker::fork_impl(std::function<void (broker*)> f, connection_handle hdl) {
-    return fork_impl(std::function<behavior (broker*)>{[=](broker* self)
-                                                       -> behavior {
-        f(self);
-        return behavior{};
-    }}, hdl);
-}
-
-broker::scribe& broker::by_id(const connection_handle& hdl) {
-    auto i = m_scribes.find(hdl);
-    if (i == m_scribes.end()) {
-        throw std::invalid_argument("invalid connection handle");
-    }
-    return *(i->second);
-}
-
-void broker::configure_read(const connection_handle &hdl,
-                            receive_policy::config config) {
-    by_id(hdl).configure_read(config);
-}
-
-void broker::flush(const connection_handle& hdl) {
+void broker::flush(connection_handle hdl) {
     by_id(hdl).flush();
 }
 
-broker::buffer_type& broker::wr_buf(const connection_handle& hdl) {
+broker::buffer_type& broker::wr_buf(connection_handle hdl) {
     return by_id(hdl).wr_buf();
 }
 
 broker::~broker() {
     BOOST_ACTOR_LOG_TRACE("");
 }
+
+void broker::stop_reading(connection_handle hdl) {
+    by_id(hdl).stop_reading();
+}
+
+void broker::stop(connection_handle hdl) {
+    by_id(hdl).stop();
+}
+
+void broker::stop(accept_handle hdl) {
+    by_id(hdl).stop();
+}
+
+void broker::stop_reading() {
+    BOOST_ACTOR_LOG_TRACE("");
+    while (!m_doormen.empty()) {
+        // stop_reading will remove the doorman from m_doormen
+        m_doormen.begin()->second->stop_reading();
+    }
+    while (!m_scribes.empty()) {
+        // stop_reading will remove the scribe from m_scribes
+        m_scribes.begin()->second->stop_reading();
+    }
+}
+
+std::vector<connection_handle> broker::connections() const {
+    std::vector<connection_handle> result;
+    for (auto& scribe : m_scribes) result.push_back(scribe.first);
+    return result;
+}
+
+broker::functor_based::~functor_based() {
+    // nop
+}
+
+behavior broker::functor_based::make_behavior() {
+    return m_make_behavior(this);
+}
+
 
 } // namespace actor_io
 } // namespace boost

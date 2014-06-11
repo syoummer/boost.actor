@@ -25,18 +25,14 @@
 #include <type_traits>
 
 #include "boost/intrusive_ptr.hpp"
+
+#include "boost/actor/fwd.hpp"
 #include "boost/actor/abstract_actor.hpp"
 
 #include "boost/actor/detail/comparable.hpp"
 
 namespace boost {
 namespace actor {
-
-class actor;
-class local_actor;
-class actor_namespace;
-
-namespace detail { class raw_access; }
 
 /**
  * @brief Identifies an invalid {@link actor_addr}.
@@ -55,7 +51,9 @@ class actor_addr : detail::comparable<actor_addr>
 
     friend class actor;
     friend class abstract_actor;
-    friend class detail::raw_access;
+
+    template<typename T, typename U>
+    friend T actor_cast(const U&);
 
  public:
 
@@ -93,6 +91,8 @@ class actor_addr : detail::comparable<actor_addr>
 
     const node_id& node() const;
 
+    node_id_ptr node_ptr() const;
+
     /**
      * @brief Returns whether this is an address of a
      *        remote actor.
@@ -102,6 +102,10 @@ class actor_addr : detail::comparable<actor_addr>
     std::set<std::string> interface() const;
 
  private:
+
+    inline abstract_actor* get() const {
+        return m_ptr.get();
+    }
 
     explicit actor_addr(abstract_actor*);
 

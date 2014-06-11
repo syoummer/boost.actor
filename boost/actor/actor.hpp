@@ -25,6 +25,8 @@
 #include <type_traits>
 
 #include "boost/intrusive_ptr.hpp"
+
+#include "boost/actor/fwd.hpp"
 #include "boost/actor/abstract_actor.hpp"
 
 #include "boost/actor/detail/comparable.hpp"
@@ -34,23 +36,6 @@ namespace boost { namespace actor_io { class broker; } }
 
 namespace boost {
 namespace actor {
-
-class actor_addr;
-class actor_proxy;
-class local_actor;
-class blocking_actor;
-class event_based_actor;
-
-struct invalid_actor_addr_t;
-
-namespace opencl {
-template <typename Signature>
-class actor_facade;
-} // namespace opencl
-
-namespace detail {
-class raw_access;
-} // namespace detail
 
 struct invalid_actor_t { constexpr invalid_actor_t() { } };
 
@@ -68,11 +53,6 @@ struct is_convertible_to_actor {
                                 || std::is_base_of<event_based_actor, T>::value;
 };
 
-template<typename T>
-struct is_convertible_to_actor<opencl::actor_facade<T>> {
-    static constexpr bool value = true;
-};
-
 /**
  * @brief Identifies an untyped actor.
  *
@@ -86,7 +66,9 @@ class actor : detail::comparable<actor>
             , detail::comparable<actor, invalid_actor_addr_t> {
 
     friend class local_actor;
-    friend class detail::raw_access;
+
+    template<typename T, typename U>
+    friend T actor_cast(const U&);
 
  public:
 
@@ -170,6 +152,10 @@ class actor : detail::comparable<actor>
  private:
 
     void swap(actor& other);
+
+    inline abstract_actor* get() const {
+        return m_ptr.get();
+    }
 
     actor(abstract_actor*);
 

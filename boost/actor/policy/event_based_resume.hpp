@@ -33,7 +33,6 @@
 #include "boost/actor/policy/resume_policy.hpp"
 
 #include "boost/actor/detail/logging.hpp"
-#include "boost/actor/detail/functor_based_actor.hpp"
 
 namespace boost {
 namespace actor { namespace policy {

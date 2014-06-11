@@ -136,6 +136,21 @@ inline bool equal(const node_id::host_id_type& node_id,
 typedef intrusive_ptr<node_id> node_id_ptr;
 
 /**
+ * @brief Allows users to use {@link node_id_ptr} in STL-compliant
+ *        sorted containers as "value type", i.e., to have the
+ *        container sorted by value rather than by pointer comparison.
+ * @relates node_id
+ */
+struct node_id_ptr_less {
+    inline bool operator()(const node_id_ptr& l, const node_id_ptr& r) const {
+        if (l  == r) return false;   // identical
+        if (!l && r) return true;    // nullptr < everything
+        if (l  && r) return *l < *r; // compare values
+        return false;                // l > r || l == r
+    }
+};
+
+/**
  * @relates node_id
  */
 std::string to_string(const node_id& what);

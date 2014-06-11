@@ -21,9 +21,9 @@
 namespace boost {
 namespace actor {
 
-mailbox_element::mailbox_element(msg_hdr_cref hdr, message data)
-: next(nullptr), marked(false), sender(hdr.sender)
-, msg(std::move(data)), mid(hdr.id) { }
+mailbox_element::mailbox_element(actor_addr arg0, message_id arg1, message arg2)
+: next(nullptr), marked(false), sender(std::move(arg0))
+, mid(arg1), msg(std::move(arg2)) { }
 
 mailbox_element::~mailbox_element() { }
 

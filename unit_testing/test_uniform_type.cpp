@@ -20,7 +20,6 @@
 #include "boost/actor/message.hpp"
 #include "boost/actor/serializer.hpp"
 #include "boost/actor/deserializer.hpp"
-#include "boost/actor/message_header.hpp"
 #include "boost/actor/uniform_type_info.hpp"
 
 #include "boost/actor/detail/type_traits.hpp"
@@ -97,8 +96,8 @@ int main() {
         "@exit",                            // exit_msg
         "@group",                           // group
         "@group_down",                      // group_down_msg
-        "@header",                          // message_header
         "@message",                         // message
+        "@message_id",                      // message_id
         "@new_connection",                  // new_connection_msg
         "@new_data",                        // new_data_msg
         "@proc",                            // intrusive_ptr<node_id>
@@ -145,76 +144,5 @@ int main() {
             BOOST_ACTOR_PRINT(lhs << "| " << rhs);
         }
     }
-
-    /*
-    // check if static types are identical to runtime types
-    auto& sarr = detail::static_types_array<
-                    int8_t, int16_t, int32_t, int64_t,
-                    uint8_t, uint16_t, uint32_t, uint64_t,
-                    std::string, std::u16string, std::u32string,
-                    float, double,
-                    atom_value, message, message_header,
-                    actor, group,
-                    channel, node_id_ptr
-                 >::arr;
-
-    BOOST_ACTOR_CHECK(sarr.is_pure());
-
-    std::vector<const uniform_type_info*> rarr{
-        uniform_typeid<int8_t>(),
-        uniform_typeid<int16_t>(),
-        uniform_typeid<int32_t>(),
-        uniform_typeid<int64_t>(),
-        uniform_typeid<uint8_t>(),
-        uniform_typeid<uint16_t>(),
-        uniform_typeid<uint32_t>(),
-        uniform_typeid<uint64_t>(),
-        uniform_typeid<std::string>(),
-        uniform_typeid<std::u16string>(),
-        uniform_typeid<std::u32string>(),
-        uniform_typeid<float>(),
-        uniform_typeid<double>(),
-        uniform_typeid<atom_value>(),
-        uniform_typeid<message>(),
-        uniform_typeid<message_header>(),
-        uniform_typeid<actor>(),
-        uniform_typeid<group>(),
-        uniform_typeid<channel>(),
-        uniform_typeid<node_id_ptr>()
-    };
-
-    for (size_t i = 0; i < sarr.size; ++i) {
-        BOOST_ACTOR_CHECK_EQUAL(sarr[i]->name(), rarr[i]->name());
-        BOOST_ACTOR_CHECK(sarr[i] == rarr[i]);
-    }
-
-    auto& arr0 = detail::static_types_array<atom_value, uint32_t>::arr;
-    BOOST_ACTOR_CHECK(arr0.is_pure());
-    BOOST_ACTOR_CHECK(arr0[0] == uniform_typeid<atom_value>());
-    BOOST_ACTOR_CHECK(arr0[0] == uniform_type_info::from("@atom"));
-    BOOST_ACTOR_CHECK(arr0[1] == uniform_typeid<uint32_t>());
-    BOOST_ACTOR_CHECK(arr0[1] == uniform_type_info::from("@u32"));
-    BOOST_ACTOR_CHECK(uniform_type_info::from("@u32") == uniform_typeid<uint32_t>());
-
-    auto& arr1 = detail::static_types_array<std::string, int8_t>::arr;
-    BOOST_ACTOR_CHECK(arr1[0] == uniform_typeid<std::string>());
-    BOOST_ACTOR_CHECK(arr1[0] == uniform_type_info::from("@str"));
-    BOOST_ACTOR_CHECK(arr1[1] == uniform_typeid<int8_t>());
-    BOOST_ACTOR_CHECK(arr1[1] == uniform_type_info::from("@i8"));
-
-    auto& arr2 = detail::static_types_array<uint8_t, int8_t>::arr;
-    BOOST_ACTOR_CHECK(arr2[0] == uniform_typeid<uint8_t>());
-    BOOST_ACTOR_CHECK(arr2[0] == uniform_type_info::from("@u8"));
-    BOOST_ACTOR_CHECK(arr2[1] == uniform_typeid<int8_t>());
-    BOOST_ACTOR_CHECK(arr2[1] == uniform_type_info::from("@i8"));
-
-    auto& arr3 = detail::static_types_array<atom_value, uint16_t>::arr;
-    BOOST_ACTOR_CHECK(arr3[0] == uniform_typeid<atom_value>());
-    BOOST_ACTOR_CHECK(arr3[0] == uniform_type_info::from("@atom"));
-    BOOST_ACTOR_CHECK(arr3[1] == uniform_typeid<uint16_t>());
-    BOOST_ACTOR_CHECK(arr3[1] == uniform_type_info::from("@u16"));
-    BOOST_ACTOR_CHECK(uniform_type_info::from("@u16") == uniform_typeid<uint16_t>());
-    */
-
     return BOOST_ACTOR_TEST_RESULT();
 }

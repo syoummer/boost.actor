@@ -33,5 +33,9 @@ void event_based_actor::forward_to(const actor& whom) {
     forward_message(whom, message_priority::normal);
 }
 
+behavior event_based_actor::functor_based::make_behavior() {
+    return m_make_behavior(this);
+}
+
 } // namespace actor
 } // namespace boost

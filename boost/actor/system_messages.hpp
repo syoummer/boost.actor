@@ -66,6 +66,52 @@ struct down_msg {
 };
 
 /**
+ * @brief Sent whenever a terminated actor receives a synchronous request.
+ */
+struct sync_exited_msg {
+    /**
+     * @brief The source of this message, i.e., the terminated actor.
+     */
+    actor_addr source;
+    /**
+     * @brief The exit reason of the terminated actor.
+     */
+    uint32_t reason;
+};
+
+template<typename T>
+typename std::enable_if<
+    detail::tl_exists<
+        detail::type_list<
+            exit_msg,
+            down_msg,
+            sync_exited_msg
+        >,
+        detail::tbind<std::is_same, T>::template type
+    >::value,
+    bool
+>::type
+operator==(const T& lhs, const T& rhs) {
+    return lhs.source == rhs.source && lhs.reason == rhs.reason;
+}
+
+template<typename T>
+typename std::enable_if<
+    detail::tl_exists<
+        detail::type_list<
+            exit_msg,
+            down_msg,
+            sync_exited_msg
+        >,
+        detail::tbind<std::is_same, T>::template type
+    >::value,
+    bool
+>::type
+operator!=(const T& lhs, const T& rhs) {
+    return !(lhs == rhs);
+}
+
+/**
  * @brief Sent to all members of a group when it goes offline.
  */
 struct group_down_msg {
@@ -106,20 +152,6 @@ inline bool operator!=(const sync_timeout_msg&, const sync_timeout_msg&) {
 }
 
 /**
- * @brief Sent whenever a terminated actor receives a synchronous request.
- */
-struct sync_exited_msg {
-    /**
-     * @brief The source of this message, i.e., the terminated actor.
-     */
-    actor_addr source;
-    /**
-     * @brief The exit reason of the terminated actor.
-     */
-    uint32_t reason;
-};
-
-/**
  * @brief Signalizes a timeout event.
  * @note This message is handled implicitly by the runtime system.
  */
@@ -135,38 +167,6 @@ inline bool operator==(const timeout_msg& lhs, const timeout_msg& rhs) {
 }
 
 inline bool operator!=(const timeout_msg& lhs, const timeout_msg& rhs) {
-    return !(lhs == rhs);
-}
-
-template<typename T>
-typename std::enable_if<
-    detail::tl_exists<
-        detail::type_list<
-            exit_msg,
-            down_msg,
-            sync_exited_msg
-        >,
-        detail::tbind<std::is_same, T>::template type
-    >::value,
-    bool
->::type
-operator==(const T& lhs, const T& rhs) {
-    return lhs.source == rhs.source && lhs.reason == rhs.reason;
-}
-
-template<typename T>
-typename std::enable_if<
-    detail::tl_exists<
-        detail::type_list<
-            exit_msg,
-            down_msg,
-            sync_exited_msg
-        >,
-        detail::tbind<std::is_same, T>::template type
-    >::value,
-    bool
->::type
-operator!=(const T& lhs, const T& rhs) {
     return !(lhs == rhs);
 }
 

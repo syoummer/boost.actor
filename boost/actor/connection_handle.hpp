@@ -35,13 +35,15 @@ class connection_handle : public io_handle<connection_handle> {
 
  public:
 
-    connection_handle() = default;
+    constexpr connection_handle() { }
 
  private:
 
     inline connection_handle(int64_t handle_id) : super{handle_id} { }
 
 };
+
+constexpr connection_handle invalid_connection_handle = connection_handle{};
 
 } // namespace actor
 } // namespace boost

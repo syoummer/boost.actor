@@ -52,8 +52,9 @@ actor_registry::value_type actor_registry::get_entry(actor_id key) const {
     if (i != m_entries.end()) {
         return i->second;
     }
-    BOOST_ACTOR_LOG_DEBUG("key not found: " << key);
-    return {nullptr, exit_reason::not_exited};
+    BOOST_ACTOR_LOG_DEBUG("key not found, assume the actor no longer exists: "
+                          << key);
+    return {nullptr, exit_reason::unknown};
 }
 
 void actor_registry::put(actor_id key, const abstract_actor_ptr& value) {

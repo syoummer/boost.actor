@@ -20,6 +20,8 @@
 #define BOOST_ACTOR_ABSTRACT_CHANNEL_HPP
 
 #include "boost/actor/fwd.hpp"
+#include "boost/actor/node_id.hpp"
+#include "boost/actor/message_id.hpp"
 #include "boost/actor/ref_counted.hpp"
 
 namespace boost {
@@ -35,6 +37,10 @@ class abstract_channel : public ref_counted {
 
  public:
 
+    abstract_channel();
+
+    abstract_channel(node_id_ptr nid);
+
     /**
      * @brief Enqueues a new message to the channel.
      * @param header Contains meta information about this message
@@ -45,15 +51,35 @@ class abstract_channel : public ref_counted {
      *             caller is executed by or @p nullptr if the caller
      *             is not a scheduled actor.
      */
-    virtual void enqueue(msg_hdr_cref header,
+    virtual void enqueue(const actor_addr& sender,
+                         message_id mid,
                          message content,
                          execution_unit* host) = 0;
 
+    /**
+     * @brief Returns a pointer to the ID of the node this actor is running on.
+     */
+    inline const node_id_ptr& get_node_id_ptr() const;
+
+    /**
+     * @brief Returns true if {@link node_ptr} returns
+     */
+    bool is_remote() const;
+
  protected:
+
+    // identifies the node of this channel
+    node_id_ptr m_node;
 
     virtual ~abstract_channel();
 
 };
+
+using abstract_channel_ptr = intrusive_ptr<abstract_channel>;
+
+inline const node_id_ptr& abstract_channel::get_node_id_ptr() const {
+    return m_node;
+}
 
 } // namespace actor
 } // namespace boost

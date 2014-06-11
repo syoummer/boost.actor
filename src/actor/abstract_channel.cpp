@@ -17,11 +17,22 @@
 
 
 #include "boost/actor/abstract_channel.hpp"
+#include "boost/actor/detail/singletons.hpp"
 
 namespace boost {
 namespace actor {
 
+using detail::singletons;
+
+abstract_channel::abstract_channel() : m_node(singletons::get_node_id()) { }
+
+abstract_channel::abstract_channel(node_id_ptr nid) : m_node(std::move(nid)) { }
+
 abstract_channel::~abstract_channel() { }
+
+bool abstract_channel::is_remote() const {
+    return m_node != singletons::get_node_id();
+}
 
 } // namespace actor
 } // namespace boost

@@ -21,8 +21,7 @@
 namespace boost {
 namespace actor {
 
-serializer::serializer(actor_namespace* ns, type_lookup_table* it)
-: m_namespace{ns}, m_outgoing_types{it} { }
+serializer::serializer(actor_namespace* ns) : m_namespace{ns} { }
 
 serializer::~serializer() { }
 

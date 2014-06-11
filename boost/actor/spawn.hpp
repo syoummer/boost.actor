@@ -33,19 +33,19 @@
 #include "boost/actor/detail/make_counted.hpp"
 #include "boost/actor/detail/proper_actor.hpp"
 #include "boost/actor/detail/typed_actor_util.hpp"
-#include "boost/actor/detail/functor_based_actor.hpp"
 #include "boost/actor/detail/implicit_conversions.hpp"
-#include "boost/actor/detail/functor_based_blocking_actor.hpp"
 
 namespace boost {
 namespace actor {
 
 class execution_unit;
 
-namespace detail {
+// marker interface to prevent spawn_impl to wrap the implementation
+// in a proper_actor
+class spawn_as_is { };
 
 template<class C, spawn_options Os, typename BeforeLaunch, typename... Ts>
-intrusive_ptr<C> spawn_impl(execution_unit* host,
+intrusive_ptr<C> spawn_impl(execution_unit* eu,
                             BeforeLaunch before_launch_fun,
                             Ts&&... args) {
     static_assert(!std::is_base_of<blocking_actor, C>::value ||
@@ -79,12 +79,16 @@ intrusive_ptr<C> spawn_impl(execution_unit* host,
                                       priority_policy,
                                       resume_policy,
                                       invoke_policy>;
-    using proper_impl = detail::proper_actor<C, policies>;
-    auto ptr = detail::make_counted<proper_impl>(std::forward<Ts>(args)...);
+    using actor_impl = typename std::conditional<
+                           std::is_base_of<spawn_as_is, C>::value,
+                           C,
+                           detail::proper_actor<C, policies>
+                       >::type;
+    auto ptr = detail::make_counted<actor_impl>(std::forward<Ts>(args)...);
     BOOST_ACTOR_LOGF_DEBUG("spawned actor with ID " << ptr->id());
     BOOST_ACTOR_PUSH_AID(ptr->id());
     before_launch_fun(ptr.get());
-    ptr->launch(has_hide_flag(Os), host);
+    ptr->launch(has_hide_flag(Os), eu);
     return ptr;
 }
 
@@ -97,8 +101,8 @@ struct spawn_fwd {
 
 template<typename T, typename... Ts>
 struct spawn_fwd<T (Ts...)> {
-    typedef T (*pointer) (Ts...);
-    static inline pointer fwd(pointer arg) { return arg; }
+    typedef T (*fun_pointer) (Ts...);
+    static inline fun_pointer fwd(fun_pointer arg) { return arg; }
 };
 
 template<>
@@ -107,18 +111,16 @@ struct spawn_fwd<scoped_actor> {
     static inline actor fwd(T& arg) { return arg; }
 };
 
-} // namespace detail
-
 // forwards the arguments to spawn_impl, replacing pointers
 // to actors with instances of 'actor'
 template<class C, spawn_options Os, typename BeforeLaunch, typename... Ts>
-intrusive_ptr<C> spawn_class(execution_unit* host,
+intrusive_ptr<C> spawn_class(execution_unit* eu,
                              BeforeLaunch before_launch_fun,
                              Ts&&... args) {
-    return detail::spawn_impl<C, Os>(host,
-                                     before_launch_fun,
-            detail::spawn_fwd<typename detail::rm_const_and_ref<Ts>::type>::fwd(
-                    std::forward<Ts>(args))...);
+    return spawn_impl<C, Os>(eu, before_launch_fun,
+                             spawn_fwd<
+                                typename detail::rm_const_and_ref<Ts>::type
+                             >::fwd(std::forward<Ts>(args))...);
 }
 
 template<spawn_options Os, typename BeforeLaunch, typename F, typename... Ts>
@@ -129,28 +131,27 @@ actor spawn_functor(execution_unit* eu,
     typedef typename detail::get_callable_trait<F>::type trait;
     typedef typename trait::arg_types arg_types;
     typedef typename detail::tl_head<arg_types>::type first_arg;
-    constexpr bool is_blocking = has_blocking_api_flag(Os);
-    constexpr bool has_ptr_arg = std::is_pointer<first_arg>::value;
-    constexpr bool has_blocking_self = std::is_same<
-                                                  first_arg,
-                                                  blocking_actor*
-                                              >::value;
-    constexpr bool has_nonblocking_self = std::is_same<
-                                                     first_arg,
-                                                     event_based_actor*
-                                                 >::value;
-    static_assert(!is_blocking || has_blocking_self || !has_ptr_arg,
-                  "functor-based actors with blocking_actor* as first "
-                  "argument need to be spawned using the blocking_api flag");
-    static_assert(is_blocking || has_nonblocking_self || !has_ptr_arg,
-                  "functor-based actors with event_based_actor* as first "
-                  "argument cannot be spawned using the blocking_api flag");
     using base_class = typename std::conditional<
-                           is_blocking,
-                           detail::functor_based_blocking_actor,
-                           detail::functor_based_actor
+                           std::is_pointer<first_arg>::value,
+                           typename std::remove_pointer<first_arg>::type,
+                           typename std::conditional<
+                               has_blocking_api_flag(Os),
+                               blocking_actor,
+                               event_based_actor
+                           >::type
                        >::type;
-    return spawn_class<base_class, Os>(eu, cb, fun, std::forward<Ts>(args)...);
+    constexpr bool has_blocking_base = std::is_base_of<
+                                           blocking_actor,
+                                           base_class
+                                       >::value;
+    static_assert(has_blocking_base || !has_blocking_api_flag(Os),
+                  "blocking functor-based actors "
+                  "need to be spawned using the blocking_api flag");
+    static_assert(!has_blocking_base || has_blocking_api_flag(Os),
+                  "non-blocking functor-based actors "
+                  "cannot be spawned using the blocking_api flag");
+    using impl_class = typename base_class::functor_based;
+    return spawn_class<impl_class, Os>(eu, cb, fun, std::forward<Ts>(args)...);
 }
 
 /**

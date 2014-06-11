@@ -35,12 +35,10 @@ class binary_deserializer : public deserializer {
  public:
 
     binary_deserializer(const void* buf, size_t buf_size,
-                        actor_namespace* ns = nullptr,
-                        type_lookup_table* table = nullptr);
+                        actor_namespace* ns = nullptr);
 
     binary_deserializer(const void* begin, const void* m_end,
-                        actor_namespace* ns = nullptr,
-                        type_lookup_table* table = nullptr);
+                        actor_namespace* ns = nullptr);
 
     const uniform_type_info* begin_object() override;
     void end_object() override;

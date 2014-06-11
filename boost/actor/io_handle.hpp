@@ -35,7 +35,7 @@ class io_handle : detail::comparable<Subtype> {
 
  public:
 
-    inline io_handle() : m_id{InvalidId} { }
+    constexpr io_handle() : m_id{InvalidId} { }
 
     io_handle(const Subtype& other) {
         m_id = other.id();
@@ -73,7 +73,6 @@ class io_handle : detail::comparable<Subtype> {
     static inline Subtype from_int(int64_t id) {
         return {id};
     }
-
 
  protected:
 

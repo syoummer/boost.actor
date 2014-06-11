@@ -35,7 +35,6 @@
 #include "boost/actor/scoped_actor.hpp"
 #include "boost/actor/spawn_options.hpp"
 #include "boost/actor/execution_unit.hpp"
-#include "boost/actor/message_header.hpp"
 
 #include "boost/actor/detail/producer_consumer_list.hpp"
 
@@ -157,26 +156,20 @@ class coordinator {
     void enqueue(resumable* what);
 
     template<typename Duration, typename... Data>
-    void delayed_send(message_header hdr,
-                      const Duration& rel_time,
-                      message data           ) {
-        auto tup = make_message(atom("SEND"),
-                                  duration{rel_time},
-                                  std::move(hdr),
-                                  std::move(data));
-        m_timer->enqueue(message_header{}, std::move(tup), nullptr);
-    }
-
-    template<typename Duration, typename... Data>
-    void delayed_reply(message_header hdr,
-                       const Duration& rel_time,
-                       message data           ) {
-        BOOST_ACTOR_REQUIRE(hdr.id.valid() && hdr.id.is_response());
-        auto tup = make_message(atom("SEND"),
-                                  duration{rel_time},
-                                  std::move(hdr),
-                                  std::move(data));
-        m_timer->enqueue(message_header{}, std::move(tup), nullptr);
+    void delayed_send(Duration   rel_time,
+                      actor_addr from,
+                      channel    to,
+                      message_id mid,
+                      message    data) {
+        m_timer->enqueue(invalid_actor_addr,
+                         message_id::invalid,
+                         make_message(atom("_Send"),
+                                      duration{rel_time},
+                                      std::move(from),
+                                      std::move(to),
+                                      mid,
+                                      std::move(data)),
+                         nullptr);
     }
 
     inline size_t num_workers() const {

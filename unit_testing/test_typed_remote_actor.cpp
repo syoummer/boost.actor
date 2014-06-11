@@ -47,7 +47,7 @@ void run_client(const char* host, uint16_t port) {
     try {
         remote_actor(host, port);
     }
-    catch (std::invalid_argument& e) {
+    catch (std::runtime_error& e) {
         cout << e.what() << endl;
         BOOST_ACTOR_CHECKPOINT();
     }
@@ -92,51 +92,35 @@ uint16_t run_server() {
 int main(int argc, char** argv) {
     announce<ping>(&ping::value);
     announce<pong>(&pong::value);
-    auto run_remote_actor = true;
-    if (argc > 1) {
-        if (strcmp(argv[1], "run_remote_actor=false") == 0) {
-            BOOST_ACTOR_PRINT("don't run remote actor");
-            run_remote_actor = false;
-        }
-        else {
-            auto kvp = get_kv_pairs(argc, argv);
-            if (kvp.count("port") == 0) {
-                throw std::invalid_argument("no port given");
-            }
-            run_client("localhost",
-                       static_cast<uint16_t>(std::stoi(kvp["port"])));
+    message_builder{argv + 1, argv + argc}.apply({
+        on("-c", spro<uint16_t>) >> [](uint16_t port) {
+            run_client("localhost", port);
+        },
+        on("-s") >> [] {
+            run_server();
+        },
+        on() >> [&] {
+            auto port = run_server();
             BOOST_ACTOR_CHECKPOINT();
-            await_all_actors_done();
-            shutdown();
-            return BOOST_ACTOR_TEST_RESULT();
+            ostringstream oss;
+            oss << argv[0] << " -c " << port << to_dev_null;
+            // execute client_part() in a separate process,
+            // connected via localhost socket
+            auto child = thread([&oss]() {
+                BOOST_ACTOR_LOGC_TRACE("NONE", "main$thread_launcher", "");
+                string cmdstr = oss.str();
+                if (system(cmdstr.c_str()) != 0) {
+                    BOOST_ACTOR_PRINTERR("FATAL: command \""
+                                         << cmdstr << "\" failed!");
+                    abort();
+                }
+            });
+            BOOST_ACTOR_CHECKPOINT();
+            child.join();
         }
-    }
+    });
     BOOST_ACTOR_CHECKPOINT();
-    auto port = run_server();
-    BOOST_ACTOR_CHECKPOINT();
-    if (run_remote_actor) {
-        BOOST_ACTOR_CHECKPOINT();
-        thread child;
-        ostringstream oss;
-        oss << argv[0] << " run=remote_actor port=" << port << to_dev_null;
-        // execute client_part() in a separate process,
-        // connected via localhost socket
-        child = thread([&oss]() {
-            BOOST_ACTOR_LOGC_TRACE("NONE", "main$thread_launcher", "");
-            string cmdstr = oss.str();
-            if (system(cmdstr.c_str()) != 0) {
-                BOOST_ACTOR_PRINTERR("FATAL: command \"" << cmdstr << "\" failed!");
-                abort();
-            }
-        });
-        BOOST_ACTOR_CHECKPOINT();
-        child.join();
-    }
-    else {
-        BOOST_ACTOR_PRINT("actor published at port " << port);
-    }
     await_all_actors_done();
-    BOOST_ACTOR_CHECKPOINT();
     shutdown();
     return BOOST_ACTOR_TEST_RESULT();
 }

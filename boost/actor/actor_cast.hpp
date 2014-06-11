@@ -16,30 +16,18 @@
 \******************************************************************************/
 
 
-#include "boost/actor/message.hpp"
-#include "boost/actor/message_header.hpp"
+#ifndef BOOST_ACTOR_ACTOR_CAST_HPP
+#define BOOST_ACTOR_ACTOR_CAST_HPP
 
 namespace boost {
 namespace actor {
 
-message_header::message_header(actor_addr source,
-                               channel dest,
-                               message_id mid)
-: sender(source), receiver(dest), id(mid) { }
-
-bool operator==(const message_header& lhs, const message_header& rhs) {
-    return    lhs.sender == rhs.sender
-           && lhs.receiver == rhs.receiver
-           && lhs.id == rhs.id;
-}
-
-bool operator!=(const message_header& lhs, const message_header& rhs) {
-    return !(lhs == rhs);
-}
-
-void message_header::deliver(message msg) const {
-    if (receiver) receiver->enqueue(*this, std::move(msg), nullptr);
+template<typename T, typename U>
+T actor_cast(const U& what) {
+    return what.get();
 }
 
 } // namespace actor
-} // namespace boost::network
+} // namespace boost
+
+#endif // BOOST_ACTOR_ACTOR_CAST_HPP

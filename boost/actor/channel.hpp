@@ -23,6 +23,8 @@
 #include <type_traits>
 
 #include "boost/intrusive_ptr.hpp"
+
+#include "boost/actor/fwd.hpp"
 #include "boost/actor/abstract_channel.hpp"
 
 #include "boost/actor/detail/comparable.hpp"
@@ -37,8 +39,6 @@ class execution_unit;
 struct invalid_actor_t;
 struct invalid_group_t;
 
-namespace detail { class raw_access; }
-
 /**
  * @brief A handle to instances of {@link abstract_channel}.
  */
@@ -46,7 +46,8 @@ class channel : detail::comparable<channel>
               , detail::comparable<channel, actor>
               , detail::comparable<channel, abstract_channel*> {
 
-    friend class detail::raw_access;
+    template<typename T, typename U>
+    friend T actor_cast(const U&);
 
  public:
 
@@ -95,6 +96,10 @@ class channel : detail::comparable<channel>
                             const abstract_channel* rhs);
 
  private:
+
+    inline abstract_channel* get() const {
+        return m_ptr.get();
+    }
 
     intrusive_ptr<abstract_channel> m_ptr;
 

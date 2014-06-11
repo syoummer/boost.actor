@@ -16,29 +16,29 @@
 \******************************************************************************/
 
 
-#ifndef BOOST_ACTOR_FUNCTOR_BASED_ACTOR_HPP
-#define BOOST_ACTOR_FUNCTOR_BASED_ACTOR_HPP
-
-#include <type_traits>
-
-#include "boost/actor/event_based_actor.hpp"
+#ifndef BOOST_ACTOR_MIXIN_FUNCTOR_BASED_HPP
+#define BOOST_ACTOR_MIXIN_FUNCTOR_BASED_HPP
 
 namespace boost {
 namespace actor {
-namespace detail {
+namespace mixin {
 
-class functor_based_actor : public event_based_actor {
+
+template<class Base, class Subtype>
+class functor_based : public Base {
 
  public:
 
-    typedef event_based_actor* pointer;
+    using combined_type = functor_based;
 
-    typedef std::function<behavior(event_based_actor*)> make_behavior_fun;
+    using pointer = Base*;
 
-    typedef std::function<void(event_based_actor*)> void_fun;
+    using make_behavior_fun = std::function<behavior (pointer)>;
+
+    using void_fun = std::function<void (pointer)>;
 
     template<typename F, typename... Ts>
-    functor_based_actor(F f, Ts&&... vs) {
+    functor_based(F f, Ts&&... vs) {
         typedef typename detail::get_callable_trait<F>::type trait;
         typedef typename trait::arg_types arg_types;
         typedef typename trait::result_type result_type;
@@ -57,7 +57,9 @@ class functor_based_actor : public event_based_actor {
         set(token1, token2, std::move(f), std::forward<Ts>(vs)...);
     }
 
-    behavior make_behavior() override;
+ protected:
+
+    make_behavior_fun m_make_behavior;
 
  private:
 
@@ -106,12 +108,10 @@ class functor_based_actor : public event_based_actor {
                               std::forward<Ts>(args)...));
     }
 
-    make_behavior_fun m_make_behavior;
-
 };
 
-} // namespace detail
+} // namespace mixin
 } // namespace actor
 } // namespace boost
 
-#endif // BOOST_ACTOR_FUNCTOR_BASED_ACTOR_HPP
+#endif // BOOST_ACTOR_MIXIN_FUNCTOR_BASED_HPP

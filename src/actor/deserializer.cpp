@@ -21,8 +21,7 @@
 namespace boost {
 namespace actor {
 
-deserializer::deserializer(actor_namespace* ns, type_lookup_table* ot)
-        : m_namespace{ns}, m_incoming_types{ot} { }
+deserializer::deserializer(actor_namespace* ns) : m_namespace{ns} { }
 
 deserializer::~deserializer() { }
 

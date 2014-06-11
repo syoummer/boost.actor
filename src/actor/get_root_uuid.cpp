@@ -19,9 +19,11 @@
 #include "boost/actor/config.hpp"
 #include "boost/actor/detail/get_root_uuid.hpp"
 
+#ifndef BOOST_ACTOR_MACOS // not needed on Mac OS X
 namespace {
 constexpr char uuid_format[] = "FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF";
 } // namespace <anonmyous>
+#endif // BOOST_ACTOR_MACOS
 
 #ifdef BOOST_ACTOR_MACOS
 

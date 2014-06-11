@@ -31,12 +31,10 @@ namespace actor {
 namespace detail {
 
 class memory;
-class instance_wrapper;
-template<typename>
-class basic_memory_cache;
 
-} } // namespace actor
-} // namespace boost::detail
+} // namespace detail
+} // namespace actor
+} // namespace boost
 
 namespace boost {
 namespace actor_io {
@@ -72,11 +70,12 @@ class remote_actor_proxy : public actor::actor_proxy {
 
     remote_actor_proxy(actor::actor_id mid,
                        actor::node_id_ptr pinfo,
-                       middleman* parent);
+                       actor::actor parent);
 
-    void enqueue(actor::msg_hdr_cref hdr,
-                 actor::message msg,
-                 actor::execution_unit*  ) override;
+    void enqueue(const actor::actor_addr&,
+                 actor::message_id,
+                 actor::message,
+                 actor::execution_unit*) override;
 
     void link_to(const actor::actor_addr& other) override;
 
@@ -90,7 +89,7 @@ class remote_actor_proxy : public actor::actor_proxy {
 
     void local_unlink_from(const actor::actor_addr& other) override;
 
-    void deliver(actor::msg_hdr_cref hdr, actor::message msg) override;
+    void kill_proxy(uint32_t reason) override;
 
  protected:
 
@@ -98,12 +97,15 @@ class remote_actor_proxy : public actor::actor_proxy {
 
  private:
 
-    void forward_msg(actor::msg_hdr_cref hdr, actor::message msg);
+    void forward_msg(const actor::actor_addr& sender,
+                     actor::message_id mid,
+                     actor::message msg);
 
-    middleman* m_parent;
-    actor::detail::single_reader_queue<sync_request_info, actor::detail::disposer> m_pending_requests;
+    actor::actor m_parent;
 
 };
+
+using remote_actor_proxy_ptr = intrusive_ptr<remote_actor_proxy>;
 
 } // namespace actor_io
 } // namespace boost

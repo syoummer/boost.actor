@@ -36,5 +36,14 @@ void blocking_actor::quit(uint32_t reason) {
     throw actor_exited(reason);
 }
 
+void blocking_actor::functor_based::create(blocking_actor*, act_fun fun) {
+    m_act = fun;
+}
+
+void blocking_actor::functor_based::act() {
+    BOOST_ACTOR_LOG_TRACE("");
+    m_act(this);
+}
+
 } // namespace actor
 } // namespace boost

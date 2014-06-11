@@ -199,8 +199,6 @@ class invoke_policy {
         BOOST_ACTOR_LOG_DEBUG_IF(res, "actor did consume message: " << msg_str);
         BOOST_ACTOR_LOG_DEBUG_IF(!res, "actor did ignore message: " << msg_str);
         if (res) {
-            //message_header hdr{self, sender, mid.is_request() ? mid.response_id()
-            //                                                    : message_id{}};
             if (res->empty()) {
                 // make sure synchronous requests
                 // always receive a response

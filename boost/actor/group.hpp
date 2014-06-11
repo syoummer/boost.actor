@@ -20,6 +20,8 @@
 #define BOOST_ACTOR_GROUP_HPP
 
 #include "boost/intrusive_ptr.hpp"
+
+#include "boost/actor/fwd.hpp"
 #include "boost/actor/abstract_group.hpp"
 
 #include "boost/actor/detail/comparable.hpp"
@@ -30,13 +32,8 @@ namespace actor {
 
 class channel;
 class message;
-class message_header;
 
 struct invalid_group_t { constexpr invalid_group_t() { } };
-
-namespace detail {
-class raw_access;
-} // namespace detail
 
 /**
  * @brief Identifies an invalid {@link group}.
@@ -47,7 +44,8 @@ constexpr invalid_group_t invalid_group = invalid_group_t{};
 class group : detail::comparable<group>
             , detail::comparable<group, invalid_group_t> {
 
-    friend class detail::raw_access;
+    template<typename T, typename U>
+    friend T actor_cast(const U&);
 
  public:
 
@@ -124,6 +122,10 @@ class group : detail::comparable<group>
 
 
  private:
+
+    inline abstract_group* get() const {
+        return m_ptr.get();
+    }
 
     abstract_group_ptr m_ptr;
 

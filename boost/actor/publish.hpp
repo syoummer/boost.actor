@@ -24,8 +24,7 @@
 #include "boost/asio.hpp"
 
 #include "boost/actor/actor.hpp"
-
-#include "boost/actor/detail/raw_access.hpp"
+#include "boost/actor/actor_cast.hpp"
 
 #include "boost/actor_io/detail/publish_impl.hpp"
 
@@ -43,8 +42,9 @@ template<class Protocol>
 inline void publish(boost::actor::actor whom,
                     asio::basic_socket_acceptor<Protocol> acceptor) {
     typedef asio::basic_stream_socket<Protocol> sock_type;
-    detail::publish_impl<sock_type>(boost::actor::detail::raw_access::get(whom),
-                                    std::move(acceptor));
+    detail::publish_impl<sock_type>(
+                actor::actor_cast<actor::abstract_actor_ptr>(whom),
+                std::move(acceptor));
 }
 
 /**
@@ -59,7 +59,8 @@ inline void publish(boost::actor::actor whom,
  */
 inline void publish(boost::actor::actor whom, uint16_t port, const char* addr = nullptr) {
     if (!whom) return;
-    detail::publish_impl(boost::actor::detail::raw_access::get(whom), port, addr);
+    detail::publish_impl(actor::actor_cast<actor::abstract_actor_ptr>(whom),
+                         port, addr);
 }
 
 /**
@@ -69,7 +70,7 @@ template<class Protocol, typename... Rs>
 void typed_publish(boost::actor::typed_actor<Rs...> whom,
                    asio::basic_socket_acceptor<Protocol> acceptor) {
     if (!whom) return;
-    detail::publish_impl(boost::actor::detail::raw_access::get(whom),
+    detail::publish_impl(actor::actor_cast<actor::abstract_actor_ptr>(whom),
                          std::move(acceptor));
 }
 
@@ -81,7 +82,8 @@ void typed_publish(actor::typed_actor<Rs...> whom,
                    uint16_t port,
                    const char* addr = nullptr) {
     if (!whom) return;
-    detail::publish_impl(actor::detail::raw_access::get(whom), port, addr);
+    detail::publish_impl(actor::actor_cast<actor::abstract_actor_ptr>(whom),
+                         port, addr);
 }
 
 } // namespace actor_io

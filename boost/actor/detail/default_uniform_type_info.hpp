@@ -22,6 +22,7 @@
 #include <memory>
 
 #include "boost/actor/unit.hpp"
+#include "boost/actor/actor.hpp"
 #include "boost/actor/anything.hpp"
 #include "boost/actor/serializer.hpp"
 #include "boost/actor/typed_actor.hpp"
@@ -30,7 +31,6 @@
 #include "boost/actor/detail/type_traits.hpp"
 #include "boost/actor/detail/abstract_uniform_type_info.hpp"
 
-#include "boost/actor/detail/raw_access.hpp"
 #include "boost/actor/detail/types_array.hpp"
 
 namespace boost {
@@ -550,14 +550,14 @@ class default_uniform_type_info<typed_actor<Rs...>>
     }
 
     void serialize(const void* obj, serializer* s) const override {
-        actor tmp = detail::raw_access::unsafe_cast(deref(obj).address());
+        auto tmp = actor_cast<actor>(deref(obj).address());
         sub_uti->serialize(&tmp, s);
     }
 
     void deserialize(void* obj, deserializer* d) const override {
         actor tmp;
         sub_uti->deserialize(&tmp, d);
-        raw_access::unsafe_assign(deref(obj), tmp);
+        deref(obj) = actor_cast<handle_type>(tmp);
     }
 
  private:

@@ -31,12 +31,10 @@
 #include "boost/actor/message.hpp"
 #include "boost/actor/serializer.hpp"
 #include "boost/actor/deserializer.hpp"
-#include "boost/actor/message_header.hpp"
 #include "boost/actor/event_based_actor.hpp"
 
 #include "boost/actor_io/middleman.hpp"
 
-#include "boost/actor/detail/raw_access.hpp"
 #include "boost/actor/detail/group_manager.hpp"
 
 namespace boost {
@@ -57,21 +55,25 @@ class local_group : public abstract_group {
 
  public:
 
-    void send_all_subscribers(msg_hdr_cref hdr, const message& msg,
-                              execution_unit* eu) {
-        BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_TARG(hdr.sender, to_string) << ", "
-                       << BOOST_ACTOR_TARG(msg, to_string));
+    void send_all_subscribers(const actor_addr& sender,
+                              const message& msg,
+                              execution_unit* host) {
+        BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_TARG(sender, to_string)
+                              << ", " << BOOST_ACTOR_TARG(msg, to_string));
         shared_guard guard(m_mtx);
         for (auto& s : m_subscribers) {
-            s->enqueue(hdr, msg, eu);
+            s->enqueue(sender, message_id::invalid, msg, host);
         }
     }
 
-    void enqueue(msg_hdr_cref hdr, message msg, execution_unit* eu) override {
-        BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_TARG(hdr, to_string) << ", "
-                       << BOOST_ACTOR_TARG(msg, to_string));
-        send_all_subscribers(hdr, msg, eu);
-        m_broker->enqueue(hdr, msg, eu);
+    void enqueue(const actor_addr& sender,
+                 message_id,
+                 message msg,
+                 execution_unit* host) override {
+        BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_TARG(sender, to_string)
+                              << ", " << BOOST_ACTOR_TARG(msg, to_string));
+        send_all_subscribers(sender, msg, host);
+        m_broker->enqueue(sender, message_id::invalid, msg, host);
     }
 
     std::pair<bool, size_t> add_subscriber(const channel& who) {
@@ -143,12 +145,11 @@ class local_broker : public event_based_actor {
                     demonitor(other);
                 }
             },
-            on(atom("FORWARD"), arg_match) >> [=](const message& what) {
+            on(atom("_Forward"), arg_match) >> [=](const message& what) {
                 BOOST_ACTOR_LOGC_TRACE("cppa::local_broker", "init$FORWARD",
                                 BOOST_ACTOR_TARG(what, to_string));
                 // local forwarding
-                message_header hdr{last_sender(), nullptr};
-                m_group->send_all_subscribers(hdr, what, m_host);
+                m_group->send_all_subscribers(last_sender(), what, m_host);
                 // forward to all acquaintances
                 send_to_acquaintances(what);
             },
@@ -179,11 +180,12 @@ class local_broker : public event_based_actor {
     void send_to_acquaintances(const message& what) {
         // send to all remote subscribers
         auto sender = last_sender();
-        BOOST_ACTOR_LOG_DEBUG("forward message to " << m_acquaintances.size()
-                       << " acquaintances; " << BOOST_ACTOR_TSARG(sender)
-                       << ", " << BOOST_ACTOR_TSARG(what));
+        BOOST_ACTOR_LOG_DEBUG("forward message to "
+                              << m_acquaintances.size()
+                              << " acquaintances; " << BOOST_ACTOR_TSARG(sender)
+                              << ", " << BOOST_ACTOR_TSARG(what));
         for (auto& acquaintance : m_acquaintances) {
-            acquaintance->enqueue({sender, acquaintance}, what, m_host);
+            acquaintance->enqueue(sender, message_id::invalid, what, m_host);
         }
     }
 
@@ -237,9 +239,11 @@ class local_group_proxy : public local_group {
         }
     }
 
-    void enqueue(msg_hdr_cref hdr, message msg, execution_unit* eu) override {
+    void enqueue(const actor_addr& sender, message_id mid,
+                 message msg, execution_unit* eu) override {
         // forward message to the broker
-        m_broker->enqueue(hdr, make_message(atom("FORWARD"), move(msg)), eu);
+        m_broker->enqueue(sender, mid,
+                          make_message(atom("_Forward"), move(msg)), eu);
     }
 
  private:
@@ -259,8 +263,9 @@ class proxy_broker : public event_based_actor {
     behavior make_behavior() {
         return (
             others() >> [=] {
-                message_header hdr{last_sender(), nullptr};
-                m_group->send_all_subscribers(hdr, last_dequeued(), m_host);
+                m_group->send_all_subscribers(last_sender(),
+                                              last_dequeued(),
+                                              m_host);
             }
         );
     }
@@ -305,7 +310,7 @@ class local_group_module : public abstract_group::module {
         actor broker;
         m_actor_utype->deserialize(&broker, source);
         if (!broker) return invalid_group;
-        if (!broker->is_proxy()) {
+        if (!broker->is_remote()) {
             return this->get(identifier);
         }
         else {

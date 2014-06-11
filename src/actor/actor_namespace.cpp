@@ -28,7 +28,6 @@
 #include "boost/actor_io/remote_actor_proxy.hpp"
 
 #include "boost/actor/detail/logging.hpp"
-#include "boost/actor/detail/raw_access.hpp"
 #include "boost/actor/detail/singletons.hpp"
 #include "boost/actor/detail/actor_registry.hpp"
 
@@ -39,11 +38,7 @@ actor_namespace::backend::~backend() {
     // nop
 }
 
-actor_namespace::hook::~hook() {
-    // nop
-}
-
-actor_namespace::actor_namespace(backend& be) : m_backend(be), m_hook(nullptr) {
+actor_namespace::actor_namespace(backend& be) : m_backend(be) {
     // nop
 }
 
@@ -60,7 +55,7 @@ void actor_namespace::write(serializer* sink, const actor_addr& addr) {
         // register locally running actors to be able to deserialize them later
         if (!addr.is_remote()) {
             detail::singletons::get_actor_registry()
-            ->put(addr.id(), detail::raw_access::get(addr));
+            ->put(addr.id(), actor_cast<abstract_actor_ptr>(addr));
         }
         auto& pinf = addr.node();
         sink->write_value(addr.id());                                  // actor id
@@ -80,88 +75,64 @@ actor_addr actor_namespace::read(deserializer* source) {
         // 0:0 identifies an invalid actor
         return invalid_actor_addr;
     }
-    else if (pid == this_node->process_id() && hid == this_node->host_id()) {
+    if (pid == this_node->process_id() && hid == this_node->host_id()) {
         // identifies this exact process on this host, ergo: local actor
         auto a = detail::singletons::get_actor_registry()->get(aid);
         // might be invalid
         return a ? a->address() : invalid_actor_addr;
 
     }
-    else {
-        // identifies a remote actor; create proxy if needed
-        node_id_ptr tmp = new node_id{pid, hid};
-        return get_or_put(tmp, aid)->address();
-    }
+    // identifies a remote actor; create proxy if needed
+    node_id_ptr tmp = new node_id{pid, hid};
+    return get_or_put(tmp, aid)->address();
 }
 
-size_t actor_namespace::count_proxies(const node_id& node) {
+size_t actor_namespace::count_proxies(const key_type& node) {
     auto i = m_proxies.find(node);
     return (i != m_proxies.end()) ? i->second.size() : 0;
 }
 
-actor_proxy_ptr actor_namespace::get(const node_id& node, actor_id aid) {
+actor_proxy_ptr actor_namespace::get(const key_type& node, actor_id aid) {
     auto& submap = m_proxies[node];
     auto i = submap.find(aid);
     if (i != submap.end()) {
-        return i->second;
+        auto res = i->second->get();
+        if (!res) submap.erase(i); // instance is expired
+        return res;
     }
     return nullptr;
 }
 
-actor_proxy_ptr actor_namespace::get_or_put(node_id_ptr node, actor_id aid) {
-    auto result = get(*node, aid);
-    if (result == nullptr) {
-        auto ptr = m_backend.make_proxy(node, aid);
-        proxy_created(ptr);
-        put(*node, aid, ptr);
-        result = ptr;
+actor_proxy_ptr actor_namespace::get_or_put(const key_type& node, actor_id aid) {
+    auto& submap = m_proxies[node];
+    auto& anchor = submap[aid];
+    actor_proxy_ptr result;
+    if (anchor) result = anchor->get();
+    // replace anchor if we've created one using the default ctor
+    // or if we've found an expired one in the map
+    if (!anchor || !result) {
+        result = m_backend.make_proxy(node, aid);
+        anchor = result->get_anchor();
     }
     return result;
 }
 
-void actor_namespace::put(const node_id& node,
-                          actor_id aid,
-                          const actor_proxy_ptr& proxy) {
-    auto& submap = m_proxies[node];
-    auto i = submap.find(aid);
-    if (i == submap.end()) {
-        submap.insert(std::make_pair(aid, proxy));
-        m_backend.register_proxy(node, aid);
-        proxy_registered(node, aid);
-    }
-    else {
-        BOOST_ACTOR_LOG_ERROR("proxy for " << aid << ":"
-                       << to_string(node) << " already exists");
-    }
+bool actor_namespace::empty() const {
+    return m_proxies.empty();
 }
 
-auto actor_namespace::proxies(node_id& node) -> proxy_map& {
-    return m_proxies[node];
-}
-
-void actor_namespace::erase(const actor_proxy_ptr& proxy) {
-    BOOST_ACTOR_LOG_TRACE("proxy = " << proxy.get());
-    auto i = m_proxies.find(proxy->node());
-    if (i != m_proxies.end()) {
-        i->second.erase(proxy->id());
-    }
-}
-
-void actor_namespace::erase(const node_id& inf) {
+void actor_namespace::erase(const key_type& inf) {
     BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_TARG(inf, to_string));
     m_proxies.erase(inf);
 }
 
-void actor_namespace::erase(node_id& inf, actor_id aid) {
+void actor_namespace::erase(const key_type& inf, actor_id aid) {
     BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_TARG(inf, to_string) << ", " << BOOST_ACTOR_ARG(aid));
     auto i = m_proxies.find(inf);
     if (i != m_proxies.end()) {
         i->second.erase(aid);
+        if (i->second.empty()) m_proxies.erase(i);
     }
-}
-
-void actor_namespace::set_hook(hook* ptr) {
-    m_hook = ptr;
 }
 
 } // namespace actor

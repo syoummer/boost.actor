@@ -45,46 +45,31 @@ namespace scheduler {
 
 namespace {
 
-typedef uint32_t ui32;
+using hrc = std::chrono::high_resolution_clock;
 
-typedef std::chrono::high_resolution_clock hrc;
+using time_point = hrc::time_point;
 
-typedef hrc::time_point time_point;
+using timer_actor_policies = policy::policies<policy::no_scheduling,
+                                              policy::not_prioritizing,
+                                              policy::no_resume,
+                                              policy::nestable_invoke>;
 
-typedef policy::policies<policy::no_scheduling, policy::not_prioritizing,
-                         policy::no_resume, policy::nestable_invoke>
-        timer_actor_policies;
-
-class delayed_msg {
-
- public:
-
-    delayed_msg(message_header&& arg1,
-                message&&      arg2)
-    : hdr(std::move(arg1)), msg(std::move(arg2)) { }
-
-    delayed_msg(delayed_msg&&) = default;
-    delayed_msg(const delayed_msg&) = default;
-    delayed_msg& operator=(delayed_msg&&) = default;
-    delayed_msg& operator=(const delayed_msg&) = default;
-
-    inline void eval() {
-        hdr.deliver(std::move(msg));
-    }
-
- private:
-
-    message_header hdr;
-    message      msg;
-
+struct delayed_msg {
+    actor_addr from;
+    channel    to;
+    message_id mid;
+    message    msg;
 };
 
-template<class Map>
-inline void insert_dmsg(Map& storage, const duration& d,
-                        message_header&& hdr, message&& tup) {
+inline void deliver(delayed_msg& dm) {
+    dm.to->enqueue(dm.from, dm.mid, std::move(dm.msg), nullptr);
+}
+
+template<class Map, typename... Ts>
+inline void insert_dmsg(Map& storage, const duration& d, Ts&&... vs) {
     auto tout = hrc::now();
     tout += d;
-    delayed_msg dmsg{std::move(hdr), std::move(tup)};
+    delayed_msg dmsg{std::forward<Ts>(vs)...};
     storage.insert(std::make_pair(std::move(tout), std::move(dmsg)));
 }
 
@@ -113,10 +98,13 @@ class timer_actor final : public detail::proper_actor<blocking_actor,
         std::multimap<decltype(tout), delayed_msg> messages;
         // message handling rules
         auto mfun = (
-            on(atom("SEND"), arg_match) >> [&](const duration& d,
-                                               message_header& hdr,
-                                               message& tup) {
-                insert_dmsg(messages, d, std::move(hdr), std::move(tup));
+            on(atom("_Send"), arg_match) >> [&](const duration& d,
+                                                actor_addr&     from,
+                                                channel&        to,
+                                                message_id      mid,
+                                                message&        tup) {
+                insert_dmsg(messages, d, std::move(from), std::move(to),
+                            mid, std::move(tup));
             },
             on(atom("DIE")) >> [&] {
                 done = true;
@@ -138,7 +126,7 @@ class timer_actor final : public detail::proper_actor<blocking_actor,
                     // handle timeouts (send messages)
                     auto it = messages.begin();
                     while (it != messages.end() && (it->first) <= tout) {
-                        it->second.eval();
+                        deliver(it->second);
                         messages.erase(it);
                         it = messages.begin();
                     }
@@ -286,8 +274,8 @@ void coordinator::destroy() {
     // shutdown utility actors
     BOOST_ACTOR_LOG_DEBUG("send 'DIE' messages to timer & printer");
     auto msg = make_message(atom("DIE"));
-    m_timer->enqueue({invalid_actor_addr, nullptr}, msg, nullptr);
-    m_printer->enqueue({invalid_actor_addr, nullptr}, msg, nullptr);
+    m_timer->enqueue(invalid_actor_addr, message_id::invalid, msg, nullptr);
+    m_printer->enqueue(invalid_actor_addr, message_id::invalid, msg, nullptr);
     BOOST_ACTOR_LOG_DEBUG("join threads of utility actors");
     m_timer_thread.join();
     m_printer_thread.join();

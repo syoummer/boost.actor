@@ -27,12 +27,11 @@
 #include "boost/actor/config.hpp"
 #include "boost/actor/message.hpp"
 #include "boost/actor/actor_addr.hpp"
+#include "boost/actor/actor_cast.hpp"
 #include "boost/actor/abstract_actor.hpp"
-#include "boost/actor/message_header.hpp"
 #include "boost/actor/system_messages.hpp"
 
 #include "boost/actor/detail/logging.hpp"
-#include "boost/actor/detail/raw_access.hpp"
 #include "boost/actor/detail/singletons.hpp"
 #include "boost/actor/detail/actor_registry.hpp"
 #include "boost/actor/detail/shared_spinlock.hpp"
@@ -45,24 +44,24 @@ namespace { typedef std::unique_lock<std::mutex> guard_type; }
 // m_exit_reason is guaranteed to be set to 0, i.e., exit_reason::not_exited,
 // by std::atomic<> constructor
 
-abstract_actor::abstract_actor(actor_id aid)
-        : m_id(aid), m_is_proxy(true)
-        , m_exit_reason(exit_reason::not_exited), m_host(nullptr) { }
+abstract_actor::abstract_actor(actor_id aid, node_id_ptr nid)
+: super(std::move(nid)), m_id(aid), m_is_proxy(true)
+, m_exit_reason(exit_reason::not_exited), m_host(nullptr) { }
 
 abstract_actor::abstract_actor()
-        : m_id(detail::singletons::get_actor_registry()->next_id())
-        , m_is_proxy(false)
-        , m_exit_reason(exit_reason::not_exited), m_host(nullptr) {
-    m_node = detail::singletons::get_node_id();
-}
+: super(detail::singletons::get_node_id())
+, m_id(detail::singletons::get_actor_registry()->next_id())
+, m_is_proxy(false)
+, m_exit_reason(exit_reason::not_exited), m_host(nullptr) { }
 
 bool abstract_actor::link_to_impl(const actor_addr& other) {
     if (other && other != this) {
         guard_type guard{m_mtx};
-        auto ptr = detail::raw_access::get(other);
+        auto ptr = actor_cast<abstract_actor_ptr>(other);
         // send exit message if already exited
         if (exited()) {
-            ptr->enqueue({address(), ptr},
+            ptr->enqueue(address(),
+                         message_id::invalid,
                          make_message(exit_msg{address(), exit_reason()}),
                          m_host);
         }
@@ -138,15 +137,16 @@ bool abstract_actor::establish_backlink(const actor_addr& other) {
         if (reason == exit_reason::not_exited) {
             auto i = std::find(m_links.begin(), m_links.end(), other);
             if (i == m_links.end()) {
-                m_links.push_back(detail::raw_access::get(other));
+                m_links.push_back(actor_cast<abstract_actor_ptr>(other));
                 return true;
             }
         }
     }
     // send exit message without lock
     if (reason != exit_reason::not_exited) {
-        auto ptr = detail::raw_access::unsafe_cast(other);
-        ptr->enqueue({address(), ptr},
+        auto ptr = actor_cast<abstract_actor_ptr>(other);
+        ptr->enqueue(address(),
+                     message_id::invalid,
                      make_message(exit_msg{address(), exit_reason()}),
                      m_host);
     }
@@ -157,7 +157,7 @@ bool abstract_actor::unlink_from_impl(const actor_addr& other) {
     if (!other) return false;
     guard_type guard{m_mtx};
     // remove_backlink returns true if this actor is linked to other
-    auto ptr = detail::raw_access::get(other);
+    auto ptr = actor_cast<abstract_actor_ptr>(other);
     if (!exited() && ptr->remove_backlink(address())) {
         auto i = std::find(m_links.begin(), m_links.end(), ptr);
         BOOST_ACTOR_REQUIRE(i != m_links.end());
@@ -192,7 +192,7 @@ void abstract_actor::cleanup(uint32_t reason) {
         m_links.clear();
         m_attachables.clear();
     }
-    BOOST_ACTOR_LOGC_INFO_IF(not is_proxy(), "cppa::actor", __func__,
+    BOOST_ACTOR_LOGC_INFO_IF(not is_remote(), "cppa::actor", __func__,
                       "actor with ID " << m_id << " had " << mlinks.size()
                       << " links and " << mattachables.size()
                       << " attached functors; exit reason = " << reason
@@ -201,8 +201,10 @@ void abstract_actor::cleanup(uint32_t reason) {
     auto msg = make_message(exit_msg{address(), reason});
     BOOST_ACTOR_LOGM_DEBUG("cppa::actor", "send EXIT to " << mlinks.size() << " links");
     for (auto& aptr : mlinks) {
-        aptr->enqueue({address(), aptr, message_id{}.with_high_priority()},
-                      msg, m_host);
+        aptr->enqueue(address(),
+                      message_id{}.with_high_priority(),
+                      msg,
+                      m_host);
     }
     BOOST_ACTOR_LOGM_DEBUG("cppa::actor", "run " << mattachables.size()
                                    << " attachables");

@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "boost/actor/message_builder.hpp"
+#include "boost/actor/message_handler.hpp"
 #include "boost/actor/uniform_type_info.hpp"
 
 namespace boost {
@@ -85,6 +86,10 @@ message_builder& message_builder::append(uniform_value what) {
 
 message message_builder::to_message() {
     return message{new dynamic_msg_data(std::move(m_elements))};
+}
+
+optional<message> message_builder::apply(message_handler handler) {
+    return to_message().apply(std::move(handler));
 }
 
 } // namespace actor

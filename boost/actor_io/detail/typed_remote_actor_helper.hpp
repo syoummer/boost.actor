@@ -19,10 +19,10 @@
 #ifndef BOOST_ACTOR_DETAIL_TYPED_REMOTE_ACTOR_HELPER_HPP
 #define BOOST_ACTOR_DETAIL_TYPED_REMOTE_ACTOR_HELPER_HPP
 
+#include "boost/actor/actor_cast.hpp"
 #include "boost/actor/typed_actor.hpp"
 
 #include "boost/actor/detail/type_list.hpp"
-#include "boost/actor/detail/raw_access.hpp"
 
 #include "boost/actor_io/detail/remote_actor_impl.hpp"
 
@@ -40,10 +40,7 @@ struct typed_remote_actor_helper<actor::detail::type_list<Ts...>> {
     return_type operator()(Vs&&... vs) {
         auto iface = return_type::get_interface();
         auto tmp = remote_actor_impl(std::forward<Vs>(vs)..., std::move(iface));
-        return_type res;
-        // actually safe, because remote_actor_impl throws on type mismatch
-        actor::detail::raw_access::unsafe_assign(res, tmp);
-        return res;
+        return actor::actor_cast<return_type>(tmp);
     }
 };
 

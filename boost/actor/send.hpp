@@ -23,7 +23,6 @@
 #include "boost/actor/channel.hpp"
 #include "boost/actor/message.hpp"
 #include "boost/actor/actor_addr.hpp"
-#include "boost/actor/message_header.hpp"
 
 namespace boost {
 namespace actor {
@@ -32,7 +31,8 @@ namespace actor {
  * @brief Sends @p to a message under the identity of @p from.
  */
 inline void send_tuple_as(const actor& from, const channel& to, message msg) {
-    if (to) to->enqueue({from.address(), to}, std::move(msg), nullptr);
+    if (to) to->enqueue(from.address(), message_id::invalid,
+                        std::move(msg), nullptr);
 }
 
 /**

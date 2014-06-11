@@ -36,7 +36,13 @@ class message_builder {
     message_builder() = default;
 
     message_builder(const message_builder&) = delete;
+
     message_builder& operator=(const message_builder&) = delete;
+
+    template<typename Iter>
+    message_builder(Iter first, Iter last) {
+        append(first, last);
+    }
 
     template<typename T>
     message_builder& append(T what) {
@@ -54,12 +60,13 @@ class message_builder {
             append(std::move(uval));
         }
         return *this;
-
     }
 
     message_builder& append(uniform_value what);
 
     message to_message();
+
+    optional<message> apply(message_handler handler);
 
  private:
 

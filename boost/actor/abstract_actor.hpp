@@ -52,6 +52,11 @@ class execution_unit;
  */
 typedef uint32_t actor_id;
 
+/**
+ * @brief Denotes an ID that is never used by an actor.
+ */
+constexpr actor_id invalid_actor_id = 0;
+
 class actor;
 class abstract_actor;
 class response_promise;
@@ -64,6 +69,8 @@ typedef intrusive_ptr<abstract_actor> abstract_actor_ptr;
 class abstract_actor : public abstract_channel {
 
     friend class response_promise;
+
+    using super = abstract_channel;
 
  public:
 
@@ -162,18 +169,6 @@ class abstract_actor : public abstract_channel {
     inline actor_id id() const;
 
     /**
-     * @brief Checks if this actor is running on a remote node.
-     * @returns @c true if this actor represents a remote actor;
-     *          otherwise @c false.
-     */
-    inline bool is_proxy() const;
-
-    /**
-     * @brief Returns the ID of the node this actor is running on.
-     */
-    inline const node_id& node() const;
-
-    /**
      * @brief Returns the actor's exit reason of
      *        <tt>exit_reason::not_exited</tt> if it's still alive.
      */
@@ -189,7 +184,7 @@ class abstract_actor : public abstract_channel {
 
     abstract_actor();
 
-    abstract_actor(actor_id aid);
+    abstract_actor(actor_id aid, node_id_ptr nid);
 
     /**
      * @brief Should be overridden by subtypes and called upon termination.
@@ -235,9 +230,6 @@ class abstract_actor : public abstract_channel {
 
  protected:
 
-    // identifies the node this actor is running on
-    node_id_ptr m_node;
-
     // identifies the execution unit this actor is currently executed by
     execution_unit* m_host;
 
@@ -251,20 +243,12 @@ inline uint32_t abstract_actor::id() const {
     return m_id;
 }
 
-inline bool abstract_actor::is_proxy() const {
-    return m_is_proxy;
-}
-
 inline uint32_t abstract_actor::exit_reason() const {
     return m_exit_reason;
 }
 
 inline bool abstract_actor::exited() const {
     return exit_reason() != exit_reason::not_exited;
-}
-
-inline const node_id& abstract_actor::node() const {
-    return *m_node;
 }
 
 template<class F>

@@ -288,7 +288,10 @@ void test_sync_send() {
     auto c = spawn<C>(); // replies only to 'gogo' messages
     // first test: sync error must occur, continuation must not be called
     bool timeout_occured = false;
-    self->on_sync_timeout([&] { timeout_occured = true; });
+    self->on_sync_timeout([&] {
+        BOOST_ACTOR_CHECKPOINT();
+        timeout_occured = true;
+    });
     self->on_sync_failure(BOOST_ACTOR_UNEXPECTED_MSG_CB_REF(self));
     self->timed_sync_send(c, std::chrono::milliseconds(500), atom("HiThere"))
     .await(BOOST_ACTOR_FAILURE_CB("C replied to 'HiThere'!"));

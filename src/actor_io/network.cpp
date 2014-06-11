@@ -17,6 +17,7 @@
 
 
 #include "boost/actor_io/network.hpp"
+#include "boost/actor_io/middleman.hpp"
 
 namespace boost {
 namespace actor_io {
@@ -28,6 +29,10 @@ manager::~manager() {
 
 stream_manager::~stream_manager() {
     // nop
+}
+
+multiplexer& get_multiplexer_singleton() {
+    return middleman::instance()->backend();
 }
 
 } // namespace network

@@ -23,7 +23,6 @@
 
 #include "boost/actor/message.hpp"
 #include "boost/actor/scheduler.hpp"
-#include "boost/actor/message_header.hpp"
 
 #include "boost/actor/detail/singletons.hpp"
 #include "boost/actor/detail/single_reader_queue.hpp"
@@ -46,21 +45,21 @@ class cooperative_scheduling {
     }
 
     template<class Actor>
-    void enqueue(Actor* self, msg_hdr_cref hdr,
-                 message& msg, execution_unit* host) {
-        auto e = self->new_mailbox_element(hdr, std::move(msg));
+    void enqueue(Actor* self, const actor_addr& sender,
+                 message_id mid, message& msg, execution_unit* eu) {
+        auto e = self->new_mailbox_element(sender, mid, std::move(msg));
         switch (self->mailbox().enqueue(e)) {
             case detail::enqueue_result::unblocked_reader: {
                 // re-schedule actor
-                if (host) host->exec_later(self);
+                if (eu) eu->exec_later(self);
                 else detail::singletons::get_scheduling_coordinator()
                      ->enqueue(self);
                 break;
             }
             case detail::enqueue_result::queue_closed: {
-                if (hdr.id.is_request()) {
+                if (mid.is_request()) {
                     detail::sync_request_bouncer f{self->exit_reason()};
-                    f(hdr.sender, hdr.id);
+                    f(sender, mid);
                 }
                 break;
             }

@@ -19,13 +19,10 @@
 #ifndef BOOST_ACTOR_SCHEDULING_POLICY_HPP
 #define BOOST_ACTOR_SCHEDULING_POLICY_HPP
 
+#include "boost/actor/fwd.hpp"
+
 namespace boost {
 namespace actor {
-
-class message;
-class duration;
-class execution_unit;
-class message_header;
 
 namespace policy {
 
@@ -93,7 +90,8 @@ class scheduling_policy {
      */
     template<class Actor>
     void enqueue(Actor* self,
-                 msg_hdr_cref hdr,
+                 const actor_addr& sender,
+                 message_id mid,
                  message& msg,
                  execution_unit* host);
 

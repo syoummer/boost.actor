@@ -19,6 +19,8 @@
 #ifndef BOOST_ACTOR_UNTYPED_ACTOR_HPP
 #define BOOST_ACTOR_UNTYPED_ACTOR_HPP
 
+#include <type_traits>
+
 #include "boost/actor/on.hpp"
 #include "boost/actor/extend.hpp"
 #include "boost/actor/local_actor.hpp"
@@ -26,6 +28,7 @@
 
 #include "boost/actor/mixin/sync_sender.hpp"
 #include "boost/actor/mixin/mailbox_based.hpp"
+#include "boost/actor/mixin/functor_based.hpp"
 #include "boost/actor/mixin/behavior_stack_based.hpp"
 
 #include "boost/actor/detail/logging.hpp"
@@ -55,6 +58,8 @@ class event_based_actor
 
     ~event_based_actor();
 
+    class functor_based;
+
  protected:
 
     /**
@@ -68,6 +73,20 @@ class event_based_actor
     void forward_to(const actor& whom);
 
     bool m_initialized;
+
+};
+
+class event_based_actor::functor_based : public extend<event_based_actor>::
+                                                with<mixin::functor_based> {
+
+    using super = combined_type;
+
+ public:
+
+    template<typename... Ts>
+    functor_based(Ts&&... vs) : super(std::forward<Ts>(vs)...) { }
+
+    behavior make_behavior() override;
 
 };
 

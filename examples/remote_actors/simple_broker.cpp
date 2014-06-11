@@ -161,13 +161,13 @@ int main(int argc, char** argv) {
         on("-s", as_u16) >> [&](uint16_t port) {
             cout << "run in server mode" << endl;
             auto pong_actor = spawn(pong);
-            auto sever_actor = spawn_io_server(server, port, pong_actor);
+            auto sever_actor = actor{invalid_actor};//spawn_io_server(server, port, pong_actor);
             print_on_exit(sever_actor, "server");
             print_on_exit(pong_actor, "pong");
         },
         on("-c", val<string>, as_u16) >> [&](const string& host, uint16_t port) {
             auto ping_actor = spawn(ping, 20);
-            auto io_actor = spawn_io_client(broker_impl, host, port, ping_actor);
+            auto io_actor = actor{invalid_actor};//spawn_io_client(broker_impl, host, port, ping_actor);
             print_on_exit(io_actor, "protobuf_io");
             print_on_exit(ping_actor, "ping");
             send_as(io_actor, ping_actor, atom("kickoff"), io_actor);

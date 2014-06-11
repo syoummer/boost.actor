@@ -65,6 +65,14 @@ struct optional_message_visitor : static_visitor<bhvr_invoke_result> {
     inline bhvr_invoke_result operator()(const skip_message_t&) const { return none; }
     inline bhvr_invoke_result operator()(unit_t&) const { return message{}; }
     inline bhvr_invoke_result operator()(const unit_t&) const { return message{}; }
+    inline bhvr_invoke_result operator()(optional<skip_message_t>& val) const {
+        if (val) return none;
+        return message{};
+    }
+    inline bhvr_invoke_result operator()(const optional<skip_message_t>& val) const {
+        if (val) return none;
+        return message{};
+    }
     template<typename T, typename... Ts>
     inline typename std::enable_if<not is_message_id_wrapper<T>::value,
                                    bhvr_invoke_result>::type

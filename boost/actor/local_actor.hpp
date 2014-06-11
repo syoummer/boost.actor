@@ -35,7 +35,6 @@
 #include "boost/actor/exit_reason.hpp"
 #include "boost/actor/typed_actor.hpp"
 #include "boost/actor/spawn_options.hpp"
-#include "boost/actor/message_header.hpp"
 #include "boost/actor/abstract_actor.hpp"
 #include "boost/actor/abstract_group.hpp"
 #include "boost/actor/mailbox_element.hpp"
@@ -270,8 +269,7 @@ class local_actor : public extend<abstract_actor>::with<mixin::memory_cached> {
      * @param args Message content as a tuple.
      */
     template<typename... Ts>
-    void delayed_send(const channel& whom, const duration& rtime,
-                      Ts&&... args) {
+    void delayed_send(const channel& whom, const duration& rtime, Ts&&... args) {
         delayed_send_tuple(message_priority::normal, whom, rtime,
                            make_message(std::forward<Ts>(args)...));
     }

@@ -32,7 +32,6 @@ namespace actor {
 
 class actor_namespace;
 class uniform_type_info;
-class type_lookup_table;
 
 /**
  * @ingroup TypeSystem
@@ -48,8 +47,7 @@ class serializer {
     /**
      * @note @p addressing must be guaranteed to outlive the serializer
      */
-    serializer(actor_namespace* addressing = nullptr,
-               type_lookup_table* outgoing_types = nullptr);
+    serializer(actor_namespace* addressing = nullptr);
 
     virtual ~serializer();
 
@@ -90,14 +88,21 @@ class serializer {
         return m_namespace;
     }
 
-    inline type_lookup_table* outgoing_types() {
-        return m_outgoing_types;
+    template<typename T>
+    inline serializer& write(const T& val) {
+        write_value(val);
+        return *this;
+    }
+
+    template<typename T>
+    inline serializer& write(const T& val, const uniform_type_info* uti) {
+        uti->serialize(&val, this);
+        return *this;
     }
 
  private:
 
     actor_namespace* m_namespace;
-    type_lookup_table* m_outgoing_types;
 
 };
 

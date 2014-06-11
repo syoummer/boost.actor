@@ -129,11 +129,11 @@ inline void cppa_check_value(V1 v1,
     else cppa_failed(v1, v2, fname, line);
 }
 
-#define BOOST_ACTOR_VERBOSE_EVAL(LineOfCode)                                          \
+#define BOOST_ACTOR_VERBOSE_EVAL(LineOfCode)                                   \
     BOOST_ACTOR_PRINT(#LineOfCode << " = " << (LineOfCode));
 
 #define BOOST_ACTOR_TEST(testname)                                             \
-    auto cppa_test_scope_guard = ::boost::actor::detail::make_scope_guard([] {   \
+    auto cppa_test_scope_guard = ::boost::actor::detail::make_scope_guard([] { \
         std::cout << cppa_error_count() << " error(s) detected" << std::endl;  \
     });                                                                        \
     set_default_test_settings();                                               \
@@ -141,40 +141,40 @@ inline void cppa_check_value(V1 v1,
 
 #define BOOST_ACTOR_TEST_RESULT() ((cppa_error_count() == 0) ? 0 : -1)
 
-#define BOOST_ACTOR_CHECK_VERBOSE(line_of_code, err_stream)                           \
+#define BOOST_ACTOR_CHECK_VERBOSE(line_of_code, err_stream)                    \
     if (!(line_of_code)) {                                                     \
         std::cerr << err_stream << std::endl;                                  \
         cppa_inc_error_count();                                                \
     }                                                                          \
     else {                                                                     \
-        BOOST_ACTOR_PRINT("passed");                                                  \
+        BOOST_ACTOR_PRINT("passed");                                           \
     } ((void) 0)
 
-#define BOOST_ACTOR_CHECK(line_of_code)                                               \
+#define BOOST_ACTOR_CHECK(line_of_code)                                        \
     if (!(line_of_code)) {                                                     \
-        BOOST_ACTOR_PRINTERR(#line_of_code);                                          \
+        BOOST_ACTOR_PRINTERR(#line_of_code);                                   \
         cppa_inc_error_count();                                                \
     }                                                                          \
     else { BOOST_ACTOR_PRINT("passed"); } BOOST_ACTOR_VOID_STMT
 
-#define BOOST_ACTOR_CHECK_EQUAL(lhs_loc, rhs_loc)                                     \
+#define BOOST_ACTOR_CHECK_EQUAL(lhs_loc, rhs_loc)                              \
     cppa_check_value((lhs_loc), (rhs_loc), __FILE__, __LINE__)
 
-#define BOOST_ACTOR_CHECK_NOT_EQUAL(rhs_loc, lhs_loc)                                 \
+#define BOOST_ACTOR_CHECK_NOT_EQUAL(rhs_loc, lhs_loc)                          \
     cppa_check_value((lhs_loc), (rhs_loc), __FILE__, __LINE__, false)
 
-#define BOOST_ACTOR_FAILURE(err_msg) {                                                \
-        BOOST_ACTOR_PRINTERR("ERROR: " << err_msg);                                   \
+#define BOOST_ACTOR_FAILURE(err_msg) {                                         \
+        BOOST_ACTOR_PRINTERR("ERROR: " << err_msg);                            \
         cppa_inc_error_count();                                                \
     } ((void) 0)
 
-#define BOOST_ACTOR_CHECKPOINT()                                                      \
+#define BOOST_ACTOR_CHECKPOINT()                                               \
     BOOST_ACTOR_PRINT("passed")
 
-#define BOOST_ACTOR_UNEXPECTED_TOUT()                                                 \
+#define BOOST_ACTOR_UNEXPECTED_TOUT()                                          \
     cppa_unexpected_timeout(__FILE__, __LINE__)
 
-#define BOOST_ACTOR_UNEXPECTED_MSG(selfptr)                                           \
+#define BOOST_ACTOR_UNEXPECTED_MSG(selfptr)                                    \
     cppa_unexpected_message(__FILE__, __LINE__, selfptr ->last_dequeued())
 
 // some convenience macros for defining callbacks
@@ -184,22 +184,19 @@ inline void cppa_check_value(V1 v1,
 #define BOOST_ACTOR_UNEXPECTED_MSG_CB_REF(selfref) [&] { BOOST_ACTOR_UNEXPECTED_MSG(selfref); }
 #define BOOST_ACTOR_UNEXPECTED_TOUT_CB() [] { BOOST_ACTOR_UNEXPECTED_TOUT(); }
 
+// string projection
+template<typename T>
+boost::optional<T> spro(const std::string& str) {
+    T value;
+    std::istringstream iss(str);
+    if (iss >> value) {
+        return value;
+    }
+    return boost::none;
+}
+
 std::vector<std::string> split(const std::string& str, char delim = ' ', bool keep_empties = true);
 
 std::map<std::string, std::string> get_kv_pairs(int argc, char** argv, int begin = 1);
-
-template<typename F>
-void run_client_part(const std::map<std::string, std::string>& args, F fun) {
-    BOOST_ACTOR_LOGF_INFO("run in client mode");
-    auto i = args.find("port");
-    if (i == args.end()) {
-        BOOST_ACTOR_LOGF_ERROR("no port specified");
-        throw std::logic_error("no port specified");
-    }
-    auto port = static_cast<uint16_t>(stoi(i->second));
-    fun(port);
-    boost::actor::await_all_actors_done();
-    boost::actor::shutdown();
-}
 
 #endif // TEST_HPP

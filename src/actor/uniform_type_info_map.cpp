@@ -31,16 +31,15 @@
 #include "boost/algorithm/string/classification.hpp"
 
 #include "boost/actor/group.hpp"
-#include "boost/actor/announce.hpp"
 #include "boost/actor/message.hpp"
+#include "boost/actor/announce.hpp"
 #include "boost/actor/duration.hpp"
-#include "boost/actor/message_header.hpp"
+#include "boost/actor/actor_cast.hpp"
 #include "boost/actor/abstract_group.hpp"
 #include "boost/actor/actor_namespace.hpp"
 #include "boost/actor/message_builder.hpp"
 
 #include "boost/actor/detail/logging.hpp"
-#include "boost/actor/detail/raw_access.hpp"
 #include "boost/actor/detail/safe_equal.hpp"
 #include "boost/actor/detail/singletons.hpp"
 #include "boost/actor/detail/scope_guard.hpp"
@@ -70,7 +69,7 @@ namespace detail {
     { "boost::actor::group",                            "@group"              },
     { "boost::actor::group_down_msg",                   "@group_down"         },
     { "boost::actor::message",                          "@message"            },
-    { "boost::actor::message_header",                   "@header"             },
+    { "boost::actor::message_id",                       "@message_id"         },
     { "boost::actor::new_connection_msg",               "@new_connection"     },
     { "boost::actor::new_data_msg",                     "@new_data"           },
     { "boost::actor::sync_exited_msg",                  "@sync_exited"        },
@@ -182,7 +181,7 @@ void serialize_impl(const actor& ptr, serializer* sink) {
 void deserialize_impl(actor& ptr, deserializer* source) {
     actor_addr addr;
     deserialize_impl(addr, source);
-    ptr = detail::raw_access::unsafe_cast(addr);
+    ptr = actor_cast<actor>(addr);
 }
 
 void serialize_impl(const group& gref, serializer* sink) {
@@ -220,13 +219,13 @@ void serialize_impl(const channel& chref, serializer* sink) {
     }
     else {
         // raw pointer
-        auto rptr = detail::raw_access::get(chref);
+        auto rptr = actor_cast<abstract_channel*>(chref);
         // raw actor pointer
-        auto aptr = dynamic_cast<abstract_actor*>(rptr);
+        abstract_actor_ptr aptr = dynamic_cast<abstract_actor*>(rptr);
         if (aptr != nullptr) {
             flag = 1;
             sink->write_value(flag);
-            serialize_impl(detail::raw_access::unsafe_cast(aptr), sink);
+            serialize_impl(actor_cast<actor>(aptr), sink);
         }
         else {
             // get raw group pointer and store it inside a group handle
@@ -254,7 +253,7 @@ void deserialize_impl(channel& ptrref, deserializer* source) {
         case 1: {
             actor tmp;
             deserialize_impl(tmp, source);
-            ptrref = detail::raw_access::get(tmp);
+            ptrref = actor_cast<channel>(tmp);
             break;
         }
         case 2: {
@@ -303,18 +302,6 @@ void deserialize_impl(message& atref, deserializer* source) {
     uti->deserialize(uval->val, source);
     source->end_object();
     atref = uti->as_message(uval->val);
-}
-
-void serialize_impl(msg_hdr_cref hdr, serializer* sink) {
-    serialize_impl(hdr.sender, sink);
-    serialize_impl(hdr.receiver, sink);
-    sink->write_value(hdr.id.integer_value());
-}
-
-void deserialize_impl(message_header& hdr, deserializer* source) {
-    deserialize_impl(hdr.sender, source);
-    deserialize_impl(hdr.receiver, source);
-    hdr.id = message_id::from_integer_value(source->read<uint64_t>());
 }
 
 void serialize_impl(const node_id_ptr& ptr, serializer* sink) {
@@ -413,6 +400,14 @@ inline void serialize_impl(const group_down_msg& dm, serializer* sink) {
 
 inline void deserialize_impl(group_down_msg& dm, deserializer* source) {
     deserialize_impl(dm.source, source);
+}
+
+inline void serialize_impl(const message_id& dm, serializer* sink) {
+    sink->write_value(dm.integer_value());
+}
+
+inline void deserialize_impl(message_id& dm, deserializer* source) {
+    dm = message_id::from_integer_value(source->read<uint64_t>());
 }
 
 inline void serialize_impl(const timeout_msg& tm, serializer* sink) {
@@ -786,13 +781,13 @@ class utim_impl : public uniform_type_info_map {
         *i++ = &m_type_exit_msg;            // @exit
         *i++ = &m_type_group;               // @group
         *i++ = &m_type_group_down;          // @group_down
-        *i++ = &m_type_header;              // @header
         *i++ = &m_type_i16;                 // @i16
         *i++ = &m_type_i32;                 // @i32
         *i++ = &m_type_i64;                 // @i64
         *i++ = &m_type_i8;                  // @i8
         *i++ = &m_type_long_double;         // @ldouble
         *i++ = &m_type_message;             // @message
+        *i++ = &m_type_message_id;          // @message_id
         *i++ = &m_type_new_connection;      // @new_connection
         *i++ = &m_type_new_data;            // @new_data
         *i++ = &m_type_proc;                // @proc
@@ -907,34 +902,34 @@ class utim_impl : public uniform_type_info_map {
     typedef std::vector<char> charbuf;
 
     // 0-9
-    uti_impl<node_id_ptr>                   m_type_proc;
-    uti_impl<channel>                       m_type_channel;
-    uti_impl<down_msg>                      m_type_down_msg;
-    uti_impl<exit_msg>                      m_type_exit_msg;
-    uti_impl<actor>                         m_type_actor;
-    uti_impl<actor_addr>                    m_type_actor_addr;
-    uti_impl<group>                         m_type_group;
-    uti_impl<group_down_msg>                m_type_group_down;
-    uti_impl<message>                       m_type_message;
-    uti_impl<duration>                      m_type_duration;
+    uti_impl<node_id_ptr>              m_type_proc;
+    uti_impl<channel>                  m_type_channel;
+    uti_impl<down_msg>                 m_type_down_msg;
+    uti_impl<exit_msg>                 m_type_exit_msg;
+    uti_impl<actor>                    m_type_actor;
+    uti_impl<actor_addr>               m_type_actor_addr;
+    uti_impl<group>                    m_type_group;
+    uti_impl<group_down_msg>           m_type_group_down;
+    uti_impl<message>                  m_type_message;
+    uti_impl<message_id>               m_type_message_id;
 
     // 10-19
-    uti_impl<sync_exited_msg>               m_type_sync_exited;
-    uti_impl<sync_timeout_msg>              m_type_sync_timeout;
-    uti_impl<timeout_msg>                   m_type_timeout;
-    uti_impl<message_header>                m_type_header;
-    uti_impl<unit_t>                        m_type_unit;
-    uti_impl<atom_value>                    m_type_atom;
-    uti_impl<std::string>                   m_type_str;
-    uti_impl<std::u16string>                m_type_u16str;
-    uti_impl<std::u32string>                m_type_u32str;
-    default_uniform_type_info<strmap>       m_type_strmap;
+    uti_impl<duration>                 m_type_duration;
+    uti_impl<sync_exited_msg>          m_type_sync_exited;
+    uti_impl<sync_timeout_msg>         m_type_sync_timeout;
+    uti_impl<timeout_msg>              m_type_timeout;
+    uti_impl<unit_t>                   m_type_unit;
+    uti_impl<atom_value>               m_type_atom;
+    uti_impl<std::string>              m_type_str;
+    uti_impl<std::u16string>           m_type_u16str;
+    uti_impl<std::u32string>           m_type_u32str;
+    default_uniform_type_info<strmap>  m_type_strmap;
 
     // 20-29
-    uti_impl<bool>                          m_type_bool;
-    uti_impl<float>                         m_type_float;
-    uti_impl<double>                        m_type_double;
-    uti_impl<long double>                   m_type_long_double;
+    uti_impl<bool>                     m_type_bool;
+    uti_impl<float>                    m_type_float;
+    uti_impl<double>                   m_type_double;
+    uti_impl<long double>              m_type_long_double;
     int_tinfo<int8_t>                  m_type_i8;
     int_tinfo<uint8_t>                 m_type_u8;
     int_tinfo<int16_t>                 m_type_i16;
@@ -945,13 +940,13 @@ class utim_impl : public uniform_type_info_map {
     // 30-38
     int_tinfo<int64_t>                 m_type_i64;
     int_tinfo<uint64_t>                m_type_u64;
-    default_uniform_type_info<charbuf>      m_type_charbuf;
-    uti_impl<accept_handle>                 m_type_accept;
-    uti_impl<connection_handle>             m_type_connection;
-    uti_impl<acceptor_closed_msg>           m_type_acceptor_closed;
-    uti_impl<connection_closed_msg>         m_type_connection_closed;
-    uti_impl<new_connection_msg>            m_type_new_connection;
-    uti_impl<new_data_msg>                  m_type_new_data;
+    default_uniform_type_info<charbuf> m_type_charbuf;
+    uti_impl<accept_handle>            m_type_accept;
+    uti_impl<connection_handle>        m_type_connection;
+    uti_impl<acceptor_closed_msg>      m_type_acceptor_closed;
+    uti_impl<connection_closed_msg>    m_type_connection_closed;
+    uti_impl<new_connection_msg>       m_type_new_connection;
+    uti_impl<new_data_msg>             m_type_new_data;
 
     // both containers are sorted by uniform name
     std::array<pointer, 39> m_builtin_types;

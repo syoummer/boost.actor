@@ -41,11 +41,13 @@ class proper_actor_base : public Policies::resume_policy::template mixin<Base, D
 
     typedef typename Policies::scheduling_policy::timeout_type timeout_type;
 
-    void enqueue(msg_hdr_cref hdr, message msg, execution_unit* eu) override {
+    void enqueue(const actor_addr& sender, message_id mid,
+                 message msg, execution_unit* eu) override {
         BOOST_ACTOR_PUSH_AID(dptr()->id());
-        BOOST_ACTOR_LOG_DEBUG(BOOST_ACTOR_TARG(hdr, to_string)
-                       << ", " << BOOST_ACTOR_TARG(msg, to_string));
-        scheduling_policy().enqueue(dptr(), hdr, msg, eu);
+        BOOST_ACTOR_LOG_DEBUG(BOOST_ACTOR_TARG(sender, to_string)
+                              << ", " << BOOST_ACTOR_MARG(mid, integer_value)
+                              << ", " << BOOST_ACTOR_TARG(msg, to_string));
+        scheduling_policy().enqueue(dptr(), sender, mid, msg, eu);
     }
 
     inline void launch(bool is_hidden, execution_unit* host) {
@@ -133,7 +135,6 @@ class proper_actor_base : public Policies::resume_policy::template mixin<Base, D
         if (!hidden()) detail::singletons::get_actor_registry()->dec_running();
         super::cleanup(reason);
     }
-
 
  protected:
 
@@ -308,7 +309,7 @@ class proper_actor<Base, Policies, true> : public proper_actor_base<Base,
         auto msg = make_message(timeout_msg{tid});
         if (d.is_zero()) {
             // immediately enqueue timeout message if duration == 0s
-            this->enqueue({this->address(), this},
+            this->enqueue(this->address(), message_id::invalid,
                           std::move(msg), this->m_host);
             //auto e = this->new_mailbox_element(this, std::move(msg));
             //this->m_mailbox.enqueue(e);

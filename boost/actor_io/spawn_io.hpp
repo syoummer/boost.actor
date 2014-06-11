@@ -66,7 +66,7 @@ template<actor::spawn_options Os = actor::no_spawn_options,
          typename... Ts>
 actor::actor spawn_io_client(F fun, const std::string& host, uint16_t port, Ts&&... args) {
     network::default_socket fd{middleman::instance()->backend()};
-    network::connect_ipv4_socket(fd, host, port);
+    network::ipv4_connect(fd, host, port);
     return spawn_io_client(std::move(fun), std::move(fd), std::forward<Ts>(args)...);
 }
 
@@ -91,7 +91,7 @@ template<actor::spawn_options Os = actor::no_spawn_options,
          typename... Ts>
 actor::actor spawn_io_server(F fun, uint16_t port, Ts&&... args) {
     network::default_socket_acceptor fd{middleman::instance()->backend()};
-    network::bind_ipv4_socket_acceptor(fd, port);
+    network::ipv4_bind(fd, port);
     return spawn_io_server(std::move(fun), std::move(fd), std::forward<Ts>(args)...);
     /*
     static_assert(!has_detach_flag(Os),

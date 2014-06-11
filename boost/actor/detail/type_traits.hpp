@@ -153,7 +153,6 @@ struct is_builtin {
                                        std::u32string,
                                        atom_value,
                                        message,
-                                       message_header,
                                        actor,
                                        group,
                                        channel,

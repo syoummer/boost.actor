@@ -48,14 +48,14 @@ class no_scheduling {
     typedef std::chrono::high_resolution_clock::time_point timeout_type;
 
     template<class Actor>
-    void enqueue(Actor* self, msg_hdr_cref hdr,
-                 message& msg, execution_unit*) {
-        auto ptr = self->new_mailbox_element(hdr, std::move(msg));
+    void enqueue(Actor* self, const actor_addr& sender,
+                 message_id mid, message& msg, execution_unit*) {
+        auto ptr = self->new_mailbox_element(sender, mid, std::move(msg));
         // returns false if mailbox has been closed
         if (!self->mailbox().synchronized_enqueue(m_mtx, m_cv, ptr)) {
-            if (hdr.id.is_request()) {
+            if (mid.is_request()) {
                 detail::sync_request_bouncer srb{self->exit_reason()};
-                srb(hdr.sender, hdr.id);
+                srb(sender, mid);
             }
         }
     }

@@ -23,6 +23,7 @@
 #include <cstddef>
 
 #include "boost/actor/primitive_variant.hpp"
+#include "boost/actor/uniform_type_info.hpp"
 
 namespace boost {
 namespace actor {
@@ -30,7 +31,6 @@ namespace actor {
 class object;
 class actor_namespace;
 class uniform_type_info;
-class type_lookup_table;
 
 /**
  * @ingroup TypeSystem
@@ -43,8 +43,7 @@ class deserializer {
 
  public:
 
-    deserializer(actor_namespace* ns = nullptr,
-                 type_lookup_table* incoming_types = nullptr);
+    deserializer(actor_namespace* ns = nullptr);
 
     virtual ~deserializer();
 
@@ -85,6 +84,27 @@ class deserializer {
         return std::move(get<T>(val));
     }
 
+    template<typename T>
+    inline T read(const uniform_type_info* uti) {
+        T result;
+        uti->deserialize(&result, uti);
+        return result;
+    }
+
+    template<typename T>
+    inline deserializer& read(T& storage) {
+        primitive_variant val{T()};
+        read_value(val);
+        storage = std::move(get<T>(val));
+        return *this;
+    }
+
+    template<typename T>
+    inline deserializer& read(T& storage, const uniform_type_info* uti) {
+        uti->deserialize(&storage, this);
+        return *this;
+    }
+
     /**
      * @brief Reads a raw memory block.
      */
@@ -92,10 +112,6 @@ class deserializer {
 
     inline actor_namespace* get_namespace() {
         return m_namespace;
-    }
-
-    inline type_lookup_table* incoming_types() {
-        return m_incoming_types;
     }
 
     template<class Buffer>
@@ -107,7 +123,6 @@ class deserializer {
  private:
 
     actor_namespace* m_namespace;
-    type_lookup_table* m_incoming_types;
 
 };
 

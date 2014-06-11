@@ -17,17 +17,17 @@
 
 
 #include "boost/actor/actor.hpp"
+#include "boost/actor/group.hpp"
 #include "boost/actor/channel.hpp"
 #include "boost/actor/message.hpp"
-
-#include "boost/actor/detail/raw_access.hpp"
+#include "boost/actor/actor_cast.hpp"
 
 namespace boost {
 namespace actor {
 
-channel::channel(const actor& other) : m_ptr(detail::raw_access::get(other)) { }
+channel::channel(const actor& other) : m_ptr(actor_cast<abstract_channel_ptr>(other)) { }
 
-channel::channel(const group& other) : m_ptr(detail::raw_access::get(other)) { }
+channel::channel(const group& other) : m_ptr(actor_cast<abstract_channel_ptr>(other)) { }
 
 channel::channel(const invalid_actor_t&) : m_ptr(nullptr) { }
 
@@ -44,7 +44,7 @@ intptr_t channel::compare(const channel& other) const {
 }
 
 intptr_t channel::compare(const actor& other) const {
-    return compare(m_ptr.get(), detail::raw_access::get(other));
+    return compare(m_ptr.get(), actor_cast<abstract_actor_ptr>(other).get());
 }
 
 intptr_t channel::compare(const abstract_channel* other) const {

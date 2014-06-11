@@ -76,15 +76,20 @@ void pong(event_based_actor* self) {
     );
 }
 
-void peer_fun(broker* self, connection_handle hdl, const actor& buddy) {
+void peer_fun(broker* self, const actor& buddy) {
     BOOST_ACTOR_CHECKPOINT();
     BOOST_ACTOR_CHECK(self != nullptr);
     BOOST_ACTOR_CHECK(buddy != invalid_actor);
     self->monitor(buddy);
-    if (self->num_connections() == 0) {
-        cerr << "num_connections() != 1" << endl;
+    // assume exactly one connection
+    auto cons = self->connections();
+    if (cons.size() != 1) {
+        cerr << "expected 1 connection, found " << cons.size() << endl;
         throw std::logic_error("num_connections() != 1");
     }
+    auto hdl = cons.front();
+    self->configure_read(hdl, receive_policy::exactly(  sizeof(atom_value)
+                                                      + sizeof(int)));
     auto write = [=](atom_value type, int value) {
         BOOST_ACTOR_LOGF_DEBUG("write: " << value);
         auto& buf = self->wr_buf(hdl);
@@ -123,9 +128,9 @@ void peer_fun(broker* self, connection_handle hdl, const actor& buddy) {
     );
 }
 
-void peer_acceptor_fun(broker* self, const actor& buddy) {
+behavior peer_acceptor_fun(broker* self, const actor& buddy) {
     BOOST_ACTOR_CHECKPOINT();
-    self->become (
+    return {
         [=](const new_connection_msg& msg) {
             BOOST_ACTOR_CHECKPOINT();
             BOOST_ACTOR_PRINT("received new_connection_msg");
@@ -133,61 +138,65 @@ void peer_acceptor_fun(broker* self, const actor& buddy) {
             self->quit();
         },
         others() >> BOOST_ACTOR_UNEXPECTED_MSG_CB(self)
-    );
+    };
 }
 
 int main(int argc, char** argv) {
     BOOST_ACTOR_TEST(test_broker);
-    string app_path = argv[0];
-    if (argc == 3) {
-        if (strcmp(argv[1], "mode=client") == 0) {
+    message_builder{argv + 1, argv + argc}.apply({
+        on("-c", arg_match) >> [&](const std::string& portstr) {
+            auto port = static_cast<uint16_t>(std::stoi(portstr));
+            auto p = spawn(ping, 10);
             BOOST_ACTOR_CHECKPOINT();
-            run_client_part(get_kv_pairs(argc, argv), [](uint16_t port) {
-                BOOST_ACTOR_CHECKPOINT();
-                auto p = spawn(ping, 10);
-                BOOST_ACTOR_CHECKPOINT();
-                auto cl = spawn_io_client(peer_fun, "localhost", port, p);
-                BOOST_ACTOR_CHECKPOINT();
-                anon_send(p, atom("kickoff"), cl);
-                BOOST_ACTOR_CHECKPOINT();
-            });
+            auto cl = spawn_functor(nullptr,
+                                    [=](broker* bro) {
+                                        bro->add_connection(network::new_ipv4_connection("localhost", port));
+                                    },
+                                    peer_fun, p);
             BOOST_ACTOR_CHECKPOINT();
-            return BOOST_ACTOR_TEST_RESULT();
-        }
-        return BOOST_ACTOR_TEST_RESULT();
-    }
-    else if (argc > 1) {
-        cerr << "usage: " << app_path << " [mode=client port={PORT}]" << endl;
-        return -1;
-    }
-    BOOST_ACTOR_CHECKPOINT();
-    auto p = spawn(pong);
-    uint16_t port = 4242;
-    for (;;) {
-        try {
-            spawn_io_server(peer_acceptor_fun, port, p);
+            anon_send(p, atom("kickoff"), cl);
             BOOST_ACTOR_CHECKPOINT();
-            ostringstream oss;
-            oss << app_path << " mode=client port=" << port << to_dev_null;
-            thread child{[&oss] {
-                BOOST_ACTOR_LOGC_TRACE("NONE", "main$thread_launcher", "");
-                auto cmdstr = oss.str();
-                if (system(cmdstr.c_str()) != 0) {
-                    BOOST_ACTOR_PRINTERR("FATAL: command failed: " << cmdstr);
-                    abort();
+        },
+        on() >> [&] {
+            auto p = spawn(pong);
+            uint16_t port = 4242;
+            bool done = false;
+            while (!done) {
+                try {
+                    spawn_functor(nullptr,
+                                  [=](broker* bro) {
+                                      bro->add_acceptor(network::new_ipv4_acceptor(port));
+                                  },
+                                  peer_acceptor_fun,
+                                  p);
+                    BOOST_ACTOR_CHECKPOINT();
+                    ostringstream oss;
+                    oss << argv[0] << " -c " << port << to_dev_null;
+                    thread child{[&oss] {
+                        BOOST_ACTOR_LOGC_TRACE("NONE", "main$thread_launcher", "");
+                        auto cmdstr = oss.str();
+                        if (system(cmdstr.c_str()) != 0) {
+                            BOOST_ACTOR_PRINTERR("FATAL: command failed: " << cmdstr);
+                            abort();
+                        }
+                    }};
+                    BOOST_ACTOR_CHECKPOINT();
+                    child.join();
+                    done = true;
                 }
-            }};
-            BOOST_ACTOR_CHECKPOINT();
-            child.join();
-            BOOST_ACTOR_CHECKPOINT();
-            await_all_actors_done();
-            BOOST_ACTOR_CHECKPOINT();
-            shutdown();
-            return BOOST_ACTOR_TEST_RESULT();
+                catch (bind_failure&) {
+                    // try next port
+                    ++port;
+                }
+            }
+        },
+        others() >> [&] {
+            cerr << "usage: " << argv[0] << " [-c PORT]" << endl;
         }
-        catch (bind_failure&) {
-            // try next port
-            ++port;
-        }
-    }
+    });
+    BOOST_ACTOR_CHECKPOINT();
+    await_all_actors_done();
+    BOOST_ACTOR_CHECKPOINT();
+    shutdown();
+    return BOOST_ACTOR_TEST_RESULT();
 }

@@ -42,6 +42,11 @@ namespace network {
 using multiplexer = asio::io_service;
 
 /**
+ * @brief Gets the multiplexer singleton.
+ */
+multiplexer& get_multiplexer_singleton();
+
+/**
  * @brief Makes sure a {@link multiplexer} does not stop its event loop
  *        before the application requests a shutdown.
  *
@@ -91,9 +96,14 @@ class manager : public actor::ref_counted {
 
     /**
      * @brief Called during application shutdown, indicating that the manager
-     *        should cause its underlying IO device to stop reading.
+     *        should cause its underlying IO device to stop read IO operations.
      */
     virtual void stop_reading() = 0;
+
+    /**
+     * @brief Causes the manager to stop all IO operations on its IO device.
+     */
+    virtual void stop() = 0;
 
     /**
      * @brief Called by the underlying IO device to report failures.
@@ -172,13 +182,6 @@ class stream {
     }
 
     /**
-     * @brief Returns the native handle of the IO socket.
-     */
-    inline typename Socket::native_handle_type native_socket_handle() {
-        return m_fd.native_handle();
-    }
-
-    /**
      * @brief Initializes this stream, setting the socket handle to @p fd.
      */
     void init(Socket fd) {
@@ -247,10 +250,12 @@ class stream {
      * @brief Closes the network connection, thus stopping this stream.
      */
     void stop() {
+        BOOST_ACTOR_LOGM_TRACE("boost::actor_io::network::stream", "");
         m_fd.close();
     }
 
     void stop_reading() {
+        BOOST_ACTOR_LOGM_TRACE("boost::actor_io::network::stream", "");
         system::error_code ec; // ignored
         m_fd.shutdown(asio::ip::tcp::socket::shutdown_receive, ec);
     }
@@ -265,9 +270,21 @@ class stream {
         m_wr_buf.clear();
         m_wr_buf.swap(m_wr_offline_buf);
         asio::async_write(m_fd, asio::buffer(m_wr_buf),
-                          [=](const system::error_code& ec, size_t) {
-            if (!ec) write_loop(mgr);
+                          [=](const system::error_code& ec, size_t nb) {
+            BOOST_ACTOR_LOGC_TRACE("boost::actor_io::network::stream",
+                                   "write_loop$lambda",
+                                   BOOST_ACTOR_ARG(this));
+            static_cast<void>(nb); // silence compiler warning
+            if (!ec) {
+                BOOST_ACTOR_LOGC_DEBUG("boost::actor_io::network::stream",
+                                       "write_loop$lambda",
+                                       nb << " bytes sent");
+                write_loop(mgr);
+            }
             else {
+                BOOST_ACTOR_LOGC_DEBUG("boost::actor_io::network::stream",
+                                       "write_loop$lambda",
+                                       "error during send: " << ec.message());
                 mgr->io_failure(operation::read, ec.message());
                 m_writing = false;
             }
@@ -276,6 +293,9 @@ class stream {
 
     void read_loop(const manager_ptr& mgr) {
         auto cb = [=](const system::error_code& ec, size_t read_bytes) {
+            BOOST_ACTOR_LOGC_TRACE("boost::actor_io::network::stream",
+                                   "read_loop$cb",
+                                   BOOST_ACTOR_ARG(this));
             if (!ec) {
                 mgr->consume(m_rd_buf.data(), read_bytes);
                 read_loop(mgr);
@@ -297,6 +317,7 @@ class stream {
                                 + std::max<size_t>(100, m_rd_size / 10);
                 if (m_rd_buf.size() < min_size) m_rd_buf.resize(min_size);
                 collect_data(mgr, 0);
+                break;
             }
         }
     }
@@ -305,16 +326,19 @@ class stream {
         m_fd.async_read_some(asio::buffer(m_rd_buf.data() + collected_bytes,
                                           m_rd_buf.size() - collected_bytes),
                             [=](const system::error_code& ec, size_t nb) {
-           if (!ec) {
-               auto sum = collected_bytes + nb;
-               if (sum >= m_rd_size) {
-                   mgr->consume(m_rd_buf.data(), sum);
-                   read_loop(mgr);
-               }
-               else collect_data(mgr, sum);
-           }
-           else mgr->io_failure(operation::write, ec.message());
-       });
+            BOOST_ACTOR_LOGC_TRACE("boost::actor_io::network::stream",
+                                   "collect_data$lambda",
+                                   BOOST_ACTOR_ARG(this));
+            if (!ec) {
+                auto sum = collected_bytes + nb;
+                if (sum >= m_rd_size) {
+                    mgr->consume(m_rd_buf.data(), sum);
+                    read_loop(mgr);
+                }
+                else collect_data(mgr, sum);
+            }
+            else mgr->io_failure(operation::write, ec.message());
+        });
     }
 
     bool                m_writing;
@@ -343,6 +367,9 @@ class acceptor_manager : public manager {
 
 };
 
+/**
+ * @brief An acceptor is responsible for accepting incoming connections.
+ */
 template<class SocketAcceptor>
 class acceptor {
 
@@ -376,13 +403,6 @@ class acceptor {
      */
     inline SocketAcceptor& socket_handle() {
         return m_accept_fd;
-    }
-
-    /**
-     * @brief Returns the native handle of the IO socket.
-     */
-    inline typename SocketAcceptor::native_handle_type native_socket_handle() {
-        return m_accept_fd.native_handle();
     }
 
     /**
@@ -421,7 +441,7 @@ class acceptor {
 
     void accept_loop(const manager_ptr& mgr) {
         m_accept_fd.async_accept(m_fd, [=](const system::error_code& ec) {
-            BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_ARG(this));
+            BOOST_ACTOR_LOGM_TRACE("boost::actor_io::network::acceptor", "");
             if (!ec) {
                 mgr->new_connection(); // probably moves m_fd
                 // reset m_fd for next accept operation
@@ -439,23 +459,9 @@ class acceptor {
 };
 
 template<class Socket>
-void blocking_write(Socket& fd, const void* buf, size_t buf_size) {
-    system::error_code ec;
-    asio::write(fd, asio::buffer(buf, buf_size), ec);
-    if (ec) throw std::ios_base::failure(ec.message());
-}
-
-template<class Socket>
-void blocking_read(Socket& fd, void* buf, size_t buf_size) {
-    system::error_code ec;
-    asio::read(fd, asio::buffer(buf, buf_size), ec);
-    if (ec) throw std::ios_base::failure(ec.message());
-}
-
-template<class Socket>
-void connect_ipv4_socket(Socket& fd,
-                         const std::string& host,
-                         uint16_t port) {
+void ipv4_connect(Socket& fd,
+                  const std::string& host,
+                  uint16_t port) {
     BOOST_ACTOR_LOGF_TRACE(BOOST_ACTOR_ARG(host) << ", "
                            BOOST_ACTOR_ARG(port));
     using asio::ip::tcp;
@@ -466,26 +472,21 @@ void connect_ipv4_socket(Socket& fd,
         asio::connect(fd, i);
     }
     catch (system::system_error& se) {
-        throw std::ios_base::failure(se.code().message());
+        throw actor::network_error(se.code().message());
     }
 }
 
-template<class Socket>
-void connect_ipv4_stream(stream<Socket>& sm,
-                         const std::string& host,
-                         uint16_t port) {
-    BOOST_ACTOR_LOGF_TRACE(BOOST_ACTOR_ARG(host) << ", "
-                           BOOST_ACTOR_ARG(port));
-    using asio::ip::tcp;
-    Socket fd{sm.backend()};
-    connect_ipv4_socket(fd, host, port);
-    sm.init(std::move(fd));
+inline default_socket new_ipv4_connection(const std::string& host,
+                                          uint16_t port) {
+    default_socket fd{get_multiplexer_singleton()};
+    ipv4_connect(fd, host, port);
+    return fd;
 }
 
 template<class SocketAcceptor>
-void bind_ipv4_socket_acceptor(SocketAcceptor& fd,
-                               uint16_t port,
-                               const char* addr = nullptr) {
+void ipv4_bind(SocketAcceptor& fd,
+               uint16_t port,
+               const char* addr = nullptr) {
     BOOST_ACTOR_LOGF_TRACE(BOOST_ACTOR_ARG(port));
     using asio::ip::tcp;
     try {
@@ -512,16 +513,11 @@ void bind_ipv4_socket_acceptor(SocketAcceptor& fd,
     }
 }
 
-template<class SocketAcceptor>
-void bind_ipv4_acceptor(acceptor<SocketAcceptor>& ar,
-                        uint16_t port,
-                        const char* addr = nullptr) {
-    BOOST_ACTOR_LOGF_TRACE(BOOST_ACTOR_ARG(port) << ", "
-                           BOOST_ACTOR_ARG(addr));
-    using asio::ip::tcp;
-    SocketAcceptor fd{ar.backend()};
-    bind_ipv4_socket_acceptor(fd, port, addr);
-    ar.init(std::move(fd));
+inline default_socket_acceptor new_ipv4_acceptor(uint16_t port,
+                                                 const char* addr = nullptr) {
+    default_socket_acceptor fd{get_multiplexer_singleton()};
+    ipv4_bind(fd, port, addr);
+    return fd;
 }
 
 } // namespace network

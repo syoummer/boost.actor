@@ -37,6 +37,7 @@
 
 #include "boost/actor_io/network.hpp"
 #include "boost/actor_io/middleman.hpp"
+#include "boost/actor_io/basp_broker.hpp"
 
 namespace boost {
 namespace actor_io {
@@ -46,28 +47,34 @@ constexpr uint32_t max_iface_size = 100;
 
 constexpr uint32_t max_iface_clause_size = 500;
 
-template<class Stream>
-actor::abstract_actor_ptr remote_actor_impl(intrusive_ptr<peer::impl<Stream>> pptr,
-                                            const std::set<std::string>& ifs) {
-    BOOST_ACTOR_LOGF_TRACE("");
-    return pptr->start_client(ifs);
-}
-
 template<class Socket>
 actor::abstract_actor_ptr remote_actor_impl(Socket fd,
                                             const std::set<std::string>& ifs) {
     auto mm = middleman::instance();
-    return remote_actor_impl(peer::make(mm, std::move(fd)), ifs);
+    std::string error_msg;
+    std::promise<actor::abstract_actor_ptr> result_promise;
+    // we can't move fd into our lambda in C++11 ...
+    auto fd_ptr = std::make_shared<Socket>(std::move(fd));
+    basp_broker::client_handshake_data hdata{nullptr, &result_promise,
+                                               &error_msg, &ifs};
+    auto hdata_ptr = &hdata;
+    mm->run_later([=] {
+        auto bro = mm->get_named_broker<basp_broker>(actor::atom("_BASP"));
+        auto hdl = bro->add_connection(std::move(*fd_ptr));
+        bro->init_client(hdl, hdata_ptr);
+    });
+    auto result = result_promise.get_future().get();
+    if (!result) throw std::runtime_error(error_msg);
+    return result;
 }
 
-actor::abstract_actor_ptr remote_actor_impl(const std::string& host,
-                                            uint16_t port,
-                                            const std::set<std::string>& ifs) {
+inline actor::abstract_actor_ptr remote_actor_impl(const std::string& host,
+                                                   uint16_t port,
+                                                   const std::set<std::string>& ifs) {
     auto mm = middleman::instance();
     network::default_socket fd{mm->backend()};
-    auto ptr = peer::make(mm, std::move(fd));
-    network::connect_ipv4_stream(ptr->get_stream(), host, port);
-    return remote_actor_impl(ptr, ifs);
+    network::ipv4_connect(fd, host, port);
+    return remote_actor_impl(std::move(fd), ifs);
 }
 
 } // namespace detail

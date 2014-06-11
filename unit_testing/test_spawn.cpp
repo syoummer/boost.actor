@@ -909,6 +909,13 @@ void test_spawn() {
             BOOST_ACTOR_CHECK_EQUAL(msg.reason, exit_reason::normal);
         }
     );
+    BOOST_ACTOR_PRINT("check timeout in sync message");
+    self->sync_send(self, "oops").await(
+        others() >> BOOST_ACTOR_UNEXPECTED_MSG_CB_REF(self),
+        after(chrono::milliseconds(10)) >> [=] {
+            BOOST_ACTOR_CHECKPOINT();
+        }
+    );
     BOOST_ACTOR_CHECKPOINT();
 }
 

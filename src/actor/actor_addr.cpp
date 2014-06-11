@@ -20,10 +20,9 @@
 #include "boost/actor/actor_addr.hpp"
 #include "boost/actor/local_actor.hpp"
 
-#include "boost/actor_io/middleman.hpp"
-
 #include "boost/actor/detail/singletons.hpp"
-#include "boost/actor/detail/raw_access.hpp"
+
+#include "boost/actor_io/middleman.hpp"
 
 namespace boost {
 namespace actor {
@@ -56,11 +55,16 @@ actor_id actor_addr::id() const {
 }
 
 const node_id& actor_addr::node() const {
-    return m_ptr ? m_ptr->node() : *detail::singletons::get_node_id();
+    return m_ptr ? *m_ptr->get_node_id_ptr() : *detail::singletons::get_node_id();
 }
 
+node_id_ptr actor_addr::node_ptr() const {
+    return m_ptr ? m_ptr->get_node_id_ptr() : detail::singletons::get_node_id();
+}
+
+
 bool actor_addr::is_remote() const {
-    return m_ptr ? m_ptr->is_proxy() : false;
+    return m_ptr ? m_ptr->is_remote() : false;
 }
 
 std::set<std::string> actor_addr::interface() const {

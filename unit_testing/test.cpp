@@ -68,18 +68,3 @@ void set_default_test_settings() {
     set_terminate(verbose_terminate);
     cout.unsetf(ios_base::unitbuf);
 }
-
-map<string, string> get_kv_pairs(int argc, char** argv, int begin) {
-    map<string, string> result;
-    for (int i = begin; i < argc; ++i) {
-        auto vec = split(argv[i], '=');
-        if (vec.size() != 2) {
-            BOOST_ACTOR_PRINTERR("\"" << argv[i] << "\" is not a key-value pair");
-        }
-        else if (result.count(vec[0]) != 0) {
-            BOOST_ACTOR_PRINTERR("key \"" << vec[0] << "\" is already defined");
-        }
-        else result[vec[0]] = vec[1];
-    }
-    return result;
-}

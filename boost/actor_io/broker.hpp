@@ -22,14 +22,15 @@
 #include <map>
 #include <vector>
 
+#include "boost/actor/spawn.hpp"
 #include "boost/actor/extend.hpp"
 #include "boost/actor/local_actor.hpp"
 #include "boost/actor/accept_handle.hpp"
 #include "boost/actor/connection_handle.hpp"
 
 #include "boost/actor_io/network.hpp"
-#include "boost/actor_io/middleman.hpp"
 
+#include "boost/actor/mixin/functor_based.hpp"
 #include "boost/actor/mixin/behavior_stack_based.hpp"
 
 #include "boost/actor/policy/not_prioritizing.hpp"
@@ -40,9 +41,7 @@ namespace actor_io {
 
 class broker;
 
-typedef intrusive_ptr<broker> broker_ptr;
-
-broker_ptr init_and_launch(broker_ptr);
+using broker_ptr = intrusive_ptr<broker>;
 
 /**
  * @brief A broker mediates between an actor system
@@ -50,7 +49,8 @@ broker_ptr init_and_launch(broker_ptr);
  * @extends local_actor
  */
 class broker : public actor::extend<actor::local_actor>::
-                      with<actor::mixin::behavior_stack_based<actor::behavior>::impl> {
+                      with<actor::mixin::behavior_stack_based<actor::behavior>::impl>,
+               public actor::spawn_as_is {
 
     friend class actor::policy::sequential_invoke;
 
@@ -58,7 +58,11 @@ class broker : public actor::extend<actor::local_actor>::
 
  public:
 
-    typedef std::vector<char> buffer_type;
+    using connection_handle = actor::connection_handle;
+
+    using accept_handle = actor::accept_handle;
+
+    using buffer_type = std::vector<char>;
 
     class servant {
 
@@ -68,9 +72,9 @@ class broker : public actor::extend<actor::local_actor>::
 
         virtual ~servant();
 
-        virtual void launch() = 0;
-
      protected:
+
+        virtual void remove_from_broker() = 0;
 
         virtual actor::message disconnect_message() = 0;
 
@@ -88,22 +92,32 @@ class broker : public actor::extend<actor::local_actor>::
 
     class scribe : public network::stream_manager, public servant {
 
-        typedef servant super;
+        using super = servant;
 
      public:
 
         ~scribe();
 
-        scribe(broker* parent, actor::connection_handle hdl);
+        scribe(broker* parent);
 
+        /**
+         * @brief Implicitly starts the read loop on first call.
+         */
         virtual void configure_read(receive_policy::config config) = 0;
 
+        /**
+         * @brief Grants access to the output buffer.
+         */
         virtual buffer_type& wr_buf() = 0;
 
+        /**
+         * @brief Flushes the output buffer, i.e., sends the content of
+         *        the buffer via the network.
+         */
         virtual void flush() = 0;
 
-        inline actor::connection_handle id() const {
-            return read_msg().handle;
+        inline connection_handle hdl() const {
+            return m_hdl;
         }
 
         void io_failure(network::operation op, const std::string& msg) override;
@@ -120,9 +134,13 @@ class broker : public actor::extend<actor::local_actor>::
             return m_read_msg.get_as<actor::new_data_msg>(0);
         }
 
+        void remove_from_broker() override;
+
         actor::message disconnect_message() override;
 
         void consume(const void* data, size_t num_bytes) override;
+
+        connection_handle m_hdl;
 
         actor::message m_read_msg;
 
@@ -130,23 +148,28 @@ class broker : public actor::extend<actor::local_actor>::
 
     class doorman : public network::acceptor_manager, public servant {
 
-        typedef servant super;
+        using super = servant;
 
      public:
 
         ~doorman();
 
-        doorman(broker* parent, actor::accept_handle hdl);
+        doorman(broker* parent);
 
-        inline actor::accept_handle id() const {
-            return accept_msg().source;
+        inline accept_handle hdl() const {
+            return m_hdl;
         }
-
-        actor::message disconnect_message() override;
 
         void io_failure(network::operation op, const std::string& msg) override;
 
+        // needs to be launched explicitly
+        virtual void launch() = 0;
+
      protected:
+
+        void remove_from_broker() override;
+
+        actor::message disconnect_message() override;
 
         inline actor::new_connection_msg& accept_msg() {
             return m_accept_msg.get_as_mutable<actor::new_connection_msg>(0);
@@ -155,6 +178,8 @@ class broker : public actor::extend<actor::local_actor>::
         inline const actor::new_connection_msg& accept_msg() const {
             return m_accept_msg.get_as<actor::new_connection_msg>(0);
         }
+
+        accept_handle m_hdl;
 
         actor::message m_accept_msg;
 
@@ -167,8 +192,6 @@ class broker : public actor::extend<actor::local_actor>::
     friend class doorman;
     friend class continuation;
 
-    friend broker_ptr init_and_launch(broker_ptr);
-
     ~broker();
 
     /**
@@ -176,22 +199,22 @@ class broker : public actor::extend<actor::local_actor>::
      * @param hdl Identifies the affected connection.
      * @param config Contains the new receive policy.
      */
-    void configure_read(const actor::connection_handle& hdl,
+    void configure_read(connection_handle hdl,
                         receive_policy::config config);
 
     /**
      * @brief Returns the write buffer for given connection.
      */
-    buffer_type& wr_buf(const actor::connection_handle& hdl);
+    buffer_type& wr_buf(connection_handle hdl);
 
-    void write(const actor::connection_handle& hdl,
+    void write(connection_handle hdl,
                size_t buf_size,
                const void* buf);
 
     /**
      * @brief Sends the content of the buffer for given connection.
      */
-    void flush(const actor::connection_handle& hdl);
+    void flush(connection_handle hdl);
 
     /**
      * @brief Returns the number of open connections.
@@ -200,23 +223,32 @@ class broker : public actor::extend<actor::local_actor>::
         return m_scribes.size();
     }
 
+    std::vector<connection_handle> connections() const;
+
     /** @cond PRIVATE */
 
     template<typename F, typename... Ts>
-    actor::actor fork(F fun, actor::connection_handle hdl, Ts&&... vs) {
-        auto f = std::bind(std::move(fun),
-                           std::placeholders::_1,
-                           hdl,
-                           std::forward<Ts>(vs)...);
-        // transform to STD function here, because GCC is unable
-        // to select proper overload otherwise ...
-        typedef decltype(f((broker*) nullptr)) fres;
-        std::function<fres(broker*)> stdfun{std::move(f)};
-        return this->fork_impl(std::move(stdfun), hdl);
+    actor::actor fork(F fun, connection_handle hdl, Ts&&... vs) {
+        auto i = m_scribes.find(hdl);
+        if (i == m_scribes.end()) {
+            BOOST_ACTOR_LOG_ERROR("invalid handle");
+            throw std::invalid_argument("invalid handle");
+        }
+        auto sptr = i->second;
+        BOOST_ACTOR_REQUIRE(sptr->hdl() == hdl);
+        m_scribes.erase(i);
+        return spawn_functor(nullptr,
+                             [sptr](broker* forked) {
+                                 sptr->set_broker(forked);
+                                 forked->m_scribes.emplace(sptr->hdl(), sptr);
+                             },
+                             fun,
+                             std::forward<Ts>(vs)...);
     }
 
     template<class Socket>
-    actor::connection_handle add_connection(Socket sock) {
+    connection_handle add_connection(Socket sock) {
+        BOOST_ACTOR_LOG_TRACE("");
         class impl : public scribe {
 
             using super = scribe;
@@ -224,14 +256,16 @@ class broker : public actor::extend<actor::local_actor>::
          public:
 
             impl(broker* parent, Socket&& s)
-            : super(parent,
-                    actor::connection_handle::from_int(s.native_handle()))
-            , m_stream(s.get_io_service()) {
+                    : super(parent)
+                    , m_launched(false)
+                    , m_stream(s.get_io_service()) {
                 m_stream.init(std::move(s));
             }
 
             void configure_read(receive_policy::config config) override {
+                BOOST_ACTOR_LOGM_TRACE("boost::actor_io::broker::scribe", "");
                 m_stream.configure_read(config);
+                if (!m_launched) launch();
             }
 
             buffer_type& wr_buf() override {
@@ -243,28 +277,42 @@ class broker : public actor::extend<actor::local_actor>::
             }
 
             void stop_reading() override {
+                BOOST_ACTOR_LOGM_TRACE("boost::actor_io::broker::scribe", "");
                 m_stream.stop_reading();
+                disconnect();
+            }
+
+            void stop() override {
+                BOOST_ACTOR_LOGM_TRACE("boost::actor_io::broker::scribe", "");
+                m_stream.stop();
+                disconnect();
             }
 
             void flush() override {
+                BOOST_ACTOR_LOGM_TRACE("boost::actor_io::broker::scribe", "");
                 m_stream.flush(this);
             }
 
-            void launch() override {
+            void launch() {
+                BOOST_ACTOR_LOGM_TRACE("boost::actor_io::broker::scribe", "");
+                BOOST_ACTOR_REQUIRE(!m_launched);
+                m_launched = true;
                 m_stream.start(this);
             }
 
+         private:
+
+            bool m_launched;
             network::stream<Socket> m_stream;
 
         };
         intrusive_ptr<impl> ptr{new impl{this, std::move(sock)}};
-        m_scribes.emplace(ptr->id(), ptr);
-        if (initialized()) ptr->launch();
-        return ptr->id();
+        m_scribes.emplace(ptr->hdl(), ptr);
+        return ptr->hdl();
     }
 
     template<class SocketAcceptor>
-    actor::accept_handle add_acceptor(SocketAcceptor fd) {
+    accept_handle add_acceptor(SocketAcceptor fd) {
         class impl : public doorman {
 
             using super = doorman;
@@ -272,19 +320,26 @@ class broker : public actor::extend<actor::local_actor>::
          public:
 
             impl(broker* parent, SocketAcceptor&& s)
-            : super(parent,
-                    actor::accept_handle::from_int(s.native_handle()))
+            : super(parent)
             , m_acceptor(s.get_io_service()) {
                 m_acceptor.init(std::move(s));
             }
 
             void new_connection() override {
                 accept_msg().handle = m_broker->add_connection(std::move(m_acceptor.accepted_socket()));
-                m_broker->invoke_message({}, m_accept_msg);
+                m_broker->invoke_message(actor::invalid_actor_addr,
+                                         actor::message_id::invalid,
+                                         m_accept_msg);
             }
 
             void stop_reading() override {
                 m_acceptor.stop();
+                disconnect();
+            }
+
+            void stop() override {
+                m_acceptor.stop();
+                disconnect();
             }
 
             void launch() override {
@@ -295,12 +350,13 @@ class broker : public actor::extend<actor::local_actor>::
 
         };
         intrusive_ptr<impl> ptr{new impl{this, std::move(fd)}};
-        m_doormen.emplace(ptr->id(), ptr);
+        m_doormen.emplace(ptr->hdl(), ptr);
         if (initialized()) ptr->launch();
-        return ptr->id();
+        return ptr->hdl();
     }
 
-    void enqueue(actor::msg_hdr_cref,
+    void enqueue(const actor::actor_addr&,
+                 actor::message_id,
                  actor::message,
                  actor::execution_unit*) override;
 
@@ -321,6 +377,31 @@ class broker : public actor::extend<actor::local_actor>::
                               std::forward<Ts>(vs)...));
     }
 
+    /**
+     * @brief Stops read IO operations on @p handle,
+     *        but send any pending data.
+     */
+    void stop_reading(connection_handle handle);
+
+    /**
+     * @brief Stops all read IO operations.
+     */
+    void stop_reading();
+
+    /**
+     * @brief Stops both read and write operations on @p handle.
+     */
+    void stop(connection_handle handle);
+
+    /**
+     * @brief Stops accept operations on @p handle.
+     */
+    void stop(accept_handle handle);
+
+    class functor_based;
+
+    void launch(bool is_hidden, actor::execution_unit*);
+
  protected:
 
     broker();
@@ -339,20 +420,27 @@ class broker : public actor::extend<actor::local_actor>::
 
  private:
 
+    template<typename Handle, class T>
+    static T& by_id(Handle hdl, std::map<Handle, intrusive_ptr<T>>& elements) {
+        auto i = elements.find(hdl);
+        if (i == elements.end()) {
+            throw std::invalid_argument("invalid handle");
+        }
+        return *(i->second);
+    }
+
     // throws on error
-    scribe& by_id(const actor::connection_handle& hdl);
+    inline scribe& by_id(connection_handle hdl) {
+        return by_id(hdl, m_scribes);
+    }
 
-    actor::actor fork_impl(std::function<void (broker*)> fun,
-                           actor::connection_handle hdl);
+    // throws on error
+    inline doorman& by_id(accept_handle hdl) {
+        return by_id(hdl, m_doormen);
+    }
 
-    actor::actor fork_impl(std::function<actor::behavior (broker*)> fun,
-                           actor::connection_handle hdl);
-
-    static broker_ptr from_impl(std::function<void (broker*)> fun);
-
-    static broker_ptr from_impl(std::function<actor::behavior (broker*)> fun);
-
-    void invoke_message(actor::msg_hdr_cref hdr,
+    void invoke_message(const actor::actor_addr& sender,
+                        actor::message_id mid,
                         actor::message& msg);
 
     bool invoke_message_from_cache();
@@ -361,13 +449,45 @@ class broker : public actor::extend<actor::local_actor>::
 
     void erase_acceptor(int id);
 
-    std::map<actor::accept_handle, doorman_pointer> m_doormen;
-    std::map<actor::connection_handle, scribe_pointer> m_scribes;
+    std::map<accept_handle, doorman_pointer> m_doormen;
+    std::map<connection_handle, scribe_pointer> m_scribes;
 
     actor::policy::not_prioritizing  m_priority_policy;
     actor::policy::sequential_invoke m_invoke_policy;
 
     bool m_initialized;
+
+    bool m_hidden;
+
+    int64_t m_next_handle_id;
+
+    bool m_running;
+
+};
+
+// functions from ref_counted cannot be found by ADL => provide new overload
+inline void intrusive_ptr_add_ref(broker* p) {
+    p->ref();
+}
+
+// functions from ref_counted cannot be found by ADL => provide new overload
+inline void intrusive_ptr_release(broker* p) {
+    p->deref();
+}
+
+class broker::functor_based : public actor::extend<broker>::
+                                     with<actor::mixin::functor_based> {
+
+    using super = combined_type;
+
+ public:
+
+    template<typename... Ts>
+    functor_based(Ts&&... vs) : super(std::forward<Ts>(vs)...) { }
+
+    ~functor_based();
+
+    actor::behavior make_behavior() override;
 
 };
 

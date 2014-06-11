@@ -26,7 +26,6 @@
 #include <stdexcept>
 #include <type_traits>
 
-#include "boost/actor/type_lookup_table.hpp"
 #include "boost/actor/binary_deserializer.hpp"
 
 #include "boost/actor/detail/logging.hpp"
@@ -146,46 +145,28 @@ struct pt_reader : static_visitor<> {
 
 } // namespace <anonmyous>
 
-binary_deserializer::binary_deserializer(const void* buf, size_t buf_size,
-                                         actor_namespace* ns,
-                                         type_lookup_table* tbl)
-: super(ns, tbl), m_pos(buf), m_end(advanced(buf, buf_size)) { }
+binary_deserializer::binary_deserializer(const void* buf,
+                                         size_t buf_size,
+                                         actor_namespace* ns)
+: super(ns), m_pos(buf), m_end(advanced(buf, buf_size)) { }
 
-binary_deserializer::binary_deserializer(const void* bbegin, const void* bend,
-                                         actor_namespace* ns,
-                                         type_lookup_table* tbl)
-: super(ns, tbl), m_pos(bbegin), m_end(bend) { }
+binary_deserializer::binary_deserializer(const void* bbegin,
+                                         const void* bend,
+                                         actor_namespace* ns)
+: super(ns), m_pos(bbegin), m_end(bend) { }
 
 const uniform_type_info* binary_deserializer::begin_object() {
-    uint8_t flag;
-    m_pos = read_range(m_pos, m_end, flag);
-    if (flag == 1) {
-        std::string tname;
-        m_pos = read_range(m_pos, m_end, tname);
-        auto uti = detail::singletons::get_uniform_type_info_map()
-                   ->by_uniform_name(tname);
-        if (!uti) {
-            std::string err = "received type name \"";
-            err += tname;
-            err += "\" but no such type is known";
-            throw std::runtime_error(err);
-        }
-        return uti;
+    std::string tname;
+    m_pos = read_range(m_pos, m_end, tname);
+    auto uti = detail::singletons::get_uniform_type_info_map()
+               ->by_uniform_name(tname);
+    if (!uti) {
+        std::string err = "received type name \"";
+        err += tname;
+        err += "\" but no such type is known";
+        throw std::runtime_error(err);
     }
-    else {
-        uint32_t type_id;
-        m_pos = read_range(m_pos, m_end, type_id);
-        auto it = incoming_types();
-        if (!it) {
-            std::string err = "received type ID ";
-            err += std::to_string(type_id);
-            err += " but incoming_types() == nullptr";
-            throw std::runtime_error(err);
-        }
-        auto uti = it->by_id(type_id);
-        if (!uti) throw std::runtime_error("received unknown type id");
-        return uti;
-    }
+    return uti;
 }
 
 void binary_deserializer::end_object() { }

@@ -40,8 +40,13 @@ class actor_namespace {
 
  public:
 
+    using key_type = node_id_ptr;
+
+    using key_compare = node_id_ptr_less;
+
     /**
-     * @brief Provides facilities to create and maintain actor proxies.
+     * @brief The backend of an actor namespace is responsible for
+     *        creating proxy actors.
      */
     class backend {
 
@@ -52,32 +57,12 @@ class actor_namespace {
         /**
          * @brief Creates a new proxy instance.
          */
-        virtual actor_proxy_ptr make_proxy(const node_id_ptr&, actor_id) = 0;
-
-        /**
-         * @brief Registers a proxy instance.
-         */
-        virtual void register_proxy(const node_id&, actor_id) = 0;
+        virtual actor_proxy_ptr make_proxy(const key_type&, actor_id) = 0;
 
         /**
          * @brief Returns the ID of the local node.
          */
-        virtual const node_id_ptr& node_ptr() const = 0;
-
-    };
-
-    /**
-     * @brief A set of callback functions to react to proxy-related events.
-     */
-    class hook {
-
-     public:
-
-        virtual ~hook();
-
-        virtual void proxy_created(const actor_proxy_ptr& ptr) = 0;
-
-        virtual void proxy_registered(const node_id&, actor_id) = 0;
+        virtual const key_type& node_ptr() const = 0;
 
     };
 
@@ -98,70 +83,45 @@ class actor_namespace {
     /**
      * @brief A map that stores all proxies for known remote actors.
      */
-    typedef std::map<actor_id, actor_proxy_ptr> proxy_map;
+    typedef std::map<actor_id, actor_proxy::anchor_ptr> proxy_map;
 
     /**
      * @brief Returns the number of proxies for @p node.
      */
-    size_t count_proxies(const node_id& node);
+    size_t count_proxies(const key_type& node);
 
     /**
      * @brief Returns the proxy instance identified by @p node and @p aid
-     *        or @p nullptr if the actor is unknown.
+     *        or @p nullptr if the actor either unknown or expired.
      */
-    actor_proxy_ptr get(const node_id& node, actor_id aid);
+    actor_proxy_ptr get(const key_type& node, actor_id aid);
 
     /**
      * @brief Returns the proxy instance identified by @p node and @p aid
      *        or creates a new (default) proxy instance.
      */
-    actor_proxy_ptr get_or_put(node_id_ptr node, actor_id aid);
-
-    /**
-     * @brief Adds @p proxy to the list of known actor proxies.
-     */
-    void put(const node_id& parent,
-             actor_id aid,
-             const actor_proxy_ptr& proxy);
-
-    /**
-     * @brief Returns the map of known actors for @p node.
-     */
-    proxy_map& proxies(node_id& node);
-
-    /**
-     * @brief Deletes given proxy instance from this namespace.
-     */
-    void erase(const actor_proxy_ptr& proxy);
+    actor_proxy_ptr get_or_put(const key_type& node, actor_id aid);
 
     /**
      * @brief Deletes all proxies for @p node.
      */
-    void erase(const node_id& node);
+    void erase(const key_type& node);
 
     /**
      * @brief Deletes the proxy with id @p aid for @p node.
      */
-    void erase(node_id& node, actor_id aid);
+    void erase(const key_type& node, actor_id aid);
 
     /**
-     * @brief Sets the hook for proxy-related events.
+     * @brief Queries whether there are any proxies left.
      */
-    void set_hook(hook*);
+    bool empty() const;
 
  private:
 
-    inline void proxy_created(const actor_proxy_ptr& ptr) {
-        if (m_hook) m_hook->proxy_created(ptr);
-    }
+    backend& m_backend;
 
-    inline void proxy_registered(const node_id& nid, actor_id aid) {
-        if (m_hook) m_hook->proxy_registered(nid, aid);
-    }
-
-    backend&                     m_backend;
-    hook*                        m_hook;
-    std::map<node_id, proxy_map> m_proxies;
+    std::map<key_type, proxy_map, key_compare> m_proxies;
 
 };
 

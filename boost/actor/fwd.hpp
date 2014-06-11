@@ -42,13 +42,14 @@ class execution_unit;
 class abstract_actor;
 class abstract_group;
 class blocking_actor;
-class message_header;
 class message_handler;
 class uniform_type_info;
 class event_based_actor;
 
 // structs
 struct anything;
+struct invalid_actor_t;
+struct invalid_actor_addr_t;
 
 // enums
 enum primitive_type : unsigned char;
@@ -59,8 +60,9 @@ typedef intrusive_ptr<abstract_group>      abstract_group_ptr;
 typedef intrusive_ptr<actor_proxy>         actor_proxy_ptr;
 typedef intrusive_ptr<node_id>             node_id_ptr;
 
-// convenience typedefs
-typedef const message_header& msg_hdr_cref;
+// functions
+template<typename T, typename U>
+T actor_cast(const U&);
 
 } // namespace actor
 } // namespace boost

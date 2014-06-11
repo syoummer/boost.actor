@@ -12,7 +12,7 @@
 #include "boost/actor_io/all.hpp"
 
 #include "boost/actor/detail/logging.hpp"
-#include "boost/actor/detail/raw_access.hpp"
+#include "boost/actor/detail/singletons.hpp"
 
 using namespace std;
 using namespace boost::actor;
@@ -128,8 +128,10 @@ void spawn5_client(event_based_actor* self) {
             BOOST_ACTOR_PRINT("received {'Spawn5'}");
             actor_vector vec;
             for (int i = 0; i < 5; ++i) {
+                BOOST_ACTOR_CHECKPOINT();
                 vec.push_back(spawn_in_group(grp, reflector));
             }
+            BOOST_ACTOR_CHECKPOINT();
             return make_message(atom("ok"), std::move(vec));
         },
         on(atom("Spawn5Done")) >> [=] {
@@ -244,7 +246,7 @@ class server : public event_based_actor {
         return await_spawn_ping();
     }
 
-    server(bool run_in_loop) : m_run_in_loop(run_in_loop) { }
+    server(bool run_in_loop = false) : m_run_in_loop(run_in_loop) { }
 
  private:
 
@@ -305,7 +307,7 @@ class server : public event_based_actor {
                 auto s5c = spawn<monitored>(spawn5_client);
                 await_down(this, s5c, [=] {
                     BOOST_ACTOR_CHECKPOINT();
-                    test_group_comm_inverted(boost::actor::detail::raw_access::unsafe_cast(cptr));
+                    test_group_comm_inverted(actor_cast<actor>(cptr));
                 });
                 return make_message(atom("GClient"), s5c);
             }
@@ -329,97 +331,94 @@ class server : public event_based_actor {
 
 };
 
+void test_remote_actor(std::string app_path, bool run_remote_actor) {
+    scoped_actor self;
+    auto serv = self->spawn<server, monitored>();
+    uint16_t port = 4242;
+    bool success = false;
+    do {
+        try {
+            publish(serv, port, "127.0.0.1");
+            success = true;
+            BOOST_ACTOR_PRINT("running on port " << port);
+            BOOST_ACTOR_LOGF_INFO("running on port " << port);
+        }
+        catch (bind_failure&) {
+            // try next port
+            ++port;
+        }
+    }
+    while (!success);
+    BOOST_ACTOR_TEST(test_remote_actor);
+    thread child;
+    ostringstream oss;
+    if (run_remote_actor) {
+        oss << app_path << " -c " << port << to_dev_null;
+        // execute client_part() in a separate process,
+        // connected via localhost socket
+        child = thread([&oss]() {
+            BOOST_ACTOR_LOGC_TRACE("NONE", "main$thread_launcher", "");
+            string cmdstr = oss.str();
+            if (system(cmdstr.c_str()) != 0) {
+                BOOST_ACTOR_PRINTERR("FATAL: command \"" << cmdstr << "\" failed!");
+                abort();
+            }
+        });
+    }
+    else { BOOST_ACTOR_PRINT("actor published at port " << port); }
+    BOOST_ACTOR_CHECKPOINT();
+    self->receive (
+        on_arg_match >> [&](const down_msg& dm) {
+            BOOST_ACTOR_CHECK_EQUAL(dm.source, serv);
+            BOOST_ACTOR_CHECK_EQUAL(dm.reason, exit_reason::normal);
+        }
+    );
+    // wait until separate process (in sep. thread) finished execution
+    BOOST_ACTOR_CHECKPOINT();
+    if (run_remote_actor) child.join();
+    BOOST_ACTOR_CHECKPOINT();
+    self->await_all_other_actors_done();
+}
+
 } // namespace <anonymous>
 
 int main(int argc, char** argv) {
     announce<actor_vector>();
-    string app_path = argv[0];
-    bool run_remote_actor = true;
-    bool run_as_server = false;
-    if (argc > 1) {
-        if (strcmp(argv[1], "run_remote_actor=false") == 0) {
-            BOOST_ACTOR_PRINT("don't run remote actor");
-            run_remote_actor = false;
-        }
-        else if (strcmp(argv[1], "run_as_server") == 0) {
-            BOOST_ACTOR_PRINT("don't run remote actor");
-            run_remote_actor = false;
-            run_as_server = true;
-        }
-        else {
-            run_client_part(get_kv_pairs(argc, argv), [](uint16_t port) {
-                scoped_actor self;
-                auto serv = remote_actor("localhost", port);
-                // remote_actor is supposed to return the same server
-                // when connecting to the same host again
-                {
-                    auto server2 = remote_actor("localhost", port);
-                    BOOST_ACTOR_CHECK(serv == server2);
-                    auto server3 = remote_actor("127.0.0.1", port);
-                    BOOST_ACTOR_CHECK(serv == server3);
-                }
-                auto c = self->spawn<client, monitored>(serv);
-                self->receive (
-                    on_arg_match >> [&](const down_msg& dm) {
-                        BOOST_ACTOR_CHECK_EQUAL(dm.source, c);
-                        BOOST_ACTOR_CHECK_EQUAL(dm.reason, exit_reason::normal);
-                    }
-                );
-            });
-            return BOOST_ACTOR_TEST_RESULT();
-        }
-    }
-    { // lifetime scope of self
-        scoped_actor self;
-        auto serv = self->spawn<server, monitored>(run_as_server);
-        uint16_t port = 4242;
-        bool success = false;
-        do {
-            try {
-                publish(serv, port, "127.0.0.1");
-                success = true;
-                BOOST_ACTOR_LOGF_DEBUG("running on port " << port);
+    cout << "this node is: "
+         << to_string(boost::actor::detail::singletons::get_node_id())
+         << endl;
+    message_builder{argv + 1, argv + argc}.apply({
+        on("-c", spro<uint16_t>) >> [](uint16_t port) {
+            BOOST_ACTOR_LOGF_INFO("run in client mode");
+            scoped_actor self;
+            auto serv = remote_actor("localhost", port);
+            // remote_actor is supposed to return the same server
+            // when connecting to the same host again
+            {
+                auto server2 = remote_actor("localhost", port);
+                BOOST_ACTOR_CHECK(serv == server2);
+                auto server3 = remote_actor("127.0.0.1", port);
+                BOOST_ACTOR_CHECK(serv == server3);
             }
-            catch (bind_failure&) {
-                // try next port
-                ++port;
-            }
-        }
-        while (!success);
-        do {
-            BOOST_ACTOR_TEST(test_remote_actor);
-            thread child;
-            ostringstream oss;
-            if (run_remote_actor) {
-                oss << app_path << " run=remote_actor port=" << port
-                    << to_dev_null;
-                // execute client_part() in a separate process,
-                // connected via localhost socket
-                child = thread([&oss]() {
-                    BOOST_ACTOR_LOGC_TRACE("NONE", "main$thread_launcher", "");
-                    string cmdstr = oss.str();
-                    if (system(cmdstr.c_str()) != 0) {
-                        BOOST_ACTOR_PRINTERR("FATAL: command \"" << cmdstr << "\" failed!");
-                        abort();
-                    }
-                });
-            }
-            else { BOOST_ACTOR_PRINT("actor published at port " << port); }
-            BOOST_ACTOR_CHECKPOINT();
+            auto c = self->spawn<client, monitored>(serv);
             self->receive (
                 on_arg_match >> [&](const down_msg& dm) {
-                    BOOST_ACTOR_CHECK_EQUAL(dm.source, serv);
+                    BOOST_ACTOR_CHECK_EQUAL(dm.source, c);
                     BOOST_ACTOR_CHECK_EQUAL(dm.reason, exit_reason::normal);
                 }
             );
-            // wait until separate process (in sep. thread) finished execution
-            BOOST_ACTOR_CHECKPOINT();
-            if (run_remote_actor) child.join();
-            BOOST_ACTOR_CHECKPOINT();
+        },
+        on("-s") >> [&] {
+            BOOST_ACTOR_PRINT("don't run remote actor (server mode)");
+            test_remote_actor(argv[0], false);
+        },
+        on() >> [&] {
+            test_remote_actor(argv[0], true);
+        },
+        others() >> [&] {
+            BOOST_ACTOR_PRINTERR("usage: " << argv[0] << " [-s|-c PORT]");
         }
-        while (run_as_server);
-        self->await_all_other_actors_done();
-    } // lifetime scope of self
+    });
     await_all_actors_done();
     shutdown();
     return BOOST_ACTOR_TEST_RESULT();

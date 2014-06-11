@@ -21,8 +21,6 @@
 #include "boost/actor/local_actor.hpp"
 #include "boost/actor/response_promise.hpp"
 
-#include "boost/actor/detail/raw_access.hpp"
-
 using std::move;
 
 namespace boost {
@@ -37,9 +35,9 @@ response_promise::response_promise(const actor_addr& from,
 
 void response_promise::deliver(message msg) {
     if (m_to) {
-        auto to = detail::raw_access::get(m_to);
-        auto from = detail::raw_access::get(m_from);
-        to->enqueue({m_from, to, m_id}, move(msg), from->m_host);
+        auto to = actor_cast<abstract_actor_ptr>(m_to);
+        auto from = actor_cast<abstract_actor_ptr>(m_from);
+        to->enqueue(m_from, m_id, move(msg), from->m_host);
         m_to = invalid_actor_addr;
     }
 }

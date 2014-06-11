@@ -91,7 +91,7 @@ int main(int, char**) {
     typedef std::vector<char> buffer_type;
 
     buffer_type buf;
-    binary_serializer<buffer_type> bs(&buf);
+    binary_serializer bs(std::back_inserter(buf));
     bs << vd;
 
     binary_deserializer bd(buf.data(), buf.size());

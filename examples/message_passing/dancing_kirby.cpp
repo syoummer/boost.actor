@@ -66,7 +66,8 @@ void dancing_kirby(event_based_actor* self) {
             // print given step
             draw_kirby(animation_steps[step]);
             // animate next step in 150ms
-            self->delayed_send(self, std::chrono::milliseconds(150), atom("Step"), step + 1);
+            self->delayed_send(self, std::chrono::milliseconds(150),
+                               atom("Step"), step + 1);
         }
     );
 }

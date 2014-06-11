@@ -122,6 +122,7 @@ std::string to_string(const node_id::host_id_type& node_id) {
 }
 
 int node_id::compare(const node_id& other) const {
+    if (this == &other) return 0; // shortcut for comparing to self
     int tmp = strncmp(reinterpret_cast<const char*>(host_id().data()),
                       reinterpret_cast<const char*>(other.host_id().data()),
                       host_id_size);

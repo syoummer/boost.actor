@@ -26,7 +26,6 @@
 #include "boost/actor/actor_addr.hpp"
 #include "boost/actor/message_id.hpp"
 #include "boost/actor/ref_counted.hpp"
-#include "boost/actor/message_header.hpp"
 
 #include "boost/actor/mixin/memory_cached.hpp"
 
@@ -47,8 +46,8 @@ class mailbox_element : public extend<memory_managed>::
     mailbox_element* next;   // intrusive next pointer
     bool             marked; // denotes if this node is currently processed
     actor_addr       sender;
-    message          msg;    // 'content field'
     message_id       mid;
+    message          msg;    // 'content field'
 
     ~mailbox_element();
 
@@ -58,15 +57,17 @@ class mailbox_element : public extend<memory_managed>::
     mailbox_element& operator=(const mailbox_element&) = delete;
 
     template<typename T>
-    inline static mailbox_element* create(msg_hdr_cref hdr, T&& data) {
-        return detail::memory::create<mailbox_element>(hdr, std::forward<T>(data));
+    static mailbox_element* create(actor_addr sender, message_id id, T&& data) {
+        return detail::memory::create<mailbox_element>(std::move(sender),
+                                                       id,
+                                                       std::forward<T>(data));
     }
 
  private:
 
     mailbox_element() = default;
 
-    mailbox_element(msg_hdr_cref hdr, message data);
+    mailbox_element(actor_addr sender, message_id id, message data);
 
 };
 

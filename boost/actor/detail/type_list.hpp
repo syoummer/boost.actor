@@ -703,6 +703,11 @@ struct tl_at_impl<0, E0, E...> {
     typedef E0 type;
 };
 
+template<size_t N>
+struct tl_at_impl<N> {
+    typedef unit_t type; // no such element
+};
+
 template<class List, size_t N>
 struct tl_at;
 
@@ -711,7 +716,6 @@ struct tl_at;
  */
 template<size_t N, typename... E>
 struct tl_at<type_list<E...>, N> {
-    static_assert(N < sizeof...(E), "N >= tl_size<List>::value");
     typedef typename tl_at_impl<N, E...>::type type;
 };
 
@@ -1044,7 +1048,8 @@ struct tl_is_strict_subset {
 };
 
 /**
- * @brief Tests whether ListA equal to ListB.
+ * @brief Tests whether ListA contains the same elements as ListB
+ *        and vice versa. This comparison ignores element positions.
  */
 template<class ListA, class ListB>
 struct tl_equal {

@@ -37,9 +37,7 @@
 #include "boost/actor/detail/get_root_uuid.hpp"
 #include "boost/actor/detail/get_mac_addresses.hpp"
 
-#include "boost/actor_io/peer.hpp"
 #include "boost/actor_io/middleman.hpp"
-#include "boost/actor_io/peer_acceptor.hpp"
 #include "boost/actor_io/remote_actor_proxy.hpp"
 
 #include "boost/actor/detail/safe_equal.hpp"
@@ -77,105 +75,11 @@ const node_id_ptr& middleman::node_ptr() const {
     return m_node;
 }
 
-bool middleman::register_peer(const node_id& nid, const peer_ptr& ptr) {
-    BOOST_ACTOR_LOG_TRACE("node = " << to_string(nid) << ", ptr = " << ptr);
-    auto res = m_peers.emplace(nid, ptr);
-    if (!res.second) {
-        BOOST_ACTOR_LOG_WARNING("peer " << to_string(nid)
-                                << " already defined, "
-                                << "multiple calls to remote_actor()?");
-        return false;
-    }
-    BOOST_ACTOR_LOG_INFO("peer " << to_string(nid) << " added");
-    return true;
-}
-
-peer_ptr middleman::get_peer(const node_id& node) {
-    BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_TARG(node, to_string));
-    auto i = m_peers.find(node);
-    // future work (?): we *could* try to be smart here and try to
-    // route all messages to node via other known peers in the network
-    // if i->second.impl == nullptr
-    if (i != m_peers.end() && i->second != nullptr) {
-        BOOST_ACTOR_LOG_DEBUG("result = " << i->second);
-        return i->second;
-    }
-    BOOST_ACTOR_LOG_DEBUG("result = nullptr");
-    return nullptr;
-}
-
-void middleman::announce_route(const node_id& hop, const node_id& dest) {
-    // do we have a blacklist entry for this route?
-    auto bi = m_blacklist.find(dest);
-    if (bi != m_blacklist.end() && bi->second == hop) return; // ignore route
-    m_routes.emplace(dest, hop);
-}
-
-void middleman::dispatch(const node_id& node, msg_hdr_cref hdr, message msg) {
-    auto p = select_peer(node);
-    if (p) p->enqueue(hdr, msg);
-    else {
-        BOOST_ACTOR_LOG_WARNING("message dropped: no route to node: "
-                                << to_string(node));
-    }
-}
-
-void middleman::dispatch(const node_id& node, const void* buf, size_t buf_len) {
-    auto p = select_peer(node);
-    if (p) p->send(buf, buf_len);
-    else {
-        BOOST_ACTOR_LOG_WARNING("message dropped: no route to node: "
-                                << to_string(node));
-    }
-}
-
-peer* middleman::select_peer(const node_id& nid) {
-    auto i = m_peers.find(nid);
-    if (i != m_peers.end()) {
-        return i->second.get();
-    }
-    auto j = m_routes.find(nid);
-    if (j != m_routes.end()) {
-        return select_peer(j->second);
-    }
-    return nullptr;
-}
-
-void middleman::last_proxy_exited(const peer_ptr& pptr) {
-    BOOST_ACTOR_REQUIRE(pptr != nullptr);
-    BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_ARG(pptr)
-                          << ", " << to_string(pptr->node()));
-    if (pptr->stop_on_last_proxy_exited()) {
-        pptr->stop();
-    }
-}
-
-void middleman::del_peer(const peer_ptr& pptr) {
-    BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_ARG(pptr));
-    auto i = m_peers.find(pptr->node());
-    if (i != m_peers.end()) {
-        BOOST_ACTOR_LOG_DEBUG_IF(i->second != pptr,
-                                 "node " << to_string(pptr->node())
-                                 << " does not exist in m_peers");
-        if (i->second == pptr) {
-            m_peers.erase(i);
-        }
-    }
-}
-
-actor_proxy_ptr middleman::make_proxy(const node_id_ptr& ptr, actor_id aid) {
-    auto mm = this;
-    auto res = make_counted<remote_actor_proxy>(aid, std::move(ptr), mm);
-    res->attach_functor([=](uint32_t) {
-        mm->run_later([=] {
-            mm->m_namespace.erase(res);
-        });
+void middleman::add_broker(broker_ptr bptr) {
+    m_brokers.emplace(bptr);
+    bptr->attach_functor([=](uint32_t) {
+        m_brokers.erase(bptr);
     });
-    return res;
-}
-
-void middleman::register_proxy(const node_id& nid, actor_id aid) {
-    dispatch(nid, {}, make_message(atom("MONITOR"), m_node, aid));
 }
 
 void middleman::initialize() {
@@ -189,33 +93,26 @@ void middleman::initialize() {
 }
 
 void middleman::destroy() {
+    BOOST_ACTOR_LOG_TRACE("");
     m_backend.dispatch([=] {
+        BOOST_ACTOR_LOGM_TRACE("destroy$lambda", "");
         delete m_supervisor;
         m_supervisor = nullptr;
         // m_managers will be modified while we are stopping each manager,
         // because each manager will call remove(...)
-        std::vector<network::manager_ptr> managers{m_managers.begin(),
-                                                   m_managers.end()};
-        for (auto& mgr : managers) mgr->stop_reading();
+        std::vector<broker_ptr> brokers;
+        for (auto& kvp : m_named_brokers) brokers.push_back(kvp.second);
+        for (auto& bro : brokers) bro->stop_reading();
     });
     m_thread.join();
-    m_managers.clear();
-    m_peers.clear();
+    m_named_brokers.clear();
 }
 
 void middleman::dispose() {
     delete this;
 }
 
-void middleman::add(const network::manager_ptr& mgr) {
-    run_later([=] { m_managers.emplace(mgr); });
-}
-
-void middleman::remove(const network::manager_ptr& mgr) {
-    run_later([=] { m_managers.erase(mgr); });
-}
-
-middleman::middleman() : m_supervisor(nullptr), m_namespace(*this) { }
+middleman::middleman() : m_supervisor(nullptr) { }
 
 middleman::~middleman() { }
 

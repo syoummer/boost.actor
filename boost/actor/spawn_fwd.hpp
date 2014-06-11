@@ -16,15 +16,6 @@
 \******************************************************************************/
 
 
-
-
-
-
-
-
-
-
-
 // this header contains prototype definitions of the spawn function famility;
 // implementations can be found in spawn.hpp (this header is included there)
 
@@ -45,7 +36,10 @@ intrusive_ptr<C> spawn_class(execution_unit* host,
                              BeforeLaunch before_launch_fun,
                              Ts&&... args);
 
-template<spawn_options Os, typename BeforeLaunch, typename F, typename... Ts>
+template<spawn_options Os = no_spawn_options,
+         typename BeforeLaunch = void (*)(abstract_actor*),
+         typename F = behavior (*)(),
+         typename... Ts>
 actor spawn_functor(execution_unit* host,
                     BeforeLaunch before_launch_fun,
                     F fun,

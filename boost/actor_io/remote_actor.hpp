@@ -23,7 +23,7 @@
 #include <string>
 #include <cstdint>
 
-#include "boost/actor/detail/raw_access.hpp"
+#include "boost/actor/actor_cast.hpp"
 
 #include "boost/actor_io/middleman.hpp"
 
@@ -42,9 +42,9 @@ namespace actor_io {
  * @throws std::invalid_argument Thrown when connecting to a typed actor.
  */
 template<class Socket>
-inline boost::actor::actor remote_actor(Socket fd) {
+inline actor::actor remote_actor(Socket fd) {
     auto res = detail::remote_actor_impl(std::move(fd), std::set<std::string>{});
-    return actor::detail::raw_access::unsafe_cast(res);
+    return actor::actor_cast<actor::actor>(res);
 }
 /**
  * @brief Establish a new connection to the actor at @p host on given @p port.
@@ -54,17 +54,17 @@ inline boost::actor::actor remote_actor(Socket fd) {
  *          representing a remote actor.
  * @throws std::invalid_argument Thrown when connecting to a typed actor.
  */
-inline boost::actor::actor remote_actor(const char* host, uint16_t port) {
+inline actor::actor remote_actor(const char* host, uint16_t port) {
     auto res = detail::remote_actor_impl(host, port, std::set<std::string>{});
-    return actor::detail::raw_access::unsafe_cast(res);
+    return actor::actor_cast<actor::actor>(res);
 }
 
 /**
  * @copydoc remote_actor(const char*, uint16_t)
  */
-inline boost::actor::actor remote_actor(const std::string& host, uint16_t port) {
+inline actor::actor remote_actor(const std::string& host, uint16_t port) {
     auto res = detail::remote_actor_impl(host, port, std::set<std::string>{});
-    return actor::detail::raw_access::unsafe_cast(res);
+    return actor::actor_cast<actor::actor>(res);
 }
 
 /**

@@ -23,7 +23,6 @@
 #include "boost/actor/mailbox_element.hpp"
 #include "boost/actor/system_messages.hpp"
 
-#include "boost/actor/detail/raw_access.hpp"
 #include "boost/actor/detail/sync_request_bouncer.hpp"
 
 namespace boost {
@@ -37,8 +36,9 @@ void sync_request_bouncer::operator()(const actor_addr& sender,
                                       const message_id& mid) const {
     BOOST_ACTOR_REQUIRE(rsn != exit_reason::not_exited);
     if (sender && mid.is_request()) {
-        auto ptr = detail::raw_access::get(sender);
-        ptr->enqueue({invalid_actor_addr, ptr, mid.response_id()},
+        auto ptr = actor_cast<abstract_actor_ptr>(sender);
+        ptr->enqueue(invalid_actor_addr,
+                     mid.response_id(),
                      make_message(sync_exited_msg{sender, rsn}),
                      // TODO: this breaks out of the execution unit
                      nullptr);

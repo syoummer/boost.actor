@@ -59,6 +59,12 @@ static constexpr uint32_t unhandled_sync_failure = 0x00004;
 static constexpr uint32_t unhandled_sync_timeout = 0x00005;
 
 /**
+ * @brief Indicates that the exit reason for this actor is unknown, i.e.,
+ *        the actor has been terminated and no longer exists.
+ */
+static constexpr uint32_t unknown = 0x00006;
+
+/**
  * @brief Indicates that the actor was forced to shutdown by
  *        a user-generated event.
  */

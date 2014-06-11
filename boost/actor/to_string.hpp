@@ -21,16 +21,17 @@
 
 #include <type_traits>
 
+#include "boost/intrusive_ptr.hpp"
+
 #include "boost/actor/atom.hpp" // included for to_string(atom_value)
 #include "boost/actor/actor.hpp"
 #include "boost/actor/group.hpp"
 #include "boost/actor/channel.hpp"
 #include "boost/actor/node_id.hpp"
-#include "boost/actor/anything.hpp"
 #include "boost/actor/message.hpp"
-#include "boost/intrusive_ptr.hpp"
+#include "boost/actor/anything.hpp"
+#include "boost/actor/actor_addr.hpp"
 #include "boost/actor/abstract_group.hpp"
-#include "boost/actor/message_header.hpp"
 #include "boost/actor/uniform_type_info.hpp"
 
 namespace std { class exception; }
@@ -50,10 +51,6 @@ inline std::string to_string_impl(const T& what) {
 } // namespace detail
 
 inline std::string to_string(const message& what) {
-    return detail::to_string_impl(what);
-}
-
-inline std::string to_string(msg_hdr_cref what) {
     return detail::to_string_impl(what);
 }
 
