@@ -47,17 +47,17 @@ sync_request_info::sync_request_info(actor_addr sptr, message_id id)
 }
 
 remote_actor_proxy::remote_actor_proxy(actor_id aid,
-                                       node_id_ptr pinfo,
+                                       node_id nid,
                                        actor_hdl parent)
-        : super(aid, std::move(pinfo)), m_parent(parent) {
+        : super(aid, nid), m_parent(parent) {
     BOOST_ACTOR_REQUIRE(parent != invalid_actor);
     BOOST_ACTOR_LOG_INFO(BOOST_ACTOR_ARG(aid)
-                         << ", " << BOOST_ACTOR_TARG(*m_node, to_string));
+                         << ", " << BOOST_ACTOR_TARG(nid, to_string));
 }
 
 remote_actor_proxy::~remote_actor_proxy() {
     anon_send(m_parent, make_message(atom("_DelProxy"),
-                                     get_node_id_ptr(),
+                                     node(),
                                      m_id));
 }
 

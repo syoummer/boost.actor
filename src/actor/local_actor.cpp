@@ -66,10 +66,8 @@ class down_observer : public attachable {
 } // namespace <anonymous>
 
 local_actor::local_actor()
-        : m_trap_exit(false), m_dummy_node(), m_current_node(&m_dummy_node)
-        , m_planned_exit_reason(exit_reason::not_exited) {
-    m_node = detail::singletons::get_node_id();
-}
+: m_trap_exit(false), m_dummy_node(), m_current_node(&m_dummy_node)
+, m_planned_exit_reason(exit_reason::not_exited) { }
 
 local_actor::~local_actor() { }
 

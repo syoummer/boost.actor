@@ -41,7 +41,7 @@ std::atomic<scheduler::coordinator*> s_scheduling_coordinator;
 std::atomic<uniform_type_info_map*> s_uniform_type_info_map;
 std::atomic<actor_registry*> s_actor_registry;
 std::atomic<group_manager*> s_group_manager;
-std::atomic<node_id*> s_node_id;
+std::atomic<node_id::data*> s_node_id;
 std::atomic<logging*> s_logger;
 
 } // namespace <anonymous>
@@ -81,8 +81,8 @@ scheduler::coordinator* singletons::get_scheduling_coordinator() {
     return lazy_get(s_scheduling_coordinator);
 }
 
-node_id* singletons::get_node_id() {
-    return lazy_get(s_node_id);
+node_id singletons::get_node_id() {
+    return node_id{lazy_get(s_node_id)};
 }
 
 logging* singletons::get_logger() {

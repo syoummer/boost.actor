@@ -55,8 +55,8 @@ actor::abstract_actor_ptr remote_actor_impl(Socket fd,
     std::promise<actor::abstract_actor_ptr> result_promise;
     // we can't move fd into our lambda in C++11 ...
     auto fd_ptr = std::make_shared<Socket>(std::move(fd));
-    basp_broker::client_handshake_data hdata{nullptr, &result_promise,
-                                               &error_msg, &ifs};
+    basp_broker::client_handshake_data hdata{actor::invalid_node_id,
+                                             &result_promise, &error_msg, &ifs};
     auto hdata_ptr = &hdata;
     mm->run_later([=] {
         auto bro = mm->get_named_broker<basp_broker>(actor::atom("_BASP"));

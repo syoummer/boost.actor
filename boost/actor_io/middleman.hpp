@@ -76,16 +76,6 @@ class middleman : public actor::detail::abstract_singleton {
     }
 
     /**
-     * @brief Returns the node ID of this middleman.
-     */
-    const actor::node_id& node() const;
-
-    /**
-     * @brief Returns a pointer to the node ID of this middleman.
-     */
-    const actor::node_id_ptr& node_ptr() const;
-
-    /**
      * @brief Returns the IO backend used by this middleman.
      */
     inline boost::asio::io_service& backend() {
@@ -112,7 +102,6 @@ class middleman : public actor::detail::abstract_singleton {
     network::multiplexer             m_backend;    // networking backend
     network::supervisor*             m_supervisor; // keeps backend busy
 
-    actor::node_id_ptr               m_node;       // identifies this node
     std::thread                      m_thread;     // runs the backend
 
     std::map<actor::atom_value, broker_ptr> m_named_brokers;

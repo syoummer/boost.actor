@@ -58,7 +58,6 @@ enum class atom_value : uint64_t;
 // intrusive pointer typedefs
 typedef intrusive_ptr<abstract_group>      abstract_group_ptr;
 typedef intrusive_ptr<actor_proxy>         actor_proxy_ptr;
-typedef intrusive_ptr<node_id>             node_id_ptr;
 
 // functions
 template<typename T, typename U>

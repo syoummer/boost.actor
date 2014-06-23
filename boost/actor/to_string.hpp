@@ -74,7 +74,7 @@ inline std::string to_string(const channel& what) {
 std::string to_string(const node_id& what);
 
 // implemented in node_id.cpp
-std::string to_string(const node_id_ptr& what);
+std::string to_string(const node_id& what);
 
 /*
 inline std::string to_string(const any& what) {

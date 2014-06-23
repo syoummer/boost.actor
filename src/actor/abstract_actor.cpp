@@ -44,7 +44,7 @@ namespace { typedef std::unique_lock<std::mutex> guard_type; }
 // m_exit_reason is guaranteed to be set to 0, i.e., exit_reason::not_exited,
 // by std::atomic<> constructor
 
-abstract_actor::abstract_actor(actor_id aid, node_id_ptr nid)
+abstract_actor::abstract_actor(actor_id aid, node_id nid)
 : super(std::move(nid)), m_id(aid), m_is_proxy(true)
 , m_exit_reason(exit_reason::not_exited), m_host(nullptr) { }
 

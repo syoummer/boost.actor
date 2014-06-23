@@ -58,17 +58,9 @@ class dummy_backend : public actor_namespace::backend {
 
  public:
 
-    actor_proxy_ptr make_proxy(const node_id_ptr&, actor_id) override {
+    actor_proxy_ptr make_proxy(const node_id&, actor_id) override {
         return nullptr;
     }
-
-    const node_id_ptr& node_ptr() const override {
-        return m_ptr;
-    }
-
- private:
-
-    node_id_ptr m_ptr;
 
 };
 

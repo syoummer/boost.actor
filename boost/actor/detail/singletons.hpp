@@ -71,7 +71,7 @@ class singletons {
 
     static logging* get_logger();
 
-    static node_id* get_node_id();
+    static node_id get_node_id();
 
     static scheduler::coordinator* get_scheduling_coordinator();
 

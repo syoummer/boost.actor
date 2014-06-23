@@ -69,7 +69,7 @@ using mapped_type_list = detail::type_list<
     sync_timeout_msg,
     timeout_msg,
     unit_t,
-    node_id_ptr,
+    node_id,
     double,
     float,
     long double,

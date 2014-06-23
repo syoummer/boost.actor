@@ -57,7 +57,7 @@ void actor_namespace::write(serializer* sink, const actor_addr& addr) {
             detail::singletons::get_actor_registry()
             ->put(addr.id(), actor_cast<abstract_actor_ptr>(addr));
         }
-        auto& pinf = addr.node();
+        auto pinf = addr.node();
         sink->write_value(addr.id());                                  // actor id
         sink->write_value(pinf.process_id());                          // process id
         sink->write_raw(node_id::host_id_size, pinf.host_id().data()); // host id
@@ -70,12 +70,12 @@ actor_addr actor_namespace::read(deserializer* source) {
     auto aid = source->read<uint32_t>();                 // actor id
     auto pid = source->read<uint32_t>();                 // process id
     source->read_raw(node_id::host_id_size, hid.data()); // host id
-    node_id_ptr this_node = detail::singletons::get_node_id();
+    node_id this_node = detail::singletons::get_node_id();
     if (aid == 0 && pid == 0) {
         // 0:0 identifies an invalid actor
         return invalid_actor_addr;
     }
-    if (pid == this_node->process_id() && hid == this_node->host_id()) {
+    if (pid == this_node.process_id() && hid == this_node.host_id()) {
         // identifies this exact process on this host, ergo: local actor
         auto a = detail::singletons::get_actor_registry()->get(aid);
         // might be invalid
@@ -83,8 +83,7 @@ actor_addr actor_namespace::read(deserializer* source) {
 
     }
     // identifies a remote actor; create proxy if needed
-    node_id_ptr tmp = new node_id{pid, hid};
-    return get_or_put(tmp, aid)->address();
+    return get_or_put({pid, hid}, aid)->address();
 }
 
 size_t actor_namespace::count_proxies(const key_type& node) {

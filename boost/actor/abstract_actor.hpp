@@ -184,7 +184,7 @@ class abstract_actor : public abstract_channel {
 
     abstract_actor();
 
-    abstract_actor(actor_id aid, node_id_ptr nid);
+    abstract_actor(actor_id aid, node_id nid);
 
     /**
      * @brief Should be overridden by subtypes and called upon termination.

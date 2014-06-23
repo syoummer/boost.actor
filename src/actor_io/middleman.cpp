@@ -65,16 +65,6 @@ middleman* middleman::instance() {
     }));
 }
 
-const node_id& middleman::node() const {
-    BOOST_ACTOR_REQUIRE(m_node != nullptr);
-    return *m_node;
-}
-
-const node_id_ptr& middleman::node_ptr() const {
-    BOOST_ACTOR_REQUIRE(m_node != nullptr);
-    return m_node;
-}
-
 void middleman::add_broker(broker_ptr bptr) {
     m_brokers.emplace(bptr);
     bptr->attach_functor([=](uint32_t) {
@@ -84,7 +74,6 @@ void middleman::add_broker(broker_ptr bptr) {
 
 void middleman::initialize() {
     BOOST_ACTOR_LOG_TRACE("");
-    m_node = boost::actor::detail::singletons::get_node_id();
     m_supervisor = new network::supervisor{m_backend};
     m_thread = std::thread([this] {
         BOOST_ACTOR_LOGF_TRACE("");

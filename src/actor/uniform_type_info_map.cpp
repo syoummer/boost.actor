@@ -304,26 +304,21 @@ void deserialize_impl(message& atref, deserializer* source) {
     atref = uti->as_message(uval->val);
 }
 
-void serialize_impl(const node_id_ptr& ptr, serializer* sink) {
-    if (ptr == nullptr) {
-        node_id::serialize_invalid(sink);
-    }
-    else {
-        sink->write_value(ptr->process_id());
-        sink->write_raw(ptr->host_id().size(), ptr->host_id().data());
-    }
+void serialize_impl(const node_id& nid, serializer* sink) {
+    sink->write_value(nid.process_id());
+    sink->write_raw(nid.host_id().size(), nid.host_id().data());
 }
 
-void deserialize_impl(node_id_ptr& ptr, deserializer* source) {
-    node_id::host_id_type nid;
+void deserialize_impl(node_id& nid, deserializer* source) {
+    node_id::host_id_type hid;
     auto pid = source->read<uint32_t>();
-    source->read_raw(node_id::host_id_size, nid.data());
+    source->read_raw(node_id::host_id_size, hid.data());
     auto is_zero = [](uint8_t value) { return value == 0; };
-    if (pid == 0 && std::all_of(nid.begin(), nid.end(), is_zero)) {
-        // invalid process information (nullptr)
-        ptr.reset();
+    if (pid == 0 && std::all_of(hid.begin(), hid.end(), is_zero)) {
+        // invalid process information
+        nid = invalid_node_id;
     }
-    else ptr.reset(new node_id{pid, nid});
+    else nid = node_id{pid, hid};
 }
 
 inline void serialize_impl(const atom_value& val, serializer* sink) {
@@ -902,7 +897,7 @@ class utim_impl : public uniform_type_info_map {
     typedef std::vector<char> charbuf;
 
     // 0-9
-    uti_impl<node_id_ptr>              m_type_proc;
+    uti_impl<node_id>              m_type_proc;
     uti_impl<channel>                  m_type_channel;
     uti_impl<down_msg>                 m_type_down_msg;
     uti_impl<exit_msg>                 m_type_exit_msg;

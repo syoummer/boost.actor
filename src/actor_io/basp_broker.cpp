@@ -38,9 +38,8 @@ namespace actor_io {
 
 basp_broker::basp_broker() : m_namespace(*this) {
     m_meta_msg = uniform_typeid<message>();
-    m_meta_id_type = uniform_typeid<node_id_ptr>();
-    BOOST_ACTOR_LOG_DEBUG("native broker started: "
-                          << to_string(get_node_id_ptr()));
+    m_meta_id_type = uniform_typeid<node_id>();
+    BOOST_ACTOR_LOG_DEBUG("BASP broker started: " << to_string(node()));
 }
 
 behavior basp_broker::make_behavior() {
@@ -146,26 +145,26 @@ void basp_broker::new_data(connection_context& ctx, buffer_type& buf) {
                                                    : basp::header_size));
 }
 
-void basp_broker::dispatch(const basp::header& msg, message&& payload) {
+void basp_broker::dispatch(const basp::header& hdr, message&& payload) {
     // TODO: provide hook API to allow ActorShell to
     //       intercept/trace/log each message
     actor_addr src;
-    if (msg.source_node && msg.source_actor != invalid_actor_id) {
-        if (*msg.source_node != *get_node_id_ptr()) {
-            src = m_namespace.get_or_put(msg.source_node, msg.source_actor)
+    if (hdr.source_node != invalid_node_id  && hdr.source_actor != invalid_actor_id) {
+        if (hdr.source_node != node()) {
+            src = m_namespace.get_or_put(hdr.source_node, hdr.source_actor)
                   ->address();
         }
         else {
-            auto ptr = singletons::get_actor_registry()->get(msg.source_actor);
+            auto ptr = singletons::get_actor_registry()->get(hdr.source_actor);
             if (ptr) src = ptr->address();
         }
     }
-    auto dest = singletons::get_actor_registry()->get(msg.dest_actor);
-    auto mid = message_id::from_integer_value(msg.operation_data);
+    auto dest = singletons::get_actor_registry()->get(hdr.dest_actor);
+    auto mid = message_id::from_integer_value(hdr.operation_data);
     if (!dest) {
         BOOST_ACTOR_LOG_DEBUG("received a message for an invalid actor; "
                               "could not find an actor with ID "
-                              << msg.dest_actor);
+                              << hdr.dest_actor);
         return;
     }
     dest->enqueue(src, mid, std::move(payload), nullptr);
@@ -205,7 +204,7 @@ basp_broker::handle_basp_header(connection_context& ctx,
     if (!payload && hdr.payload_len > 0) return await_payload;
     // forward message if not addressed to us; invalid dest_node implies
     // that msg is a server_handshake
-    if (hdr.dest_node && *hdr.dest_node != *get_node_id_ptr()) {
+    if (hdr.dest_node != invalid_node_id && hdr.dest_node != node()) {
         auto hdl = get_route(hdr.dest_node);
         if (hdl.invalid()) {
             // TODO: signalize that we don't have route to given node
@@ -260,7 +259,7 @@ basp_broker::handle_basp_header(connection_context& ctx,
             // we have a proxy to an actor that has been terminated
             auto ptr = m_namespace.get(hdr.source_node, hdr.source_actor);
             if (ptr) {
-                m_namespace.erase(ptr->get_node_id_ptr(), ptr->id());
+                m_namespace.erase(ptr->node(), ptr->id());
                 ptr->kill_proxy(static_cast<uint32_t>(hdr.operation_data));
             }
             else {
@@ -270,12 +269,12 @@ basp_broker::handle_basp_header(connection_context& ctx,
         }
         case basp::client_handshake: {
             BOOST_ACTOR_REQUIRE(payload == nullptr);
-            if (ctx.remote_id != nullptr) {
+            if (ctx.remote_id != invalid_node_id) {
                 BOOST_ACTOR_LOG_WARNING("received unexpected client handshake");
                 return close_connection;
             }
             ctx.remote_id = hdr.source_node;
-            if (*get_node_id_ptr() == *ctx.remote_id) {
+            if (node() == ctx.remote_id) {
                 BOOST_ACTOR_LOG_INFO("incoming connection from self");
                 return close_connection;
             }
@@ -350,7 +349,7 @@ basp_broker::handle_basp_header(connection_context& ctx,
             auto nid = ctx.handshake_data->remote_id;
             if (!try_set_default_route(nid, ctx.hdl)) {
                 BOOST_ACTOR_LOG_INFO("multiple connections to "
-                                     << to_string(*nid)
+                                     << to_string(nid)
                                      << " (re-use old one)");
                 auto proxy = m_namespace.get(nid, remote_aid);
                 BOOST_ACTOR_LOG_WARNING_IF(!proxy,
@@ -365,7 +364,7 @@ basp_broker::handle_basp_header(connection_context& ctx,
             // finalize handshake
             auto& buf = wr_buf(ctx.hdl);
             binary_serializer bs(std::back_inserter(buf), &m_namespace);
-            write(bs, {get_node_id_ptr(), ctx.handshake_data->remote_id,
+            write(bs, {node(), ctx.handshake_data->remote_id,
                        invalid_actor_id, invalid_actor_id,
                        0, basp::client_handshake, 0});
             // prepare to receive messages
@@ -394,7 +393,7 @@ void basp_broker::send_kill_proxy_instance(const id_type& nid,
     }
     auto& buf = wr_buf(hdl);
     binary_serializer bs(std::back_inserter(buf), &m_namespace);
-    write(bs, {get_node_id_ptr(), nid, aid, invalid_actor_id, 0,
+    write(bs, {node(), nid, aid, invalid_actor_id, 0,
                basp::kill_proxy_instance, uint64_t{reason}});
     flush(hdl);
 }
@@ -408,11 +407,11 @@ void basp_broker::dispatch(const actor_addr& from,
                           << BOOST_ACTOR_TARG(to, to_string) << ", "
                           << BOOST_ACTOR_TARG(msg, to_string));
     BOOST_ACTOR_REQUIRE(to != nullptr);
-    auto dest = to.node_ptr();
+    auto dest = to.node();
     auto hdl = get_route(dest);
     if (hdl.invalid()) {
         BOOST_ACTOR_LOG_WARNING("unable to dispatch message: no route to "
-                                << to_string(*dest) << ", message: "
+                                << to_string(dest) << ", message: "
                                 << to_string(msg));
         return;
     }
@@ -428,7 +427,7 @@ void basp_broker::dispatch(const actor_addr& from,
     }
     // write broker message to the reserved space
     binary_serializer bs2{buf.begin() + wr_pos, &m_namespace};
-    write(bs2, {from.node_ptr(), dest,
+    write(bs2, {from.node(), dest,
                 from.id(), to.id(),
                 static_cast<uint32_t>(buf.size() - before),
                 basp::dispatch_message,
@@ -454,8 +453,7 @@ actor_proxy_ptr basp_broker::make_proxy(const id_type& nid, actor_id aid) {
                           << BOOST_ACTOR_ARG(aid));
     BOOST_ACTOR_REQUIRE(m_current_context != nullptr);
     BOOST_ACTOR_REQUIRE(aid != invalid_actor_id);
-    BOOST_ACTOR_REQUIRE(nid != nullptr);
-    BOOST_ACTOR_REQUIRE(*nid != *get_node_id_ptr());
+    BOOST_ACTOR_REQUIRE(nid != node());
     // this member function is being called whenever we deserialize a
     // payload received from a remote node; if a remote node N sends
     // us a handle to a third node T, we assume that N has a route to T
@@ -484,7 +482,7 @@ actor_proxy_ptr basp_broker::make_proxy(const id_type& nid, actor_id aid) {
     });
     // tell remote side we are monitoring this actor now
     binary_serializer bs(std::back_inserter(wr_buf(hdl)), &m_namespace);
-    write(bs, {get_node_id_ptr(), nid, invalid_actor_id, aid,
+    write(bs, {node(), nid, invalid_actor_id, aid,
                0, basp::announce_proxy_instance, 0});
     return res;
 }
@@ -511,7 +509,7 @@ bool basp_broker::try_set_default_route(const id_type& nid,
     auto& entry = m_routes[nid];
     if (entry.first.invalid()) {
         BOOST_ACTOR_LOG_DEBUG("new default route: "
-                              << to_string(*nid) << " -> " << hdl.id());
+                              << to_string(nid) << " -> " << hdl.id());
         entry.first = hdl;
         return true;
     }
@@ -537,7 +535,7 @@ void basp_broker::init_handshake_as_client(connection_context& ctx,
 void basp_broker::init_handshake_as_sever(connection_context& ctx,
                                           actor_addr addr) {
     BOOST_ACTOR_LOG_TRACE(BOOST_ACTOR_ARG(this));
-    BOOST_ACTOR_REQUIRE(get_node_id_ptr() != nullptr);
+    BOOST_ACTOR_REQUIRE(node() != invalid_node_id);
     auto& buf = wr_buf(ctx.hdl);
     auto wrpos = buf.size();
     char padding[basp::header_size];
@@ -553,7 +551,7 @@ void basp_broker::init_handshake_as_sever(connection_context& ctx,
     // fill padded region with the actual broker message
     binary_serializer bs2(buf.begin() + wrpos, &m_namespace);
     auto payload_len = buf.size() - before;
-    write(bs2, {get_node_id_ptr(), nullptr,
+    write(bs2, {node(), invalid_node_id,
                 addr.id(), 0,
                 static_cast<uint32_t>(payload_len),
                 basp::server_handshake,
@@ -563,10 +561,6 @@ void basp_broker::init_handshake_as_sever(connection_context& ctx,
     // setup for receiving client handshake
     ctx.state = await_client_handshake;
     configure_read(ctx.hdl, receive_policy::exactly(basp::header_size));
-}
-
-const basp_broker::id_type& basp_broker::node_ptr() const {
-    return get_node_id_ptr();
 }
 
 void basp_broker::announce_published_actor(accept_handle hdl,

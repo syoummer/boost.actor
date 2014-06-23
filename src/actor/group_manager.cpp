@@ -283,8 +283,7 @@ class local_group_module : public abstract_group::module {
  public:
 
     local_group_module()
-            : super("local"), m_process(detail::singletons::get_node_id())
-            , m_actor_utype(uniform_typeid<actor>()){ }
+    : super("local"), m_actor_utype(uniform_typeid<actor>()){ }
 
     group get(const std::string& identifier) override {
         upgrade_guard guard(m_instances_mtx);
@@ -337,13 +336,8 @@ class local_group_module : public abstract_group::module {
         m_actor_utype->serialize(&ptr->broker(), sink);
     }
 
-    inline const node_id& process() const {
-        return *m_process;
-    }
-
  private:
 
-    node_id_ptr m_process;
     const uniform_type_info* m_actor_utype;
     detail::shared_spinlock m_instances_mtx;
     std::map<std::string, local_group_ptr> m_instances;

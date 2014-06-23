@@ -114,7 +114,7 @@ class actor_proxy : public abstract_actor {
 
  protected:
 
-    actor_proxy(actor_id aid, node_id_ptr nid);
+    actor_proxy(actor_id aid, node_id nid);
 
     anchor_ptr m_anchor;
 

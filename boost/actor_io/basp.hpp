@@ -38,13 +38,13 @@ namespace basp {
  * message types consist of only a header.
  */
 struct header {
-    actor::node_id_ptr source_node;
-    actor::node_id_ptr dest_node;
-    actor::actor_id    source_actor;
-    actor::actor_id    dest_actor;
-    uint32_t           payload_len;
-    uint32_t           operation;
-    uint64_t           operation_data;
+    actor::node_id  source_node;
+    actor::node_id  dest_node;
+    actor::actor_id source_actor;
+    actor::actor_id dest_actor;
+    uint32_t        payload_len;
+    uint32_t        operation;
+    uint64_t        operation_data;
 };
 
 /**
@@ -62,13 +62,22 @@ constexpr size_t header_size =   actor::node_id::host_id_size * 2
                                + sizeof(uint32_t) * 2
                                + sizeof(uint64_t);
 
-inline bool valid(const actor::node_id_ptr& val) { return val != nullptr; }
-inline bool invalid(const actor::node_id_ptr& val) { return !valid(val); }
-template<typename T> inline bool zero(T val) { return val == 0; }
-template<typename T> inline bool nonzero(T aid) { return !zero(aid); }
-inline bool not_equal(const actor::node_id_ptr& lhs,
-                      const actor::node_id_ptr& rhs) {
-    return (lhs && rhs) ? *lhs != *rhs : lhs != rhs;
+inline bool valid(const actor::node_id& val) {
+    return val != actor::invalid_node_id;
+}
+
+inline bool invalid(const actor::node_id& val) {
+    return !valid(val);
+}
+
+template<typename T>
+inline bool zero(T val) {
+    return val == 0;
+}
+
+template<typename T>
+inline bool nonzero(T aid) {
+    return !zero(aid);
 }
 
 /**
@@ -109,7 +118,7 @@ constexpr uint32_t client_handshake = 0x01;
 inline bool client_handshake_valid(const header& hdr) {
     return    valid(hdr.source_node)
            && valid(hdr.dest_node)
-           && not_equal(hdr.source_node, hdr.dest_node)
+           && hdr.source_node != hdr.dest_node
            && zero(hdr.source_actor)
            && zero(hdr.dest_actor)
            && zero(hdr.payload_len)
@@ -153,7 +162,7 @@ constexpr uint32_t announce_proxy_instance = 0x03;
 inline bool announce_proxy_instance_valid(const header& hdr) {
     return    valid(hdr.source_node)
            && valid(hdr.dest_node)
-           && not_equal(hdr.source_node, hdr.dest_node)
+           && hdr.source_node != hdr.dest_node
            && zero(hdr.source_actor)
            && nonzero(hdr.dest_actor)
            && zero(hdr.payload_len)
@@ -176,7 +185,7 @@ constexpr uint32_t kill_proxy_instance = 0x04;
 inline bool kill_proxy_instance_valid(const header& hdr) {
     return    valid(hdr.source_node)
            && valid(hdr.dest_node)
-           && not_equal(hdr.source_node, hdr.dest_node)
+           && hdr.source_node != hdr.dest_node
            && nonzero(hdr.source_actor)
            && zero(hdr.dest_actor)
            && zero(hdr.payload_len)

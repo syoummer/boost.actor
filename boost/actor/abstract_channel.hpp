@@ -37,9 +37,7 @@ class abstract_channel : public ref_counted {
 
  public:
 
-    abstract_channel();
-
-    abstract_channel(node_id_ptr nid);
+    virtual ~abstract_channel();
 
     /**
      * @brief Enqueues a new message to the channel.
@@ -57,9 +55,9 @@ class abstract_channel : public ref_counted {
                          execution_unit* host) = 0;
 
     /**
-     * @brief Returns a pointer to the ID of the node this actor is running on.
+     * @brief Returns the ID of the node this actor is running on.
      */
-    inline const node_id_ptr& get_node_id_ptr() const;
+    inline node_id node() const;
 
     /**
      * @brief Returns true if {@link node_ptr} returns
@@ -68,16 +66,20 @@ class abstract_channel : public ref_counted {
 
  protected:
 
-    // identifies the node of this channel
-    node_id_ptr m_node;
+    abstract_channel();
 
-    virtual ~abstract_channel();
+    abstract_channel(node_id nid);
+
+ private:
+
+    // identifies the node of this channel
+    node_id m_node;
 
 };
 
 using abstract_channel_ptr = intrusive_ptr<abstract_channel>;
 
-inline const node_id_ptr& abstract_channel::get_node_id_ptr() const {
+inline node_id abstract_channel::node() const {
     return m_node;
 }
 

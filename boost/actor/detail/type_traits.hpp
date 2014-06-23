@@ -156,7 +156,7 @@ struct is_builtin {
                                        actor,
                                        group,
                                        channel,
-                                       node_id_ptr
+                                       node_id
                                    >::value;
 };
 

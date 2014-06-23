@@ -34,12 +34,12 @@
 namespace boost {
 namespace actor {
 
+struct invalid_actor_addr_t { constexpr invalid_actor_addr_t() { } };
+
 /**
  * @brief Identifies an invalid {@link actor_addr}.
  * @relates actor_addr
  */
-struct invalid_actor_addr_t { constexpr invalid_actor_addr_t() { } };
-
 constexpr invalid_actor_addr_t invalid_actor_addr = invalid_actor_addr_t{};
 
 /**
@@ -89,9 +89,7 @@ class actor_addr : detail::comparable<actor_addr>
 
     actor_id id() const;
 
-    const node_id& node() const;
-
-    node_id_ptr node_ptr() const;
+    node_id node() const;
 
     /**
      * @brief Returns whether this is an address of a

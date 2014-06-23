@@ -69,7 +69,7 @@ class remote_actor_proxy : public actor::actor_proxy {
  public:
 
     remote_actor_proxy(actor::actor_id mid,
-                       actor::node_id_ptr pinfo,
+                       actor::node_id pinfo,
                        actor::actor parent);
 
     void enqueue(const actor::actor_addr&,

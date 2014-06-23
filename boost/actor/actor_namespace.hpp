@@ -40,9 +40,7 @@ class actor_namespace {
 
  public:
 
-    using key_type = node_id_ptr;
-
-    using key_compare = node_id_ptr_less;
+    using key_type = node_id;
 
     /**
      * @brief The backend of an actor namespace is responsible for
@@ -58,11 +56,6 @@ class actor_namespace {
          * @brief Creates a new proxy instance.
          */
         virtual actor_proxy_ptr make_proxy(const key_type&, actor_id) = 0;
-
-        /**
-         * @brief Returns the ID of the local node.
-         */
-        virtual const key_type& node_ptr() const = 0;
 
     };
 
@@ -121,7 +114,7 @@ class actor_namespace {
 
     backend& m_backend;
 
-    std::map<key_type, proxy_map, key_compare> m_proxies;
+    std::map<key_type, proxy_map> m_proxies;
 
 };
 

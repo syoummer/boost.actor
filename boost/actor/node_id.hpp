@@ -25,6 +25,7 @@
 
 #include "boost/intrusive_ptr.hpp"
 
+#include "boost/actor/config.hpp"
 #include "boost/actor/ref_counted.hpp"
 
 #include "boost/actor/detail/comparable.hpp"
@@ -34,16 +35,34 @@ namespace actor {
 
 class serializer;
 
-/**
- * @brief Identifies a process.
- */
-class node_id : public ref_counted, detail::comparable<node_id> {
+struct invalid_node_id_t { constexpr invalid_node_id_t() { } };
 
-    typedef ref_counted super;
+/**
+ * @brief Identifies an invalid {@link node_id}.
+ * @relates node_id
+ */
+constexpr invalid_node_id_t invalid_node_id = invalid_node_id_t{};
+
+/**
+ * @brief A node ID consists of a host ID and process ID. The host ID
+ *        identifies the physical machine in the network, whereas the
+ *        process ID identifies the running system-level process on that
+ *        machine.
+ */
+class node_id : detail::comparable<node_id>,
+                detail::comparable<node_id, invalid_node_id_t> {
+
+    using super = ref_counted;
 
  public:
 
-    ~node_id();
+    node_id() = default;
+
+    node_id(const invalid_node_id_t&);
+
+    node_id& operator=(const node_id&) = default;
+
+    node_id& operator=(const invalid_node_id_t&);
 
     /**
      * @brief A 160 bit hash (20 bytes).
@@ -56,8 +75,45 @@ class node_id : public ref_counted, detail::comparable<node_id> {
     typedef std::array<uint8_t, host_id_size> host_id_type;
 
     /**
-     * @brief Copy constructor.
+     * @brief A reference counted container for host ID and process ID.
      */
+    class data : public ref_counted {
+
+     public:
+
+        // for singleton API
+        inline void destroy() {
+            deref();
+        }
+
+        // for singleton API
+        inline void dispose() {
+            deref();
+        }
+
+        // for singleton API
+        inline void initialize() {
+            // nop
+        }
+
+        static data* create_singleton();
+
+        int compare(const node_id& other) const;
+
+        data() = default;
+
+        ~data();
+
+        data(uint32_t procid, host_id_type hid);
+
+        uint32_t process_id;
+
+        host_id_type host_id;
+
+    };
+
+    ~node_id();
+
     node_id(const node_id&);
 
     /**
@@ -78,96 +134,37 @@ class node_id : public ref_counted, detail::comparable<node_id> {
      * @brief Identifies the running process.
      * @returns A system-wide unique process identifier.
      */
-    inline uint32_t process_id() const { return m_process_id; }
+    uint32_t process_id() const;
 
     /**
      * @brief Identifies the host system.
      * @returns A hash build from the MAC address of the first network device
      *          and the UUID of the root partition (mounted in "/" or "C:").
      */
-    inline const host_id_type& host_id() const { return m_host_id; }
+    const host_id_type& host_id() const;
 
     /** @cond PRIVATE */
 
     // "inherited" from comparable<node_id>
     int compare(const node_id& other) const;
 
-    static void serialize_invalid(serializer*);
+    // "inherited" from comparable<node_id, invalid_node_id_t>
+    int compare(const invalid_node_id_t&) const;
 
-    // for singleton API
-
-    inline void destroy() {
-        deref();
-    }
-
-    inline void dispose() {
-        deref();
-    }
-
-    static node_id* create_singleton();
-
-    inline void initialize() { }
+    node_id(intrusive_ptr<data> dataptr);
 
     /** @endcond */
 
  private:
 
-    uint32_t m_process_id;
-    host_id_type m_host_id;
+    intrusive_ptr<data> m_data;
 
-};
-
-void host_id_from_string(const std::string& hash,
-                         node_id::host_id_type& node_id);
-
-bool equal(const std::string& hash,
-           const node_id::host_id_type& node_id);
-
-inline bool equal(const node_id::host_id_type& node_id,
-                  const std::string& hash) {
-    return equal(hash, node_id);
-}
-
-/**
- * @brief A smart pointer type that manages instances of
- *        {@link node_id}.
- * @relates node_id
- */
-typedef intrusive_ptr<node_id> node_id_ptr;
-
-/**
- * @brief Allows users to use {@link node_id_ptr} in STL-compliant
- *        sorted containers as "value type", i.e., to have the
- *        container sorted by value rather than by pointer comparison.
- * @relates node_id
- */
-struct node_id_ptr_less {
-    inline bool operator()(const node_id_ptr& l, const node_id_ptr& r) const {
-        if (l  == r) return false;   // identical
-        if (!l && r) return true;    // nullptr < everything
-        if (l  && r) return *l < *r; // compare values
-        return false;                // l > r || l == r
-    }
 };
 
 /**
  * @relates node_id
  */
 std::string to_string(const node_id& what);
-
-/**
- * @relates node_id
- */
-std::string to_string(const node_id_ptr& what);
-
-/**
- * @brief Converts a {@link node_id::host_id_type node_id}
- *        to a hexadecimal string.
- * @param node_id A unique node identifier.
- * @returns A hexadecimal representation of @p node_id.
- * @relates node_id
- */
-std::string to_string(const node_id::host_id_type& node_id);
 
 } // namespace actor
 } // namespace boost

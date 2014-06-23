@@ -45,7 +45,7 @@ class basp_broker : public broker, public actor::actor_namespace::backend {
 
  public:
 
-    using id_type = actor::node_id_ptr;
+    using id_type = actor::node_id;
 
     basp_broker();
 
@@ -56,8 +56,6 @@ class basp_broker : public broker, public actor::actor_namespace::backend {
         auto hdl = add_acceptor(std::move(fd));
         announce_published_actor(hdl, whom);
     }
-
-    const id_type& node_ptr() const override;
 
     actor::actor_proxy_ptr make_proxy(const id_type&, actor::actor_id) override;
 
@@ -160,15 +158,13 @@ class basp_broker : public broker, public actor::actor_namespace::backend {
     struct blacklist_less {
         inline bool operator()(const blacklist_entry& lhs,
                                const blacklist_entry& rhs) const {
-            actor::node_id_ptr_less nl;
-            if (nl(lhs.first, rhs.first)) return lhs.second < rhs.second;
+            if (lhs.first < rhs.first) return lhs.second < rhs.second;
             return false;
         }
     };
 
-    using routing_table = std::map<id_type                 /* dest */,
-                                   routing_table_entry     /* hops */,
-                                   actor::node_id_ptr_less>;
+    using routing_table = std::map<id_type,              /* dest */
+                                   routing_table_entry>; /* hops */
 
     using pending_request = std::pair<actor::actor_addr,  /* sender  */
                                       actor::message_id>; /* req. ID */
