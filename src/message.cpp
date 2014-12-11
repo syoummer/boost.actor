@@ -74,7 +74,7 @@ message message::drop_right(size_t n) const {
     vector<size_t> mapping(size() - n);
     size_t i = 0;
     generate(mapping.begin(), mapping.end(), [&] { return i++; });
-    return message{detail::decorated_tuple::create(m_vals, move(mapping))};
+    return message{detail::decorated_tuple::create(m_vals, boost::move(mapping))};
 }
 
 } // namespace actor
